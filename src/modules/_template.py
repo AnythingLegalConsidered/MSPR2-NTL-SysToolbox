@@ -14,7 +14,7 @@ Instructions:
 import logging
 from typing import Any
 
-from src.interfaces import (
+from src.interfaces import (  # noqa: F401
     EXIT_CRITICAL,
     EXIT_OK,
     EXIT_UNKNOWN,

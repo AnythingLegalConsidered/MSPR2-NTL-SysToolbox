@@ -5,7 +5,7 @@ Ce fichier definit les structures communes que TOUS les modules doivent respecte
 Ne pas modifier sans accord de l'equipe.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone  # noqa: I001
 from typing import Any
 
 
