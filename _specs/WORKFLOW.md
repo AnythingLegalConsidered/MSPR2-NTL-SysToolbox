@@ -6,6 +6,8 @@
 >
 > **Temps total prévu : 19h | Marge : quasi nulle**
 > **Priorité absolue : code fonctionnel > documentation > slides**
+>
+> **Voir aussi :** [PLAN_PROJET.md](PLAN_PROJET.md) pour les détails techniques | [QUICKREF.md](QUICKREF.md) pendant le dev | [GUIDE_EQUIPE.md](GUIDE_EQUIPE.md) pour les issues GitHub
 
 ---
 
@@ -13,7 +15,7 @@
 
 **Qui :** Tous (4 personnes)
 **Quand :** Début du projet, avant toute ligne de code
-**Prérequis :** Avoir lu `PLAN_PROJET.md` en diagonale (sections 1 et 2)
+**Prérequis :** Avoir lu [PLAN_PROJET.md](PLAN_PROJET.md) en diagonale (sections 1 et 2)
 **Document support :** `_specs/DECISIONS.md`
 
 ### Déroulement
@@ -41,7 +43,7 @@
 
 **Qui :** Réparti selon les décisions (Thème 5.1)
 **Prérequis :** Étape 0 terminée
-**Référence :** `PLAN_PROJET.md` sections 1.1 à 1.3
+**Référence :** [PLAN_PROJET.md](PLAN_PROJET.md) sections 1.1 à 1.3
 
 ### Track A — DC01 (personne désignée)
 
@@ -56,7 +58,7 @@
 - [ ] Installer Ubuntu 20.04 (VM)
 - [ ] IP statique : 192.168.10.21
 - [ ] Installer MySQL Server
-- [ ] Créer la base `wms` + tables (script SQL dans `PLAN_PROJET.md` section 1)
+- [ ] Créer la base `wms` + tables (script SQL dans [PLAN_PROJET.md](PLAN_PROJET.md) section 1)
 - [ ] Créer un utilisateur MySQL dédié (pas root !)
 - [ ] Activer SSH
 
@@ -94,7 +96,7 @@ Parcourir la checklist ensemble :
 
 **Qui :** Chacun sur sa branche
 **Prérequis :** Étape 2 terminée + lab fonctionnel
-**Référence :** `PLAN_PROJET.md` section 2 (fiches par personne), `_specs/QUICKREF.md`
+**Référence :** [PLAN_PROJET.md](PLAN_PROJET.md) section 2 (fiches par personne), `_specs/QUICKREF.md`
 
 ### Règles communes
 
@@ -293,4 +295,4 @@ Parcourir la checklist ensemble :
 
 ---
 
-*Voir `DECISIONS.md` pour les choix techniques | `PLAN_PROJET.md` pour les détails complets | `QUICKREF.md` pour l'aide-mémoire dev*
+*Voir `DECISIONS.md` pour les choix techniques | [PLAN_PROJET.md](PLAN_PROJET.md) pour les détails complets | `QUICKREF.md` pour l'aide-mémoire dev*

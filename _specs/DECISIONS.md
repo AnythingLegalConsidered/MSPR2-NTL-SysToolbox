@@ -6,6 +6,8 @@
 >
 > **Date de la réunion :** 26 février 2026
 > **Présents :** Ianis PUICHAUD, Zaid ABOUYAALA, Ojvind LANTSIGBLE, Blaise WANDA NKONG
+>
+> **Voir aussi :** [PLAN_PROJET.md](PLAN_PROJET.md) pour le plan complet | [WORKFLOW.md](WORKFLOW.md) pour le déroulement | [QUICKREF.md](QUICKREF.md) pour l'aide-mémoire dev
 
 ---
 

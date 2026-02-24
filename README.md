@@ -122,12 +122,19 @@ Scripts de déploiement dans [`scripts/proxmox/`](scripts/proxmox/).
 | Dev Backup | Ojvind LANTSIGBLE |
 | Dev Audit | Zaid ABOUYAALA |
 
+## Par où commencer
+
+| Vous êtes... | Lisez |
+|---------------|-------|
+| Nouveau sur le projet | [_specs/PLAN_PROJET.md](_specs/PLAN_PROJET.md) — vue d'ensemble complète |
+| Développeur prêt à coder | [_specs/QUICKREF.md](_specs/QUICKREF.md) — aide-mémoire à garder ouvert |
+| Besoin du workflow étape par étape | [_specs/WORKFLOW.md](_specs/WORKFLOW.md) — checklist chronologique |
+
 ## Documentation
 
 | Document | Emplacement |
 |----------|-------------|
+| Plan projet complet | [_specs/PLAN_PROJET.md](_specs/PLAN_PROJET.md) |
+| Décisions d'équipe | [_specs/DECISIONS.md](_specs/DECISIONS.md) |
 | Guide CI pour l'équipe | [docs/GUIDE_CI.md](docs/GUIDE_CI.md) |
 | Rapport technique CI | [docs/RAPPORT_CI.md](docs/RAPPORT_CI.md) |
-| Dossier technique et fonctionnel | `docs/document_technique.md` (à venir) |
-| Manuel d'installation | `docs/manuel_utilisation.md` (à venir) |
-| Rapport d'exécution audit | `docs/rapport_audit.md` (à venir) |

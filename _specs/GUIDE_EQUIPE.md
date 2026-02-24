@@ -2,6 +2,8 @@
 
 > Ce document explique comment s'organiser avec les issues GitHub.
 > Lisez-le une fois, et vous saurez exactement quoi faire.
+>
+> **Voir aussi :** [PLAN_PROJET.md](PLAN_PROJET.md) pour le contexte complet | [QUICKREF.md](QUICKREF.md) pendant le dev | [WORKFLOW.md](WORKFLOW.md) pour le déroulement étape par étape
 
 ---
 

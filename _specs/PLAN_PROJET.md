@@ -6,9 +6,9 @@
 **Équipe :** 4 personnes | **Durée :** 19h | **Soutenance :** 20 min + 30 min questions
 **Contraintes :** Cross-platform (Win + Linux), sorties JSON horodatées, codes retour, menu interactif.
 
-> **Guide opérationnel :** Voir `_specs/WORKFLOW.md` pour le déroulement étape par étape.
-> **Décisions :** Voir `_specs/DECISIONS.md` pour les choix techniques à valider en équipe.
-> **Aide-mémoire dev :** Voir `_specs/QUICKREF.md` pour les commandes et conventions.
+> **Guide opérationnel :** Voir [WORKFLOW.md](WORKFLOW.md) pour le déroulement étape par étape.
+> **Décisions :** Voir [DECISIONS.md](DECISIONS.md) pour les choix techniques à valider en équipe.
+> **Aide-mémoire dev :** Voir [QUICKREF.md](QUICKREF.md) pour les commandes et conventions.
 
 ---
 

@@ -1,5 +1,7 @@
 # Rapport Technique — Intégration Continue
 
+> Pour le guide d'utilisation quotidien de la CI, voir le [Guide CI](GUIDE_CI.md).
+
 **Projet :** NTL-SysToolbox
 **Équipe :** Ianis PUICHAUD, Zaid ABOUYAALA, Ojvind LANTSIGBLE, Blaise WANDA NKONG
 **Date :** Février 2026
