@@ -39,22 +39,22 @@
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Convention de branches ? | `feature/module-diagnostic`, `feature/module-backup`, `feature/module-audit`, `feature/cli-menu` | **Telles quelles** — standard, deja dans le plan | |
-| Qui cree le repo + invite les autres ? | Lead | **Lead** | |
-| Strategie de merge ? | A) Merge commit (historique lisible) — B) Squash (1 commit par branche) | **B) Squash** — 1 commit propre par feature, historique lisible | |
-| Qui review les PRs ? | A) Le Lead review tout — B) Chacun review 1 autre — C) Pas de review | **A) Lead review tout** — plus rapide, 1 gatekeeper | |
-| Branche `main` protegee ? | A) Oui (merge via PR uniquement) — B) Non (push direct) | **A) Oui** — empeche un push accidentel | |
-| Convention de commits ? | `feat:`, `fix:`, `docs:`, `test:`, `chore:` (conventionnel) | **Oui, conventionnel** — standard de l'industrie | |
-| Tag avant soutenance ? | `v1.0` sur main quand tout est pret | **Oui** — `v1.0` | |
+| Convention de branches ? | `feature/module-diagnostic`, `feature/module-backup`, `feature/module-audit`, `feature/cli-menu` | **Telles quelles** — standard, deja dans le plan | Telles quelles |
+| Qui cree le repo + invite les autres ? | Lead | **Lead** | Lead |
+| Strategie de merge ? | A) Merge commit (historique lisible) — B) Squash (1 commit par branche) | **B) Squash** — 1 commit propre par feature, historique lisible | B) Squash |
+| Qui review les PRs ? | A) Le Lead review tout — B) Chacun review 1 autre — C) Pas de review | **A) Lead review tout** — plus rapide, 1 gatekeeper | A) Lead review tout |
+| Branche `main` protegee ? | A) Oui (merge via PR uniquement) — B) Non (push direct) | **A) Oui** — empeche un push accidentel | A) Oui |
+| Convention de commits ? | `feat:`, `fix:`, `docs:`, `test:`, `chore:` (conventionnel) | **Oui, conventionnel** — standard de l'industrie | Conventionnel |
+| Tag avant soutenance ? | `v1.0` sur main quand tout est pret | **Oui** — `v1.0` | Oui, `v1.0` |
 
 ### 1.3 Communication & suivi
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Canal de communication ? | A) Discord — B) WhatsApp — C) Slack — D) Autre : _____ | **A) Discord** — voix + texte + partage ecran | |
-| Standup async ? | Format : `[Fait] / [En cours] / [Bloque par]` — 1 message par session | **Oui, tel quel** — simple et efficace | |
-| Outil de suivi des taches ? | A) GitHub Issues — B) Trello — C) Fichier TASKS.md — D) Autre | **A) GitHub Issues** — integre aux PRs, pas d'outil externe | |
-| Regle si bloque > 30 min ? | Message immediat sur le canal + ping le Lead | **Oui, tel quel** — evite les heures perdues | |
+| Canal de communication ? | A) Discord — B) WhatsApp — C) Slack — D) Autre : _____ | **A) Discord** — voix + texte + partage ecran | B) WhatsApp |
+| Standup async ? | Format : `[Fait] / [En cours] / [Bloque par]` — 1 message par session | **Oui, tel quel** — simple et efficace | Oui, tel quel |
+| Outil de suivi des taches ? | A) GitHub Issues — B) Trello — C) Fichier TASKS.md — D) Autre | **A) GitHub Issues** — integre aux PRs, pas d'outil externe | A) GitHub Issues |
+| Regle si bloque > 30 min ? | Message immediat sur le canal + ping le Lead | **Oui, tel quel** — evite les heures perdues | Oui, tel quel |
 
 ---
 
@@ -79,9 +79,9 @@ Chaque fonction de chaque module DOIT retourner un dict avec cette structure :
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Ce schema est-il complet ? | A) Oui tel quel — B) Ajouter des champs : _____ | **A) Oui** — deja implemente dans `interfaces.py` | |
-| Format du timestamp ? | A) ISO 8601 UTC (`2026-02-24T14:30:00Z`) — B) Local avec timezone | **A) ISO 8601 UTC** — standard, deja dans `build_result()` | |
-| Le champ `details` est libre par module ? | A) Oui, chaque module met ce qu'il veut — B) Sous-structure imposee | **A) Libre** — chaque module a ses propres metriques | |
+| Ce schema est-il complet ? | A) Oui tel quel — B) Ajouter des champs : _____ | **A) Oui** — deja implemente dans `interfaces.py` | A) Oui tel quel |
+| Format du timestamp ? | A) ISO 8601 UTC (`2026-02-24T14:30:00Z`) — B) Local avec timezone | **A) ISO 8601 UTC** — standard, deja dans `build_result()` | A) ISO 8601 UTC |
+| Le champ `details` est libre par module ? | A) Oui, chaque module met ce qu'il veut — B) Sous-structure imposee | **A) Libre** — chaque module a ses propres metriques | A) Libre par module |
 
 ### 2.2 Codes retour (exit codes)
 
@@ -94,19 +94,19 @@ Chaque fonction de chaque module DOIT retourner un dict avec cette structure :
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Seuil WARNING CPU ? | A) > 80% — B) > 85% — C) > 90% | **A) > 80%** — regle simple, identique partout | |
-| Seuil WARNING disque ? | A) > 80% — B) > 85% — C) > 90% | **A) > 80%** | |
-| Seuil WARNING RAM ? | A) > 80% — B) > 85% — C) > 90% | **A) > 80%** | |
-| Timeout par defaut ? | A) 5s — B) 10s — C) 15s | **B) 10s** — deja dans `config.example.yaml` | |
+| Seuil WARNING CPU ? | A) > 80% — B) > 85% — C) > 90% | **A) > 80%** — regle simple, identique partout | A) > 80% |
+| Seuil WARNING disque ? | A) > 80% — B) > 85% — C) > 90% | **A) > 80%** | A) > 80% |
+| Seuil WARNING RAM ? | A) > 80% — B) > 85% — C) > 90% | **A) > 80%** | A) > 80% |
+| Timeout par defaut ? | A) 5s — B) 10s — C) 15s | **B) 10s** — deja dans `config.example.yaml` | B) 10s |
 
 ### 2.3 Gestion des erreurs
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Exceptions custom ? | A) `ModuleConfigError` + `ModuleExecutionError` (voir `interfaces.py`) — B) Pas d'exceptions | **A) Custom** — deja dans `interfaces.py`, pret a l'emploi | |
-| Un module plante = ? | A) Le CLI continue les autres modules — B) Le CLI s'arrete | **A) Continue** — resilience, montre de la maturite au jury | |
-| Logging | A) Module `logging` Python uniquement — B) `print()` autorise pour le debug | **A) `logging` uniquement** — pro, pas de print en prod | |
-| Niveau de log par defaut ? | A) INFO — B) WARNING — C) Configurable dans le YAML | **C) Configurable YAML** — deja prevu dans config | |
+| Exceptions custom ? | A) `ModuleConfigError` + `ModuleExecutionError` (voir `interfaces.py`) — B) Pas d'exceptions | **A) Custom** — deja dans `interfaces.py`, pret a l'emploi | A) Custom |
+| Un module plante = ? | A) Le CLI continue les autres modules — B) Le CLI s'arrete | **A) Continue** — resilience, montre de la maturite au jury | A) Continue |
+| Logging | A) Module `logging` Python uniquement — B) `print()` autorise pour le debug | **A) `logging` uniquement** — pro, pas de print en prod | A) `logging` uniquement |
+| Niveau de log par defaut ? | A) INFO — B) WARNING — C) Configurable dans le YAML | **C) Configurable YAML** — deja prevu dans config | C) Configurable YAML |
 
 ### 2.4 Signature commune des modules
 
@@ -129,8 +129,8 @@ def run(config: dict, target: str, **kwargs) -> dict:
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Cette signature convient ? | A) Oui — B) Modifier : _____ | **A) Oui** — deja dans `_template.py` | |
-| Le menu appelle `run()` de chaque module ? | A) Oui, le Lead code les appels dans main.py — B) Chaque module a son propre sous-menu | **A) Oui** — le Lead centralise dans `main.py` | |
+| Cette signature convient ? | A) Oui — B) Modifier : _____ | **A) Oui** — deja dans `_template.py` | A) Oui |
+| Le menu appelle `run()` de chaque module ? | A) Oui, le Lead code les appels dans main.py — B) Chaque module a son propre sous-menu | **A) Oui** — le Lead centralise dans `main.py` | A) Oui |
 
 ---
 
@@ -176,10 +176,10 @@ audit:
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Cette structure est OK ? | A) Oui — B) Modifier : _____ | **A) Oui** — deja dans `config.example.yaml` | |
-| Secrets : variables d'env ou fichier .env ? | A) `.env` + `python-dotenv` — B) Variables d'env systeme uniquement | **A) `.env` + python-dotenv** — standard, deja dans requirements | |
-| Chemin du config par defaut ? | A) `config/config.yaml` — B) `~/.ntl-systoolbox/config.yaml` — C) Argument CLI `--config` | **A) `config/config.yaml`** — simple, + support `--config` en bonus | |
-| Config par defaut si fichier absent ? | A) Erreur + exit — B) Valeurs par defaut hardcodees | **A) Erreur + exit** — explicite, pas de magie | |
+| Cette structure est OK ? | A) Oui — B) Modifier : _____ | **A) Oui** — deja dans `config.example.yaml` | A) Oui |
+| Secrets : variables d'env ou fichier .env ? | A) `.env` + `python-dotenv` — B) Variables d'env systeme uniquement | **A) `.env` + python-dotenv** — standard, deja dans requirements | A) `.env` + python-dotenv |
+| Chemin du config par defaut ? | A) `config/config.yaml` — B) `~/.ntl-systoolbox/config.yaml` — C) Argument CLI `--config` | **A) `config/config.yaml`** — simple, + support `--config` en bonus | A) `config/config.yaml` |
+| Config par defaut si fichier absent ? | A) Erreur + exit — B) Valeurs par defaut hardcodees | **A) Erreur + exit** — explicite, pas de magie | A) Erreur + exit |
 
 ### 3.2 Surcharge par variables d'environnement
 
@@ -195,7 +195,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Prefixe des variables d'env ? | A) `NTL_` — B) `SYSTOOL_` — C) Pas de prefixe | **A) `NTL_`** — deja dans `.env.example` | |
+| Prefixe des variables d'env ? | A) `NTL_` — B) `SYSTOOL_` — C) Pas de prefixe | **A) `NTL_`** — deja dans `.env.example` | A) `NTL_` |
 
 ---
 
@@ -205,37 +205,37 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| `check_ad_dns()` : lib DNS ? | A) `dnspython` — B) `nslookup` via subprocess | **A) `dnspython`** — cross-platform, dans requirements | |
-| `check_ad_dns()` : port LDAP a tester ? | A) 389 uniquement — B) 389 + 636 (LDAPS) | **A) 389 uniquement** — LDAPS optionnel, gain de temps | |
-| `check_mysql()` : quelles infos remonter ? | A) Connexion + `SHOW DATABASES` — B) + `SHOW STATUS` (uptime, threads) — C) + taille des bases | **B) + SHOW STATUS** — uptime/threads impressionnent le jury | |
-| `check_windows_server()` : comment ? | A) `wmic` via subprocess — B) `psutil` si local — C) WinRM distant | **A) `wmic` via subprocess** — fonctionne a distance sans setup | |
-| `check_ubuntu()` : commandes SSH ? | `lsb_release -a`, `uptime`, `free -m`, `df -h` — autres ? _____ | **Telles quelles** + `systemctl status mysql` | |
-| Lib LDAP sur Windows ? | A) `ldap3` (pure Python, cross-platform) — B) `python-ldap` (compile C) | **A) `ldap3`** — pure Python, zero galere d'install | |
-| Timeout SSH pour les checks ? | A) 10s — B) 15s — C) Valeur du config.yaml | **C) Valeur du config.yaml** — coherent avec le timeout global | |
+| `check_ad_dns()` : lib DNS ? | A) `dnspython` — B) `nslookup` via subprocess | **A) `dnspython`** — cross-platform, dans requirements | A) `dnspython` |
+| `check_ad_dns()` : port LDAP a tester ? | A) 389 uniquement — B) 389 + 636 (LDAPS) | **A) 389 uniquement** — LDAPS optionnel, gain de temps | A) 389 uniquement |
+| `check_mysql()` : quelles infos remonter ? | A) Connexion + `SHOW DATABASES` — B) + `SHOW STATUS` (uptime, threads) — C) + taille des bases | **B) + SHOW STATUS** — uptime/threads impressionnent le jury | B) + SHOW STATUS |
+| `check_windows_server()` : comment ? | A) `wmic` via subprocess — B) `psutil` si local — C) WinRM distant | **A) `wmic` via subprocess** — fonctionne a distance sans setup | A) `wmic` subprocess |
+| `check_ubuntu()` : commandes SSH ? | `lsb_release -a`, `uptime`, `free -m`, `df -h` — autres ? _____ | **Telles quelles** + `systemctl status mysql` | Telles quelles + systemctl |
+| Lib LDAP sur Windows ? | A) `ldap3` (pure Python, cross-platform) — B) `python-ldap` (compile C) | **A) `ldap3`** — pure Python, zero galere d'install | A) `ldap3` |
+| Timeout SSH pour les checks ? | A) 10s — B) 15s — C) Valeur du config.yaml | **C) Valeur du config.yaml** — coherent avec le timeout global | C) Valeur config.yaml |
 
 ### 4.2 Module Backup (Personne C)
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| `backup_database()` : methode ? | A) `mysqldump` via subprocess SSH — B) `mysqldump` en local — C) `mysql-connector` SELECT | **A) `mysqldump` via SSH** — le plus fiable pour un dump complet | |
-| Nom du fichier backup ? | A) `wms_YYYYMMDD_HHMMSS.sql` — B) `backup_wms_YYYYMMDD.sql` — C) Autre : _____ | **A) `wms_YYYYMMDD_HHMMSS.sql`** — horodatage precis | |
-| Compression du backup ? | A) Non (fichier .sql brut) — B) Oui (gzip -> .sql.gz) | **A) Non** — plus simple, le jury peut ouvrir le .sql | |
-| `export_table_csv()` : encodage ? | A) UTF-8 — B) UTF-8 BOM (pour Excel) — C) Configurable | **A) UTF-8** — standard universel | |
-| `export_table_csv()` : separateur ? | A) Virgule `,` — B) Point-virgule `;` (francais) — C) Configurable | **A) Virgule** — standard CSV, Excel sait lire | |
-| Verification SHA256 : quand ? | A) Apres chaque backup automatiquement — B) Fonction separee a appeler | **A) Auto** — zero oubli, integrite garantie | |
-| Ou stocker les backups ? | A) `output/backups/` — B) Configurable dans le YAML | **A) `output/backups/`** — coherent avec la structure du repo | |
+| `backup_database()` : methode ? | A) `mysqldump` via subprocess SSH — B) `mysqldump` en local — C) `mysql-connector` SELECT | **A) `mysqldump` via SSH** — le plus fiable pour un dump complet | A) mysqldump via SSH |
+| Nom du fichier backup ? | A) `wms_YYYYMMDD_HHMMSS.sql` — B) `backup_wms_YYYYMMDD.sql` — C) Autre : _____ | **A) `wms_YYYYMMDD_HHMMSS.sql`** — horodatage precis | A) `wms_YYYYMMDD_HHMMSS.sql` |
+| Compression du backup ? | A) Non (fichier .sql brut) — B) Oui (gzip -> .sql.gz) | **A) Non** — plus simple, le jury peut ouvrir le .sql | A) Non |
+| `export_table_csv()` : encodage ? | A) UTF-8 — B) UTF-8 BOM (pour Excel) — C) Configurable | **A) UTF-8** — standard universel | A) UTF-8 |
+| `export_table_csv()` : separateur ? | A) Virgule `,` — B) Point-virgule `;` (francais) — C) Configurable | **A) Virgule** — standard CSV, Excel sait lire | A) Virgule |
+| Verification SHA256 : quand ? | A) Apres chaque backup automatiquement — B) Fonction separee a appeler | **A) Auto** — zero oubli, integrite garantie | A) Auto |
+| Ou stocker les backups ? | A) `output/backups/` — B) Configurable dans le YAML | **A) `output/backups/`** — coherent avec la structure du repo | A) `output/backups/` |
 
 ### 4.3 Module Audit (Personne D)
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| `scan_network()` : flags nmap ? | A) `-sV` + `-O` si admin — B) `-sT -sV` seulement — C) Adapter selon privileges | **C) Adapter** — detecter les privileges + fallback, montre maturite | |
-| Comportement sans privileges admin ? | A) Warning + scan degrade — B) Erreur + stop | **A) Warning + scan degrade** — resilience | |
-| `list_os_eol()` : source des dates ? | A) Fichier `data/eol_database.json` local — B) API endoflife.date en ligne | **A) JSON local** — pas de dependance reseau, fiable en demo | |
-| `audit_from_csv()` : format CSV attendu ? | Colonnes : `hostname, os_name, os_version, role` — OK ? _____ | **OK tel quel** — simple et suffisant | |
-| `generate_report()` : format ? | A) JSON uniquement — B) JSON + tableau `rich` — C) JSON + HTML | **B) JSON + `rich`** — visuel en demo, exportable en JSON | |
-| Tri du rapport ? | A) Par criticite (EXPIRE > BIENTOT > OK) — B) Par hostname | **A) Par criticite** — logique business, EXPIRE en premier | |
-| Seuil "bientot expire" ? | A) < 6 mois — B) < 12 mois — C) Configurable | **A) < 6 mois** — assez urgent pour alerter | |
+| `scan_network()` : flags nmap ? | A) `-sV` + `-O` si admin — B) `-sT -sV` seulement — C) Adapter selon privileges | **C) Adapter** — detecter les privileges + fallback, montre maturite | C) Adapter selon privileges |
+| Comportement sans privileges admin ? | A) Warning + scan degrade — B) Erreur + stop | **A) Warning + scan degrade** — resilience | A) Warning + scan degrade |
+| `list_os_eol()` : source des dates ? | A) Fichier `data/eol_database.json` local — B) API endoflife.date en ligne | **A) JSON local** — pas de dependance reseau, fiable en demo | A) JSON local |
+| `audit_from_csv()` : format CSV attendu ? | Colonnes : `hostname, os_name, os_version, role` — OK ? _____ | **OK tel quel** — simple et suffisant | OK tel quel |
+| `generate_report()` : format ? | A) JSON uniquement — B) JSON + tableau `rich` — C) JSON + HTML | **B) JSON + `rich`** — visuel en demo, exportable en JSON | B) JSON + `rich` |
+| Tri du rapport ? | A) Par criticite (EXPIRE > BIENTOT > OK) — B) Par hostname | **A) Par criticite** — logique business, EXPIRE en premier | A) Par criticite |
+| Seuil "bientot expire" ? | A) < 6 mois — B) < 12 mois — C) Configurable | **A) < 6 mois** — assez urgent pour alerter | A) < 6 mois |
 
 ---
 
@@ -287,10 +287,10 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Quand fait-on le merge ? | A) Sync collective programmee — B) Chacun merge quand il est pret | **A) Sync collective** — evite les surprises | |
-| Ordre de merge ? | A) diagnostic -> backup -> audit — B) Tous en meme temps — C) Peu importe | **A) diagnostic -> backup -> audit** — moins de risque | |
-| Qui resout les conflits de merge ? | A) Le Lead — B) Chacun les siens | **A) Le Lead** — coherent avec son role d'integrateur | |
-| Date de "code freeze" ? | _______ (date/heure apres laquelle on ne code plus) | **Suggere : 2h avant la fin du dev** | |
+| Quand fait-on le merge ? | A) Sync collective programmee — B) Chacun merge quand il est pret | **A) Sync collective** — evite les surprises | A) Sync collective |
+| Ordre de merge ? | A) diagnostic -> backup -> audit — B) Tous en meme temps — C) Peu importe | **A) diagnostic -> backup -> audit** — moins de risque | A) diag -> backup -> audit |
+| Qui resout les conflits de merge ? | A) Le Lead — B) Chacun les siens | **A) Le Lead** — coherent avec son role d'integrateur | A) Le Lead |
+| Date de "code freeze" ? | _______ (date/heure apres laquelle on ne code plus) | **Suggere : 2h avant la fin du dev** | 2h avant fin dev |
 
 ### 6.2 Protocole de test (checklist pre-merge)
 
@@ -332,7 +332,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 
 | Question | Options | Recommande | Decision |
 |----------|---------|------------|----------|
-| Module pas fini a la deadline ? | A) Stub avec message "Non implemente" — B) On supprime du menu — C) Le Lead finit | **A) Stub** — le menu reste complet, montre la structure | |
+| Module pas fini a la deadline ? | A) Stub avec message "Non implemente" — B) On supprime du menu — C) Le Lead finit | **A) Stub** — le menu reste complet, montre la structure | A) Stub |
 
 ---
 
@@ -382,25 +382,25 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 
 | # | Decision | Recommande | Valeur retenue |
 |---|----------|------------|---------------|
-| 1 | Strategie de merge | Squash | |
-| 2 | Review des PRs | Lead review tout | |
-| 3 | Main protege | Oui | |
-| 4 | Canal de communication | Discord | |
-| 5 | Outil de suivi | GitHub Issues | |
-| 6 | Seuils WARNING (CPU/Disque/RAM) | 80% partout | |
-| 7 | Timeout par defaut | 10s | |
-| 8 | Exceptions custom | Oui (Config + Execution) | |
-| 9 | Module plante = continue | Oui | |
-| 10 | Niveau de log | Configurable YAML | |
-| 11 | Secrets | .env + python-dotenv | |
-| 12 | Prefixe variables d'env | NTL_ | |
-| 13 | Lib LDAP | ldap3 | |
-| 14 | Methode backup | mysqldump via SSH | |
-| 15 | Flags nmap | Adapter selon privileges | |
-| 16 | Source EOL | JSON local | |
-| 17 | Format rapport audit | JSON + rich | |
-| 18 | Plan B module pas pret | Stub "Non implemente" | |
-| 19 | Date code freeze | A definir | |
+| 1 | Strategie de merge | Squash | Squash |
+| 2 | Review des PRs | Lead review tout | Lead review tout |
+| 3 | Main protege | Oui | Oui |
+| 4 | Canal de communication | Discord | **WhatsApp** |
+| 5 | Outil de suivi | GitHub Issues | GitHub Issues |
+| 6 | Seuils WARNING (CPU/Disque/RAM) | 80% partout | 80% partout |
+| 7 | Timeout par defaut | 10s | 10s |
+| 8 | Exceptions custom | Oui (Config + Execution) | Oui |
+| 9 | Module plante = continue | Oui | Oui |
+| 10 | Niveau de log | Configurable YAML | Configurable YAML |
+| 11 | Secrets | .env + python-dotenv | .env + python-dotenv |
+| 12 | Prefixe variables d'env | NTL_ | NTL_ |
+| 13 | Lib LDAP | ldap3 | ldap3 |
+| 14 | Methode backup | mysqldump via SSH | mysqldump via SSH |
+| 15 | Flags nmap | Adapter selon privileges | Adapter selon privileges |
+| 16 | Source EOL | JSON local | JSON local |
+| 17 | Format rapport audit | JSON + rich | JSON + rich |
+| 18 | Plan B module pas pret | Stub "Non implemente" | Stub "Non implemente" |
+| 19 | Date code freeze | A definir | 2h avant fin dev |
 
 ---
 
