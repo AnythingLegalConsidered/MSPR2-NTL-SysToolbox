@@ -118,9 +118,9 @@ Scripts de déploiement dans [`scripts/proxmox/`](scripts/proxmox/).
 | Rôle | Membre |
 |------|--------|
 | Lead / Intégrateur | Ianis PUICHAUD |
-| Dev Diagnostic | À attribuer |
-| Dev Backup | À attribuer |
-| Dev Audit | À attribuer |
+| Dev Diagnostic | Blaise WANDA NKONG |
+| Dev Backup | Ojvind LANTSIGBLE |
+| Dev Audit | Zaid ABOUYAALA |
 
 ## Documentation
 

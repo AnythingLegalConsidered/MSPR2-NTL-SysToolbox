@@ -9,10 +9,10 @@
 
 | Rôle | Branche de travail | Quoi ? |
 |------|--------------------|--------|
-| **Lead Dev** (Personne A) | `feature/cli-menu` | Le "chef d'orchestre" : menu CLI, config, utilitaires, merge final |
-| **Dev Diagnostic** (Personne B) | `feature/module-diagnostic` | Le script qui vérifie que les serveurs fonctionnent |
-| **Dev Backup** (Personne C) | `feature/module-backup` | Le script qui sauvegarde la base de données |
-| **Dev Audit** (Personne D) | `feature/module-audit` | Le script qui détecte les OS obsolètes |
+| **Lead Dev** (Ianis PUICHAUD) | `feature/cli-menu` | Le "chef d'orchestre" : menu CLI, config, utilitaires, merge final |
+| **Dev Diagnostic** (Blaise WANDA NKONG) | `feature/module-diagnostic` | Le script qui vérifie que les serveurs fonctionnent |
+| **Dev Backup** (Ojvind LANTSIGBLE) | `feature/module-backup` | Le script qui sauvegarde la base de données |
+| **Dev Audit** (Zaid ABOUYAALA) | `feature/module-audit` | Le script qui détecte les OS obsolètes |
 
 ---
 
@@ -86,7 +86,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 > Chacun travaille sur SA branche, dans SON fichier. Pas de conflit possible !
 
-### Dev Diagnostic (Personne B) → branche `feature/module-diagnostic`
+### Dev Diagnostic (Blaise WANDA NKONG) → branche `feature/module-diagnostic`
 
 | Issue | Titre | Ce que ça fait |
 |-------|-------|----------------|
@@ -100,7 +100,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 **Pour commencer :** Copier `src/modules/_template.py` → `src/modules/diagnostic.py`
 
-### Dev Backup (Personne C) → branche `feature/module-backup`
+### Dev Backup (Ojvind LANTSIGBLE) → branche `feature/module-backup`
 
 | Issue | Titre | Ce que ça fait |
 |-------|-------|----------------|
@@ -112,7 +112,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 **Pour commencer :** Copier `src/modules/_template.py` → `src/modules/backup.py`
 
-### Dev Audit (Personne D) → branche `feature/module-audit`
+### Dev Audit (Zaid ABOUYAALA) → branche `feature/module-audit`
 
 | Issue | Titre | Ce que ça fait |
 |-------|-------|----------------|
@@ -159,7 +159,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
   feature/cli-menu  feature/       feature/    feature/
   (Lead Dev)        module-        module-     module-
                     diagnostic     backup      audit
-                    (Pers. B)      (Pers. C)   (Pers. D)
+                    (Blaise)      (Ojvind)   (Zaid)
           |            |            |           |
        #1 config    #4 ad_dns    #8 backup   #10 data
        #2 menu      #5 mysql     #9 csv+run  #11 scan
