@@ -1,5 +1,7 @@
 # Guide CI/CD — NTL-SysToolbox
 
+> Pour les justifications techniques et comparatifs d'outils, voir le [Rapport technique CI](RAPPORT_CI.md).
+
 ## Comment ça marche
 
 On utilise **GitHub Actions** pour vérifier automatiquement le code à chaque push.

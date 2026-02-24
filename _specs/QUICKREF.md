@@ -85,10 +85,10 @@ make clean          # Nettoyer les artefacts générés
 
 ## Si je suis bloqué
 
-1. Relire `PLAN_PROJET.md` section de mon module
+1. Relire [PLAN_PROJET.md](PLAN_PROJET.md) section de mon module
 2. Relire `src/modules/_template.py` pour le pattern
 3. **Si > 30 min** : message sur le canal + ping le Lead
 
 ---
 
-*Voir `WORKFLOW.md` pour les étapes | `DECISIONS.md` pour les choix validés*
+*Voir [WORKFLOW.md](WORKFLOW.md) pour les étapes | [DECISIONS.md](DECISIONS.md) pour les choix validés*
