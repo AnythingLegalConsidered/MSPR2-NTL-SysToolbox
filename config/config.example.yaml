@@ -1,0 +1,37 @@
+# NTL-SysToolbox — Configuration
+# Copier ce fichier en config/config.yaml et remplir vos valeurs.
+# NE JAMAIS COMMITER config.yaml (il contient des secrets).
+
+general:
+  log_level: INFO          # DEBUG, INFO, WARNING
+  output_dir: ./output
+  timeout: 10              # secondes, timeout par defaut
+
+targets:
+  dc01:
+    host: 192.168.10.10
+    type: windows
+    description: "Domain Controller — AD/DNS"
+  wms_db:
+    host: 192.168.10.21
+    type: linux
+    description: "WMS Database Server"
+
+mysql:
+  host: 192.168.10.21
+  port: 3306
+  user: "${NTL_MYSQL_USER}"
+  password: "${NTL_MYSQL_PASSWORD}"
+  database: wms
+
+ssh:
+  host: 192.168.10.21
+  port: 22
+  user: "${NTL_SSH_USER}"
+  password: "${NTL_SSH_PASSWORD}"
+  # key_file: ~/.ssh/id_rsa  # alternative au password
+
+audit:
+  network_range: "192.168.10.0/24"
+  eol_database: "./data/eol_database.json"
+  inventory_csv: "./data/sample_inventory.csv"
