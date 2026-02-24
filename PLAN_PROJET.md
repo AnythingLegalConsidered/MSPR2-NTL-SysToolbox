@@ -6,6 +6,10 @@
 **Equipe :** 4 personnes | **Duree :** 19h | **Soutenance :** 20 min + 30 min questions
 **Contraintes :** Cross-platform (Win + Linux), sorties JSON horodatees, codes retour, menu interactif.
 
+> **Guide operationnel :** Voir `_specs/WORKFLOW.md` pour le deroulement etape par etape.
+> **Decisions :** Voir `_specs/DECISIONS.md` pour les choix techniques a valider en equipe.
+> **Aide-memoire dev :** Voir `_specs/QUICKREF.md` pour les commandes et conventions.
+
 ---
 
 ## 1. Lab — VMs a monter
