@@ -17,17 +17,17 @@ logger = logging.getLogger(__name__)
 # --- Module imports (graceful if not yet implemented) -----------------------
 
 try:
-    from src.modules import diagnostic
+    from src.modules import diagnostic  # type: ignore[attr-defined]
 except ImportError:
     diagnostic = None  # type: ignore[assignment]
 
 try:
-    from src.modules import backup
+    from src.modules import backup  # type: ignore[attr-defined]
 except ImportError:
     backup = None  # type: ignore[assignment]
 
 try:
-    from src.modules import audit
+    from src.modules import audit  # type: ignore[attr-defined]
 except ImportError:
     audit = None  # type: ignore[assignment]
 
