@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NTL-SysToolbox — Autounattend for Windows Server 2016/2019/2022 -->
+<!-- Placeholders replaced by gen-autounattend.sh -->
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+
+    <!-- Phase 1: Windows PE (boot + disk setup) -->
+    <settings pass="windowsPE">
+        <component name="Microsoft-Windows-International-Core-WinPE"
+                   processorArchitecture="amd64" language="neutral"
+                   xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+            <SetupUILanguage>
+                <UILanguage>en-US</UILanguage>
+            </SetupUILanguage>
+            <InputLocale>fr-FR</InputLocale>
+            <SystemLocale>fr-FR</SystemLocale>
+            <UILanguage>en-US</UILanguage>
+            <UserLocale>fr-FR</UserLocale>
+        </component>
+
+        <component name="Microsoft-Windows-Setup"
+                   processorArchitecture="amd64" language="neutral"
+                   xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+
+            <UserData>
+                <AcceptEula>true</AcceptEula>
+                <ProductKey>
+                    <Key>{{PRODUCT_KEY}}</Key>
+                </ProductKey>
+            </UserData>
+
+            <ImageInstall>
+                <OSImage>
+                    <InstallFrom>
+                        <MetaData wcm:action="add">
+                            <Key>/IMAGE/INDEX</Key>
+                            <Value>{{IMAGE_INDEX}}</Value>
+                        </MetaData>
+                    </InstallFrom>
+                    <InstallTo>
+                        <DiskID>0</DiskID>
+                        <PartitionID>2</PartitionID>
+                    </InstallTo>
+                </OSImage>
+            </ImageInstall>
+
+            <DiskConfiguration>
+                <Disk wcm:action="add">
+                    <DiskID>0</DiskID>
+                    <WillWipeDisk>true</WillWipeDisk>
+                    <CreatePartitions>
+                        <!-- EFI System Partition -->
+                        <CreatePartition wcm:action="add">
+                            <Order>1</Order>
+                            <Size>500</Size>
+                            <Type>EFI</Type>
+                        </CreatePartition>
+                        <!-- Windows partition -->
+                        <CreatePartition wcm:action="add">
+                            <Order>2</Order>
+                            <Extend>true</Extend>
+                            <Type>Primary</Type>
+                        </CreatePartition>
+                    </CreatePartitions>
+                    <ModifyPartitions>
+                        <ModifyPartition wcm:action="add">
+                            <Order>1</Order>
+                            <PartitionID>1</PartitionID>
+                            <Format>FAT32</Format>
+                            <Label>System</Label>
+                        </ModifyPartition>
+                        <ModifyPartition wcm:action="add">
+                            <Order>2</Order>
+                            <PartitionID>2</PartitionID>
+                            <Format>NTFS</Format>
+                            <Label>Windows</Label>
+                        </ModifyPartition>
+                    </ModifyPartitions>
+                </Disk>
+            </DiskConfiguration>
+
+            <!-- Load VirtIO drivers from secondary CD -->
+            <DriverPaths>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+                    <Path>E:\vioscsi\w10\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+                    <Path>E:\NetKVM\w10\amd64</Path>
+                </PathAndCredentials>
+                <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+                    <Path>E:\viostor\w10\amd64</Path>
+                </PathAndCredentials>
+            </DriverPaths>
+        </component>
+    </settings>
+
+    <!-- Phase 4: Specialize (hostname, network) -->
+    <settings pass="specialize">
+        <component name="Microsoft-Windows-Shell-Setup"
+                   processorArchitecture="amd64" language="neutral">
+            <ComputerName>{{HOSTNAME}}</ComputerName>
+            <TimeZone>Romance Standard Time</TimeZone>
+        </component>
+
+        <component name="Microsoft-Windows-TCPIP"
+                   processorArchitecture="amd64" language="neutral">
+            <Interfaces>
+                <Interface wcm:action="add">
+                    <Identifier>Ethernet</Identifier>
+                    <Ipv4Settings>
+                        <DhcpEnabled>false</DhcpEnabled>
+                    </Ipv4Settings>
+                    <UnicastIpAddresses>
+                        <IpAddress wcm:action="add" wcm:keyValue="1">{{IP_ADDRESS}}/24</IpAddress>
+                    </UnicastIpAddresses>
+                    <Routes>
+                        <Route wcm:action="add">
+                            <Identifier>1</Identifier>
+                            <NextHopAddress>{{GATEWAY}}</NextHopAddress>
+                            <Prefix>0.0.0.0/0</Prefix>
+                        </Route>
+                    </Routes>
+                </Interface>
+            </Interfaces>
+        </component>
+
+        <component name="Microsoft-Windows-DNS-Client"
+                   processorArchitecture="amd64" language="neutral">
+            <Interfaces>
+                <Interface wcm:action="add">
+                    <Identifier>Ethernet</Identifier>
+                    <DNSServerSearchOrder>
+                        <IpAddress wcm:action="add" wcm:keyValue="1">{{DNS_SERVER}}</IpAddress>
+                    </DNSServerSearchOrder>
+                </Interface>
+            </Interfaces>
+        </component>
+
+        <component name="Microsoft-Windows-TerminalServices-LocalSessionManager"
+                   processorArchitecture="amd64" language="neutral">
+            <fDenyTSConnections>false</fDenyTSConnections>
+        </component>
+    </settings>
+
+    <!-- Phase 7: OOBE (first login) -->
+    <settings pass="oobeSystem">
+        <component name="Microsoft-Windows-Shell-Setup"
+                   processorArchitecture="amd64" language="neutral">
+            <OOBE>
+                <HideEULAPage>true</HideEULAPage>
+                <HideLocalAccountScreen>true</HideLocalAccountScreen>
+                <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+                <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+                <ProtectYourPC>3</ProtectYourPC>
+                <NetworkLocation>Work</NetworkLocation>
+            </OOBE>
+
+            <UserAccounts>
+                <AdministratorPassword>
+                    <Value>{{ADMIN_PASSWORD}}</Value>
+                    <PlainText>true</PlainText>
+                </AdministratorPassword>
+            </UserAccounts>
+
+            <AutoLogon>
+                <Enabled>true</Enabled>
+                <Username>Administrator</Username>
+                <Password>
+                    <Value>{{ADMIN_PASSWORD}}</Value>
+                    <PlainText>true</PlainText>
+                </Password>
+                <LogonCount>1</LogonCount>
+            </AutoLogon>
+
+            <FirstLogonCommands>
+                <!-- Enable RDP firewall rule -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>1</Order>
+                    <CommandLine>netsh advfirewall firewall set rule group="Remote Desktop" new enable=yes</CommandLine>
+                    <Description>Enable RDP</Description>
+                </SynchronousCommand>
+                <!-- Install QEMU Guest Agent if available -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>2</Order>
+                    <CommandLine>cmd /c if exist E:\guest-agent\qemu-ga-x86_64.msi msiexec /i E:\guest-agent\qemu-ga-x86_64.msi /qn</CommandLine>
+                    <Description>Install QEMU Guest Agent</Description>
+                </SynchronousCommand>
+                <!-- Run post-install script if present -->
+                <SynchronousCommand wcm:action="add">
+                    <Order>3</Order>
+                    <CommandLine>cmd /c if exist "D:\*.ps1" {{POST_INSTALL_CMD}}</CommandLine>
+                    <Description>Post-install script</Description>
+                </SynchronousCommand>
+            </FirstLogonCommands>
+        </component>
+    </settings>
+</unattend>

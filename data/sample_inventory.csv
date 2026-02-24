@@ -1,0 +1,19 @@
+hostname,os_name,os_version,role
+DC01,Windows Server,2022,Domain Controller (AD/DNS)
+DC02,Windows Server,2019,Domain Controller Secondary
+WMS-DB,Ubuntu,20.04 LTS,Database Server (MySQL WMS)
+WMS-APP,Ubuntu,20.04 LTS,Application Server (WMS)
+IPBX-VM,CentOS,7,IPBX Server (telephonie)
+SUPER-01,Windows Server,2016,Supervision Zabbix
+SRV-FILE,Windows Server,2012 R2,File Server (partages legacy)
+SRV-PRINT,Windows Server,2008 R2,Print Server
+NAS-01,Debian,10,Backup NAS
+SRV-INTRANET,Debian,11,Intranet / Wiki interne
+SRV-BACKUP,Ubuntu,16.04 LTS,Scripts de sauvegarde
+SRV-CDK,Ubuntu,18.04 LTS,Cross-dock saisonnier
+PC-SIEGE-01,Windows,11,Poste de travail (siege)
+PC-SIEGE-02,Windows,11,Poste de travail (siege)
+PC-COMPTA-01,Windows,10,Poste comptabilite
+PC-QUAI-WH1,Windows,7,Terminal quai Lens
+PC-QUAI-WH2,Windows,7,Terminal quai Valenciennes
+PC-QUAI-WH3,Windows,10,Terminal quai Arras

@@ -106,7 +106,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 |-------|-------|----------------|
 | [#8](../../issues/8) | `backup_database()` | Fait un dump SQL de la base MySQL + calcule le SHA256 |
 | [#9](../../issues/9) | `export_table_csv()` + `run()` | Exporte une table en CSV + dispatcher |
-| [#14](../../issues/14) | Tests unitaires | Tests automatisés du module |
+| [#14](../../issues/14) | Tests unitaires (partagée avec Audit) | Tests automatisés du module |
 
 **Tout va dans un seul fichier :** `src/modules/backup.py`
 
@@ -119,7 +119,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 | [#10](../../issues/10) | Fichiers de données | Créer `data/eol_database.json` et `data/sample_inventory.csv` |
 | [#11](../../issues/11) | `scan_network()` | Scanne le réseau avec nmap pour trouver les machines |
 | [#12](../../issues/12) | `list_os_eol()` + `audit_from_csv()` + `generate_report()` + `run()` | Croise l'inventaire avec les dates de fin de support, génère un rapport coloré |
-| [#14](../../issues/14) | Tests unitaires | Tests automatisés du module |
+| [#14](../../issues/14) | Tests unitaires (partagée avec Backup) | Tests automatisés du module |
 
 **Tout va dans un seul fichier :** `src/modules/audit.py` (+ fichiers `data/`)
 

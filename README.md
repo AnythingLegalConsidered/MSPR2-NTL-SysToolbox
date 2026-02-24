@@ -16,21 +16,23 @@ NTL-SysToolbox industrialise les vérifications d'exploitation, sécurise la ges
 | **Backup** | Garantir l'intégrité et la traçabilité des exports WMS | Sauvegarde BDD au format SQL, export table au format CSV, vérification SHA256 |
 | **Audit** | Fournir un inventaire réseau et qualifier le statut EOL | Scan réseau nmap, détection OS, dates de fin de vie, rapport d'obsolescence |
 
-## Architecture
+## Architecture (cible)
 
 ```
 src/
 ├── main.py              # Menu CLI interactif
 ├── config_loader.py     # Chargement YAML + surcharge .env
-├── interfaces.py        # Contrat commun (exit codes, build_result)
+├── interfaces.py        # Contrat commun (exit codes, build_result)  ✔
 ├── modules/
 │   ├── diagnostic.py    # Checks AD/DNS, MySQL, santé serveurs
 │   ├── backup.py        # Dump MySQL, export CSV
 │   └── audit.py         # Scan nmap, EOL, rapports
 └── utils/
-    ├── output.py        # Logging, JSON, affichage rich
+    ├── output.py        # Logging, JSON, affichage rich  ✔
     └── network.py       # Helpers réseau (ping, port check)
 ```
+
+> Les fichiers marqués ✔ sont implémentés. Les autres seront créés au fur et à mesure du développement (voir les [issues GitHub](https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox/issues)).
 
 Les sorties sont horodatées en JSON avec des codes de retour exploitables en supervision :
 
@@ -98,8 +100,8 @@ Le lab de développement est déployé sur Proxmox avec les VMs suivantes :
 | DC01 | Windows Server 2022 | Contrôleur de domaine AD/DNS | 192.168.10.10 |
 | WMS-DB | Ubuntu 20.04 | Base MySQL du WMS | 192.168.10.21 |
 | SRV-OLD | Windows Server 2012 R2 | Serveur legacy (tests EOL) | 192.168.10.12 |
-| SRV-LEGACY | Ubuntu 16.04 | Serveur legacy (tests EOL) | 192.168.10.18 |
-| CLIENT-01 | Ubuntu 22.04 | Poste d'exécution de l'outil | 192.168.10.50 |
+| SRV-LEGACY | Ubuntu 18.04 | Serveur legacy (tests EOL) | 192.168.10.18 |
+| CLIENT-01 | Windows 10 | Poste d'exécution de l'outil | 192.168.10.50 |
 
 Scripts de déploiement dans [`scripts/proxmox/`](scripts/proxmox/).
 
