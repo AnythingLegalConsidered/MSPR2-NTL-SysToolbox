@@ -5,18 +5,18 @@
 
 ---
 
-## Les 4 roles
+## Les 4 rôles
 
-| Role | Branche de travail | Quoi ? |
+| Rôle | Branche de travail | Quoi ? |
 |------|--------------------|--------|
 | **Lead Dev** (Personne A) | `feature/cli-menu` | Le "chef d'orchestre" : menu CLI, config, utilitaires, merge final |
-| **Dev Diagnostic** (Personne B) | `feature/module-diagnostic` | Le script qui verifie que les serveurs fonctionnent |
-| **Dev Backup** (Personne C) | `feature/module-backup` | Le script qui sauvegarde la base de donnees |
-| **Dev Audit** (Personne D) | `feature/module-audit` | Le script qui detecte les OS obsoletes |
+| **Dev Diagnostic** (Personne B) | `feature/module-diagnostic` | Le script qui vérifie que les serveurs fonctionnent |
+| **Dev Backup** (Personne C) | `feature/module-backup` | Le script qui sauvegarde la base de données |
+| **Dev Audit** (Personne D) | `feature/module-audit` | Le script qui détecte les OS obsolètes |
 
 ---
 
-## Comment demarrer
+## Comment démarrer
 
 ### 1. Cloner le repo (si pas encore fait)
 
@@ -41,18 +41,18 @@ git checkout feature/module-audit
 git checkout feature/cli-menu
 ```
 
-### 3. Installer les dependances
+### 3. Installer les dépendances
 
 ```bash
 make setup          # Windows (Git Bash)
 make setup-linux    # Linux
 ```
 
-### 4. Aller sur GitHub → Issues → S'assigner ses taches
+### 4. Aller sur GitHub → Issues → S'assigner ses tâches
 
 Lien : https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox/issues
 
-Cliquer sur une issue → a droite "Assignees" → s'ajouter.
+Cliquer sur une issue → à droite "Assignees" → s'ajouter.
 
 ---
 
@@ -69,32 +69,32 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 ## Phase 1 — Fondations (Lead Dev seul)
 
-> Le Lead construit les briques partagees. Les autres attendent que #1 soit fini
+> Le Lead construit les briques partagées. Les autres attendent que #1 soit fini
 > avant de commencer leurs modules (ou commencent par lire la doc/se former).
 
-| Issue | Titre | Fichier a creer | Branche |
+| Issue | Titre | Fichier à créer | Branche |
 |-------|-------|-----------------|---------|
 | [#1](../../issues/1) | Config loader | `src/config_loader.py` | `feature/cli-menu` |
 | [#2](../../issues/2) | Menu CLI | `src/main.py` | `feature/cli-menu` |
-| [#3](../../issues/3) | Utilitaires reseau | `src/utils/network.py` | `feature/cli-menu` |
+| [#3](../../issues/3) | Utilitaires réseau | `src/utils/network.py` | `feature/cli-menu` |
 
-**Ordre :** #1 d'abord (tout le monde en depend), puis #2 et #3 en parallele.
+**Ordre :** #1 d'abord (tout le monde en dépend), puis #2 et #3 en parallèle.
 
 ---
 
-## Phase 2 — Developpement des modules (3 devs en parallele)
+## Phase 2 — Développement des modules (3 devs en parallèle)
 
 > Chacun travaille sur SA branche, dans SON fichier. Pas de conflit possible !
 
 ### Dev Diagnostic (Personne B) → branche `feature/module-diagnostic`
 
-| Issue | Titre | Ce que ca fait |
+| Issue | Titre | Ce que ça fait |
 |-------|-------|----------------|
-| [#4](../../issues/4) | `check_ad_dns()` | Verifie que Active Directory et DNS marchent sur DC01 |
-| [#5](../../issues/5) | `check_mysql()` | Verifie que MySQL repond sur WMS-DB |
-| [#6](../../issues/6) | `check_windows_server()` + `check_ubuntu()` | Recupere CPU/RAM/Disque des serveurs |
+| [#4](../../issues/4) | `check_ad_dns()` | Vérifie que Active Directory et DNS marchent sur DC01 |
+| [#5](../../issues/5) | `check_mysql()` | Vérifie que MySQL répond sur WMS-DB |
+| [#6](../../issues/6) | `check_windows_server()` + `check_ubuntu()` | Récupère CPU/RAM/Disque des serveurs |
 | [#7](../../issues/7) | `run()` dispatcher | Fonction qui aiguille vers le bon check |
-| [#13](../../issues/13) | Tests unitaires | Tests automatises du module |
+| [#13](../../issues/13) | Tests unitaires | Tests automatisés du module |
 
 **Tout va dans un seul fichier :** `src/modules/diagnostic.py`
 
@@ -102,11 +102,11 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 ### Dev Backup (Personne C) → branche `feature/module-backup`
 
-| Issue | Titre | Ce que ca fait |
+| Issue | Titre | Ce que ça fait |
 |-------|-------|----------------|
 | [#8](../../issues/8) | `backup_database()` | Fait un dump SQL de la base MySQL + calcule le SHA256 |
 | [#9](../../issues/9) | `export_table_csv()` + `run()` | Exporte une table en CSV + dispatcher |
-| [#14](../../issues/14) | Tests unitaires | Tests automatises du module |
+| [#14](../../issues/14) | Tests unitaires | Tests automatisés du module |
 
 **Tout va dans un seul fichier :** `src/modules/backup.py`
 
@@ -114,12 +114,12 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 ### Dev Audit (Personne D) → branche `feature/module-audit`
 
-| Issue | Titre | Ce que ca fait |
+| Issue | Titre | Ce que ça fait |
 |-------|-------|----------------|
-| [#10](../../issues/10) | Fichiers de donnees | Creer `data/eol_database.json` et `data/sample_inventory.csv` |
-| [#11](../../issues/11) | `scan_network()` | Scanne le reseau avec nmap pour trouver les machines |
-| [#12](../../issues/12) | `list_os_eol()` + `audit_from_csv()` + `generate_report()` + `run()` | Croise l'inventaire avec les dates de fin de support, genere un rapport colore |
-| [#14](../../issues/14) | Tests unitaires | Tests automatises du module |
+| [#10](../../issues/10) | Fichiers de données | Créer `data/eol_database.json` et `data/sample_inventory.csv` |
+| [#11](../../issues/11) | `scan_network()` | Scanne le réseau avec nmap pour trouver les machines |
+| [#12](../../issues/12) | `list_os_eol()` + `audit_from_csv()` + `generate_report()` + `run()` | Croise l'inventaire avec les dates de fin de support, génère un rapport coloré |
+| [#14](../../issues/14) | Tests unitaires | Tests automatisés du module |
 
 **Tout va dans un seul fichier :** `src/modules/audit.py` (+ fichiers `data/`)
 
@@ -127,7 +127,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 ---
 
-## Phase 3 — Integration & Tests (tous ensemble)
+## Phase 3 — Intégration & Tests (tous ensemble)
 
 > Le Lead merge les branches une par une. Tout le monde est disponible pour aider.
 
@@ -139,7 +139,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 ---
 
-## Phase 4 — Documentation & Livraison (repartition equipe)
+## Phase 4 — Documentation & Livraison (répartition équipe)
 
 | Issue | Titre | Branche | Qui |
 |-------|-------|---------|-----|
@@ -149,7 +149,7 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 
 ---
 
-## Schema visuel complet
+## Schéma visuel complet
 
 ```
                      master
@@ -188,17 +188,17 @@ FONDATIONS  -->  MODULES         -->  INTEGRATION  -->  DOCUMENTATION
 # 1. Se mettre sur sa branche
 git checkout feature/module-diagnostic   # (remplacer par ta branche)
 
-# 2. Recuperer les derniers changements du master
+# 2. Récupérer les derniers changements du master
 git pull origin master
 ```
 
-### Apres avoir code
+### Après avoir codé
 
 ```bash
-# 1. Voir ce qui a change
+# 1. Voir ce qui a changé
 git status
 
-# 2. Ajouter les fichiers modifies
+# 2. Ajouter les fichiers modifiés
 git add src/modules/diagnostic.py        # (remplacer par ton fichier)
 
 # 3. Commiter avec un message clair
@@ -210,9 +210,9 @@ git push origin feature/module-diagnostic
 
 ### Conventions de commit
 
-| Prefixe | Quand l'utiliser | Exemple |
+| Préfixe | Quand l'utiliser | Exemple |
 |---------|-----------------|---------|
-| `feat:` | Nouvelle fonctionnalite | `feat: add check_mysql()` |
+| `feat:` | Nouvelle fonctionnalité | `feat: add check_mysql()` |
 | `fix:` | Correction de bug | `fix: handle timeout in backup` |
 | `test:` | Ajout de tests | `test: add diagnostic module tests` |
 | `docs:` | Documentation | `docs: add technical documentation` |
@@ -220,31 +220,31 @@ git push origin feature/module-diagnostic
 
 ---
 
-## Regles importantes
+## Règles importantes
 
 1. **Chacun travaille UNIQUEMENT sur sa branche et ses fichiers**
 2. **Ne JAMAIS push directement sur `master`** — on passe par des PRs
 3. **Le Lead review toutes les PRs** avant merge
-4. **Si bloque > 30 min** → message immediat sur le groupe + ping le Lead
+4. **Si bloqué > 30 min** → message immédiat sur le groupe + ping le Lead
 5. **Toujours utiliser `build_result()`** pour le format de retour (voir `src/interfaces.py`)
 6. **Pas de `print()`** — utiliser `logging` (voir `src/utils/output.py`)
 7. **Pas de secrets dans le code** — tout dans `.env`
 
 ---
 
-## Questions frequentes
+## Questions fréquentes
 
-**Q: Je ne sais pas par ou commencer ?**
-→ Ouvre ton issue (#4, #8 ou #10 selon ton role). Tout est explique dedans avec des exemples de code.
+**Q: Je ne sais pas par où commencer ?**
+→ Ouvre ton issue (#4, #8 ou #10 selon ton rôle). Tout est expliqué dedans avec des exemples de code.
 
 **Q: Mon module a besoin du config_loader mais il n'est pas encore fait ?**
-→ Commence par lire le template (`_template.py`), comprends la structure, prepare ton code. Des que #1 est merge dans master, fais un `git pull origin master` sur ta branche.
+→ Commence par lire le template (`_template.py`), comprends la structure, prépare ton code. Dès que #1 est mergé dans master, fais un `git pull origin master` sur ta branche.
 
 **Q: Comment tester sans les VMs du lab ?**
 → Utilise les mocks (simulations) dans les tests. Les issues #13 et #14 expliquent comment.
 
 **Q: J'ai un conflit de merge ?**
-→ Appelle le Lead. C'est son role de resoudre les conflits (decision d'equipe).
+→ Appelle le Lead. C'est son rôle de résoudre les conflits (décision d'équipe).
 
-**Q: Mon module n'est pas fini a la deadline ?**
-→ Pas de panique. On met un stub "Module non implemente" dans le menu. L'outil reste fonctionnel (decision d'equipe, DECISIONS.md section 6.3).
+**Q: Mon module n'est pas fini à la deadline ?**
+→ Pas de panique. On met un stub "Module non implémenté" dans le menu. L'outil reste fonctionnel (décision d'équipe, DECISIONS.md section 6.3).

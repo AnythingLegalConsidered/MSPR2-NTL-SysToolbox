@@ -1,12 +1,12 @@
 # Guide CI/CD — NTL-SysToolbox
 
-## Comment ca marche
+## Comment ça marche
 
-On utilise **GitHub Actions** pour verifier automatiquement le code a chaque push.
+On utilise **GitHub Actions** pour vérifier automatiquement le code à chaque push.
 
 ### Quand la CI tourne
 
-| Evenement | Branches concernees |
+| Événement | Branches concernées |
 |-----------|-------------------|
 | `git push` | `main`, `master`, `feature/*` |
 | Ouverture d'une PR | vers `main` ou `master` |
@@ -18,20 +18,20 @@ Tu push sur docs/readme         →  CI ne tourne PAS
 Tu ouvres une PR vers main      →  CI tourne
 ```
 
-### Ce que la CI verifie
+### Ce que la CI vérifie
 
-La pipeline lance **2 jobs en parallele** :
+La pipeline lance **2 jobs en parallèle** :
 
 **Job 1 — Lint & Type Check**
-- **Ruff** : verifie le style du code (imports tries, variables inutilisees, etc.)
-- **Mypy** : verifie les types Python (type hints)
+- **Ruff** : vérifie le style du code (imports triés, variables inutilisées, etc.)
+- **Mypy** : vérifie les types Python (type hints)
 
 **Job 2 — Tests**
 - Lance `pytest` sur **3 versions de Python** (3.10, 3.11, 3.12)
-- Genere un rapport de couverture de code
+- Génère un rapport de couverture de code
 - Upload le rapport en artefact sur GitHub
 
-### Ou voir les resultats
+### Où voir les résultats
 
 1. Aller sur la page du repo GitHub
 2. Onglet **Actions** → voir les runs
@@ -44,13 +44,13 @@ La pipeline lance **2 jobs en parallele** :
 ✅ Tests (Python 3.12)      — passed
 ```
 
-Si un check est rouge, cliquer dessus pour voir le detail de l'erreur.
+Si un check est rouge, cliquer dessus pour voir le détail de l'erreur.
 
 ---
 
 ## Commandes locales
 
-Avant de push, tu peux lancer les memes verifications en local :
+Avant de push, tu peux lancer les mêmes vérifications en local :
 
 ```bash
 # Installer les outils de dev (une seule fois)
@@ -66,13 +66,13 @@ make typecheck
 make test
 ```
 
-**Conseil : lance `make lint && make test` avant chaque push.** Ca evite de decouvrir les erreurs sur GitHub.
+**Conseil : lance `make lint && make test` avant chaque push.** Ça évite de découvrir les erreurs sur GitHub.
 
 ---
 
 ## Erreurs courantes et solutions
 
-### Ruff : import non utilise (F401)
+### Ruff : import non utilisé (F401)
 
 ```
 F401 `os` imported but unused
@@ -80,7 +80,7 @@ F401 `os` imported but unused
 
 **Solution :** Supprimer l'import inutile, ou ajouter `# noqa: F401` si c'est voulu (ex: template).
 
-### Ruff : imports mal tries (I001)
+### Ruff : imports mal triés (I001)
 
 ```
 I001 Import block is un-sorted or un-formatted
@@ -94,9 +94,9 @@ I001 Import block is un-sorted or un-formatted
 Cannot find implementation or library stub for module named "xxx"
 ```
 
-**Solution :** Normal pour les libs externes (mysql-connector, paramiko...). On a `ignore_missing_imports = true` dans `pyproject.toml`, donc ca ne devrait pas apparaitre.
+**Solution :** Normal pour les libs externes (mysql-connector, paramiko...). On a `ignore_missing_imports = true` dans `pyproject.toml`, donc ça ne devrait pas apparaître.
 
-### Pytest : test qui echoue
+### Pytest : test qui échoue
 
 ```
 FAILED tests/test_diagnostic.py::test_check_dns - AssertionError
@@ -111,20 +111,20 @@ FAILED tests/test_diagnostic.py::test_check_dns - AssertionError
 ```
 .github/workflows/ci.yml   ← Pipeline principale
 pyproject.toml              ← Config ruff + mypy + pytest
-requirements-dev.txt        ← Dependencies dev (ruff, mypy, pytest-cov)
+requirements-dev.txt        ← Dépendances dev (ruff, mypy, pytest-cov)
 tests/                      ← Dossier des tests
   __init__.py
-  test_interfaces.py        ← Tests du module commun (deja fait)
-  test_diagnostic.py        ← A creer par le dev Diagnostic
-  test_backup.py            ← A creer par le dev Backup
-  test_audit.py             ← A creer par le dev Audit
+  test_interfaces.py        ← Tests du module commun (déjà fait)
+  test_diagnostic.py        ← À créer par le dev Diagnostic
+  test_backup.py            ← À créer par le dev Backup
+  test_audit.py             ← À créer par le dev Audit
 ```
 
 ---
 
-## Ecrire un test pour ton module
+## Écrire un test pour ton module
 
-Chaque dev doit ecrire les tests de son module. Exemple pour le module diagnostic :
+Chaque dev doit écrire les tests de son module. Exemple pour le module diagnostic :
 
 ```python
 # tests/test_diagnostic.py
@@ -142,20 +142,20 @@ def test_check_dns_returns_unknown_on_unreachable():
     assert result["exit_code"] == 3
 ```
 
-**Regles :**
+**Règles :**
 - Un fichier `test_<module>.py` par module
 - Chaque fonction publique doit avoir au moins 1 test OK et 1 test erreur
-- Utiliser `build_result()` dans le module → le test verifie la structure du retour
+- Utiliser `build_result()` dans le module → le test vérifie la structure du retour
 
 ---
 
 ## FAQ
 
-**Q: La CI echoue mais mon code marche en local ?**
-A: Verifier que tu as bien push tous les fichiers. La CI clone le repo depuis zero.
+**Q: La CI échoue mais mon code marche en local ?**
+A: Vérifier que tu as bien push tous les fichiers. La CI clone le repo depuis zéro.
 
 **Q: Comment voir le rapport de couverture ?**
-A: Onglet Actions → cliquer sur le run → section Artifacts → telecharger `coverage-report`.
+A: Onglet Actions → cliquer sur le run → section Artifacts → télécharger `coverage-report`.
 
 **Q: Je peux ignorer un check ruff ?**
 A: Oui avec `# noqa: XXXX` en fin de ligne. Mais c'est mieux de corriger.

@@ -44,11 +44,11 @@ clean:
 # Show help
 help:
 	@echo "Commandes disponibles:"
-	@echo "  make setup        — Creer le venv + installer les deps (Windows)"
-	@echo "  make setup-linux  — Creer le venv + installer les deps (Linux)"
+	@echo "  make setup        — Créer le venv + installer les deps (Windows)"
+	@echo "  make setup-linux  — Créer le venv + installer les deps (Linux)"
 	@echo "  make setup-dev    — Installer les deps de dev (ruff, mypy, pytest-cov)"
 	@echo "  make run          — Lancer le CLI"
 	@echo "  make test         — Lancer les tests avec couverture"
-	@echo "  make lint         — Verifier le code avec ruff"
-	@echo "  make typecheck    — Verifier les types avec mypy"
-	@echo "  make clean        — Nettoyer les fichiers generes"
+	@echo "  make lint         — Vérifier le code avec ruff"
+	@echo "  make typecheck    — Vérifier les types avec mypy"
+	@echo "  make clean        — Nettoyer les fichiers générés"

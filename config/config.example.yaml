@@ -5,7 +5,7 @@
 general:
   log_level: INFO          # DEBUG, INFO, WARNING
   output_dir: ./output
-  timeout: 10              # secondes, timeout par defaut
+  timeout: 10              # secondes, timeout par défaut
 
 targets:
   dc01:
