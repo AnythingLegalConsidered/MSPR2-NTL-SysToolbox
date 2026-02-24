@@ -1,0 +1,39 @@
+#cloud-config
+# NTL-SysToolbox — Cloud-init template for Ubuntu (all versions)
+# Placeholders replaced by gen-cloud-init.sh
+
+hostname: {{HOSTNAME}}
+fqdn: {{HOSTNAME}}.ntl.local
+manage_etc_hosts: true
+
+users:
+  - name: {{USER}}
+    groups: sudo
+    shell: /bin/bash
+    lock_passwd: false
+    plain_text_passwd: "{{PASSWORD}}"
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+# Disable cloud-init network config (Proxmox cloud-init handles it)
+network:
+  config: disabled
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - qemu-guest-agent
+  - curl
+  - wget
+  - vim
+  - net-tools
+
+runcmd:
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+  # Set static DNS if provided
+  - |
+    if [ -n "{{DNS_SERVER}}" ]; then
+      echo "nameserver {{DNS_SERVER}}" > /etc/resolv.conf.tail
+      resolvconf -u 2>/dev/null || true
+    fi

@@ -1,20 +1,19 @@
 #!/bin/bash
 # ==============================================================================
-# NTL-SysToolbox — Setup Lab Proxmox
+# NTL-SysToolbox — Setup Lab Proxmox (18 VMs, data-driven)
 # ==============================================================================
-# Creates the full lab environment on a Proxmox host:
-#   - Network bridge (vmbr10)
-#   - 2 Linux VMs via cloud-init (fully automated)
-#   - 3 Windows VMs (shell creation + ISO attached, manual install required)
+# Reads vms.csv and creates all VMs automatically:
+#   - Linux VMs → cloud-init (100% automated)
+#   - Windows VMs → autounattend.xml ISO (zero-click install)
 #
 # Usage:
 #   bash setup-lab.sh              # uses config.local.env or config.env
-#   bash setup-lab.sh my-config.env # uses a custom config file
+#   bash setup-lab.sh my-config.env
 #
 # Prerequisites:
 #   - Run as root on the Proxmox host
-#   - ISOs downloaded (run download-images.sh first)
-#   - Cloud images downloaded (run download-images.sh first)
+#   - ISOs/cloud images downloaded (run download-images.sh first)
+#   - genisoimage installed (for Windows autounattend ISOs)
 # ==============================================================================
 
 set -euo pipefail
@@ -32,29 +31,31 @@ if [[ -z "$CONFIG_FILE" ]]; then
 fi
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "ERREUR: Fichier de config introuvable: $CONFIG_FILE"
+    echo "ERREUR: Config introuvable: $CONFIG_FILE"
     echo "Copiez config.env vers config.local.env et remplissez vos valeurs."
     exit 1
 fi
 
-echo "=== NTL-SysToolbox — Setup Lab ==="
-echo "Config: $CONFIG_FILE"
 # shellcheck source=config.env
 source "$CONFIG_FILE"
 
-# --- Helper functions ---
-log()  { echo -e "\033[1;32m[OK]\033[0m $*"; }
-warn() { echo -e "\033[1;33m[WARN]\033[0m $*"; }
-err()  { echo -e "\033[1;31m[ERR]\033[0m $*"; }
-step() { echo -e "\n\033[1;36m>>> $*\033[0m"; }
-run_cmd() {
-    if [[ "$VERBOSE" == "yes" ]]; then
-        echo -e "\033[0;90m  \$ $*\033[0m"
-    fi
-    eval "$@"
-}
+# --- Source lib ---
+source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR/lib/create-linux-vm.sh"
+source "$SCRIPT_DIR/lib/create-windows-vm.sh"
 
-# --- Pre-flight checks ---
+# --- Paths ---
+VMS_CSV="$SCRIPT_DIR/vms.csv"
+IMAGES_CONF="$SCRIPT_DIR/images.conf"
+export IMAGES_CONF SCRIPT_DIR
+
+# Derive DNS server from vms.csv (first DC = DC01)
+DNS_SERVER=$(get_dns_server "$VMS_CSV" "$SUBNET")
+export DNS_SERVER
+
+# ==============================================================================
+# PRE-FLIGHT CHECKS
+# ==============================================================================
 step "Pre-flight checks"
 
 if [[ "$(id -u)" -ne 0 ]]; then
@@ -63,28 +64,73 @@ if [[ "$(id -u)" -ne 0 ]]; then
 fi
 
 if ! command -v qm &>/dev/null; then
-    err "qm introuvable. Ce script doit etre execute sur un Proxmox VE."
+    err "qm introuvable. Executez ceci sur un Proxmox VE."
     exit 1
 fi
 
-# Check VM IDs not already in use
-for VMID_VAR in DC01_VMID WMSDB_VMID CLIENT_VMID SRVOLD_VMID SRVLEG_VMID; do
-    VMID="${!VMID_VAR}"
-    if qm status "$VMID" &>/dev/null; then
-        err "VM ID $VMID deja utilisee ! Changez $VMID_VAR dans config.env"
-        exit 1
-    fi
-done
-log "Aucun conflit de VM IDs"
+if [[ ! -f "$VMS_CSV" ]]; then
+    err "vms.csv introuvable: $VMS_CSV"
+    exit 1
+fi
 
-# Check storage exists
+if [[ ! -f "$IMAGES_CONF" ]]; then
+    err "images.conf introuvable: $IMAGES_CONF"
+    exit 1
+fi
+
+# Check storage
 if ! pvesm status | grep -q "^${STORAGE}"; then
-    err "Storage '$STORAGE' introuvable. Verifiez STORAGE dans config.env"
-    echo "Storages disponibles :"
+    err "Storage '$STORAGE' introuvable."
     pvesm status
     exit 1
 fi
 log "Storage '$STORAGE' OK"
+
+# Check for VMID conflicts
+CONFLICTS=0
+check_vmid_conflict() {
+    local vmid="$1" hostname="$2"
+    shift 7
+    if vm_exists "$vmid"; then
+        err "VM ID $vmid ($hostname) deja utilisee !"
+        CONFLICTS=$((CONFLICTS + 1))
+    fi
+}
+parse_vms "$VMS_CSV" check_vmid_conflict
+if [[ $CONFLICTS -gt 0 ]]; then
+    err "$CONFLICTS conflits de VM ID. Modifiez vms.csv ou supprimez les VMs existantes."
+    exit 1
+fi
+log "Aucun conflit de VM IDs"
+
+# Check genisoimage for Windows VMs
+if ! command -v genisoimage &>/dev/null && ! command -v mkisofs &>/dev/null; then
+    warn "genisoimage/mkisofs non installe. Les ISOs autounattend ne pourront pas etre creees."
+    warn "Installez: apt install genisoimage"
+fi
+
+# Count VMs
+TOTAL_LINUX=0
+TOTAL_WINDOWS=0
+count_vms() {
+    local os_key="$3"
+    local vm_type
+    vm_type=$(get_image_type "$os_key" "$IMAGES_CONF")
+    if [[ "$vm_type" == "linux" ]]; then
+        TOTAL_LINUX=$((TOTAL_LINUX + 1))
+    else
+        TOTAL_WINDOWS=$((TOTAL_WINDOWS + 1))
+    fi
+}
+parse_vms "$VMS_CSV" count_vms
+log "VMs a creer: $TOTAL_LINUX Linux + $TOTAL_WINDOWS Windows = $((TOTAL_LINUX + TOTAL_WINDOWS)) total"
+
+echo ""
+echo "=== NTL-SysToolbox — Setup Lab (${TOTAL_LINUX} Linux + ${TOTAL_WINDOWS} Windows) ==="
+echo "Config : $CONFIG_FILE"
+echo "Reseau : ${SUBNET}.0/${CIDR} sur ${BRIDGE}"
+echo "DNS    : $DNS_SERVER (DC01)"
+echo ""
 
 # ==============================================================================
 # PHASE 1 — NETWORK
@@ -92,7 +138,7 @@ log "Storage '$STORAGE' OK"
 step "Phase 1 — Configuration reseau (bridge $BRIDGE)"
 
 if grep -q "iface ${BRIDGE}" /etc/network/interfaces 2>/dev/null; then
-    warn "Bridge $BRIDGE existe deja, on le garde tel quel."
+    warn "Bridge $BRIDGE existe deja, on le garde."
 else
     echo "Creation du bridge $BRIDGE (${GATEWAY}/${CIDR})..."
 
@@ -114,12 +160,11 @@ EOF
 EOF
     fi
 
-    # Activate the bridge now
     run_cmd ifup "${BRIDGE}" 2>/dev/null || ifreload -a
     log "Bridge $BRIDGE cree et actif"
 fi
 
-# Enable IP forwarding if NAT is on
+# IP forwarding
 if [[ "$ENABLE_NAT" == "yes" ]]; then
     if ! sysctl net.ipv4.ip_forward | grep -q "= 1"; then
         echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
@@ -131,255 +176,129 @@ if [[ "$ENABLE_NAT" == "yes" ]]; then
 fi
 
 # ==============================================================================
-# PHASE 2 — LINUX VMs (cloud-init, fully automated)
+# PHASE 2 — CREATE ALL VMs
 # ==============================================================================
-step "Phase 2 — Creation des VMs Linux (cloud-init)"
+step "Phase 2 — Creation des VMs"
 
-CLOUD_INIT_DIR="$SCRIPT_DIR/../cloud-init"
-POST_INSTALL_DIR="$SCRIPT_DIR/../post-install"
+# Work directory for generated files
+mkdir -p "$WORK_DIR"
 
-# --- Helper: create cloud-init Linux VM ---
-create_linux_vm() {
-    local VMID="$1"
-    local NAME="$2"
-    local IP="$3"
-    local CORES="$4"
-    local RAM="$5"
-    local DISK="$6"
-    local CLOUD_IMG="$7"
-    local USERDATA="$8"
+CREATED_LINUX=0
+CREATED_WINDOWS=0
+FAILED=0
 
-    local IMG_PATH="${ISO_PATH}/${CLOUD_IMG}"
+create_vm_from_csv() {
+    local vmid="$1" hostname="$2" os_key="$3" ip_suffix="$4"
+    local cores="$5" ram="$6" disk="$7" post_install="$8"
 
-    if [[ ! -f "$IMG_PATH" ]]; then
-        err "Cloud image introuvable: $IMG_PATH"
-        echo "Lancez d'abord: bash download-images.sh"
-        return 1
-    fi
-
-    echo "  Creation VM $VMID ($NAME)..."
-
-    # Create the VM
-    run_cmd qm create "$VMID" \
-        --name "$NAME" \
-        --cores "$CORES" \
-        --memory "$RAM" \
-        --net0 "virtio,bridge=${BRIDGE}" \
-        --ostype l26 \
-        --scsihw virtio-scsi-single \
-        --agent enabled=1 \
-        --serial0 socket \
-        --vga serial0
-
-    # Import cloud image as disk
-    run_cmd qm importdisk "$VMID" "$IMG_PATH" "$STORAGE" --format qcow2
-    run_cmd qm set "$VMID" --scsi0 "${STORAGE}:vm-${VMID}-disk-0"
-
-    # Resize disk
-    run_cmd qm resize "$VMID" scsi0 "${DISK}G"
-
-    # Add cloud-init drive
-    run_cmd qm set "$VMID" --ide2 "${STORAGE}:cloudinit"
-
-    # Set boot order
-    run_cmd qm set "$VMID" --boot order=scsi0
-
-    # Configure cloud-init basics
-    run_cmd qm set "$VMID" \
-        --ipconfig0 "ip=${IP}/${CIDR},gw=${GATEWAY}" \
-        --nameserver "${GATEWAY}" \
-        --ciuser "$SSH_USER" \
-        --cipassword "$SSH_PASSWORD"
-
-    # Apply custom cloud-init user-data if provided
-    if [[ -n "$USERDATA" && -f "$USERDATA" ]]; then
-        # Proxmox supports custom cloud-init via snippets
-        local SNIPPET_STORAGE
-        SNIPPET_STORAGE=$(pvesm status --content snippets 2>/dev/null | awk 'NR==2{print $1}')
-
-        if [[ -n "$SNIPPET_STORAGE" ]]; then
-            local SNIPPET_PATH
-            SNIPPET_PATH=$(pvesm path "${SNIPPET_STORAGE}:snippets/" 2>/dev/null || echo "")
-
-            if [[ -d "$SNIPPET_PATH" ]]; then
-                cp "$USERDATA" "${SNIPPET_PATH}/${NAME}-user-data.yaml"
-                run_cmd qm set "$VMID" --cicustom "user=${SNIPPET_STORAGE}:snippets/${NAME}-user-data.yaml"
-                log "  Cloud-init custom user-data configure"
-            else
-                warn "  Pas de snippet storage trouve. Cloud-init basique uniquement."
-                warn "  Le script post-install devra etre lance manuellement via SSH."
-            fi
-        else
-            warn "  Pas de snippet storage. Cloud-init basique uniquement."
-        fi
-    fi
-
-    # Start if requested
-    if [[ "$AUTO_START" == "yes" ]]; then
-        run_cmd qm start "$VMID"
-        log "  VM $VMID ($NAME) demarree"
-    fi
-
-    log "VM $VMID ($NAME) creee — IP: $IP"
-}
-
-# --- WMS-DB (Ubuntu 20.04) ---
-create_linux_vm \
-    "$WMSDB_VMID" "$WMSDB_NAME" "$WMSDB_IP" \
-    "$WMSDB_CORES" "$WMSDB_RAM" "$WMSDB_DISK" \
-    "$CLOUD_IMG_2004" \
-    "$CLOUD_INIT_DIR/wmsdb-user-data.yaml"
-
-# --- SRV-LEGACY (Ubuntu 18.04) ---
-create_linux_vm \
-    "$SRVLEG_VMID" "$SRVLEG_NAME" "$SRVLEG_IP" \
-    "$SRVLEG_CORES" "$SRVLEG_RAM" "$SRVLEG_DISK" \
-    "$CLOUD_IMG_1804" \
-    "$CLOUD_INIT_DIR/legacy-user-data.yaml"
-
-# ==============================================================================
-# PHASE 3 — WINDOWS VMs (shell creation + ISO attached)
-# ==============================================================================
-step "Phase 3 — Creation des VMs Windows (install manuelle requise)"
-
-create_windows_vm() {
-    local VMID="$1"
-    local NAME="$2"
-    local IP="$3"
-    local CORES="$4"
-    local RAM="$5"
-    local DISK="$6"
-    local ISO="$7"
-    local OSTYPE="${8:-win11}"
-
-    echo "  Creation VM $VMID ($NAME)..."
-
-    run_cmd qm create "$VMID" \
-        --name "$NAME" \
-        --cores "$CORES" \
-        --memory "$RAM" \
-        --net0 "virtio,bridge=${BRIDGE}" \
-        --ostype "$OSTYPE" \
-        --scsihw virtio-scsi-single \
-        --machine pc-q35-8.1 \
-        --bios ovmf \
-        --efidisk0 "${STORAGE}:1,efitype=4m,pre-enrolled-keys=1" \
-        --tpmstate0 "${STORAGE}:1,version=v2.0" \
-        --agent enabled=1
-
-    # Create system disk
-    run_cmd qm set "$VMID" --scsi0 "${STORAGE}:${DISK},format=qcow2"
-
-    # Attach Windows ISO
-    if [[ -n "$ISO" && -f "${ISO_PATH}/${ISO}" ]]; then
-        run_cmd qm set "$VMID" --cdrom "${ISO_STORAGE}:iso/${ISO}"
-        log "  ISO Windows attachee: $ISO"
-    else
-        warn "  ISO Windows non trouvee: ${ISO:-non definie}"
-        warn "  Attachez l'ISO manuellement dans la GUI Proxmox."
-    fi
-
-    # Attach VirtIO drivers
-    if [[ -f "${ISO_PATH}/${ISO_VIRTIO}" ]]; then
-        run_cmd qm set "$VMID" --ide0 "${ISO_STORAGE}:iso/${ISO_VIRTIO},media=cdrom"
-        log "  VirtIO drivers attaches"
-    else
-        warn "  VirtIO ISO non trouvee. Les drivers ne seront pas disponibles pendant l'install."
-    fi
-
-    # Set boot order (CD first for install, then disk)
-    run_cmd qm set "$VMID" --boot order="cdrom;scsi0"
-
-    log "VM $VMID ($NAME) creee — IP prevue: $IP (a configurer manuellement)"
-}
-
-# --- DC01 (Windows Server 2022) ---
-create_windows_vm \
-    "$DC01_VMID" "$DC01_NAME" "$DC01_IP" \
-    "$DC01_CORES" "$DC01_RAM" "$DC01_DISK" \
-    "$ISO_WIN2022" "win11"
-
-# --- CLIENT-01 (Windows 10/11) ---
-create_windows_vm \
-    "$CLIENT_VMID" "$CLIENT_NAME" "$CLIENT_IP" \
-    "$CLIENT_CORES" "$CLIENT_RAM" "$CLIENT_DISK" \
-    "$ISO_WIN10" "win11"
-
-# --- SRV-OLD (Windows Server 2012 R2) ---
-create_windows_vm \
-    "$SRVOLD_VMID" "$SRVOLD_NAME" "$SRVOLD_IP" \
-    "$SRVOLD_CORES" "$SRVOLD_RAM" "$SRVOLD_DISK" \
-    "$ISO_WIN2012" "win8"
-
-# ==============================================================================
-# PHASE 4 — POST-INSTALL INSTRUCTIONS
-# ==============================================================================
-step "Phase 4 — Etapes manuelles restantes"
-
-echo ""
-echo "========================================================================"
-echo "  VMs LINUX (${WMSDB_NAME}, ${SRVLEG_NAME}) : RIEN A FAIRE"
-echo "  Cloud-init configure tout automatiquement au premier boot."
-echo "  Attendez ~5 min que le setup se termine."
-echo "========================================================================"
-echo ""
-echo "  VMs WINDOWS : INSTALL MANUELLE REQUISE"
-echo "------------------------------------------------------------------------"
-echo ""
-echo "  1. Ouvrir la console noVNC de chaque VM Windows dans la GUI Proxmox"
-echo ""
-echo "  2. ${DC01_NAME} (VM ${DC01_VMID}) — Windows Server 2022 :"
-echo "     a) Installer Windows Server 2022 (Desktop Experience)"
-echo "     b) Installer les VirtIO drivers depuis le lecteur D:\\"
-echo "     c) Configurer IP statique : ${DC01_IP}/${CIDR}, GW ${GATEWAY}, DNS 127.0.0.1"
-echo "     d) Renommer le PC en '${DC01_NAME}'"
-echo "     e) Lancer le script post-install :"
-echo "        > Copier scripts/post-install/setup-dc01.ps1 sur le bureau"
-echo "        > Ouvrir PowerShell en Admin"
-echo "        > Set-ExecutionPolicy Bypass -Scope Process"
-echo "        > .\\setup-dc01.ps1"
-echo ""
-echo "  3. ${CLIENT_NAME} (VM ${CLIENT_VMID}) — Windows 10/11 :"
-echo "     a) Installer Windows 10"
-echo "     b) IP statique : ${CLIENT_IP}/${CIDR}, GW ${GATEWAY}, DNS ${DC01_IP}"
-echo "     c) Lancer scripts/post-install/setup-client01.ps1"
-echo ""
-echo "  4. ${SRVOLD_NAME} (VM ${SRVOLD_VMID}) — Windows Server 2012 R2 :"
-echo "     a) Installer Windows Server 2012 R2"
-echo "     b) IP statique : ${SRVOLD_IP}/${CIDR}, GW ${GATEWAY}"
-echo "     c) C'est tout ! Cette VM existe juste pour etre detectee par nmap."
-echo ""
-echo "========================================================================"
-
-# ==============================================================================
-# PHASE 5 — SNAPSHOTS
-# ==============================================================================
-if [[ "$AUTO_SNAPSHOT" == "yes" ]]; then
-    step "Phase 5 — Snapshots"
+    local vm_type
+    vm_type=$(get_image_type "$os_key" "$IMAGES_CONF")
 
     echo ""
-    echo "Les VMs Linux sont pretes. Snapshot automatique..."
-    for VMID_VAR in WMSDB_VMID SRVLEG_VMID; do
-        VMID="${!VMID_VAR}"
-        # Wait for VM to be running and cloud-init to finish
-        if qm status "$VMID" 2>/dev/null | grep -q "running"; then
-            echo "  Attente cloud-init VM $VMID (max 5 min)..."
-            for i in $(seq 1 30); do
-                if qm guest exec "$VMID" -- test -f /var/lib/cloud/instance/boot-finished 2>/dev/null; then
+    if [[ "$vm_type" == "linux" ]]; then
+        if create_linux_vm "$vmid" "$hostname" "$os_key" "$ip_suffix" \
+                           "$cores" "$ram" "$disk" "$post_install"; then
+            CREATED_LINUX=$((CREATED_LINUX + 1))
+        else
+            err "Echec creation VM $vmid ($hostname)"
+            FAILED=$((FAILED + 1))
+        fi
+    elif [[ "$vm_type" == "windows" ]]; then
+        if create_windows_vm "$vmid" "$hostname" "$os_key" "$ip_suffix" \
+                             "$cores" "$ram" "$disk" "$post_install"; then
+            CREATED_WINDOWS=$((CREATED_WINDOWS + 1))
+        else
+            err "Echec creation VM $vmid ($hostname)"
+            FAILED=$((FAILED + 1))
+        fi
+    else
+        err "Type inconnu pour $os_key: $vm_type"
+        FAILED=$((FAILED + 1))
+    fi
+}
+
+parse_vms "$VMS_CSV" create_vm_from_csv
+
+# ==============================================================================
+# PHASE 3 — SNAPSHOTS
+# ==============================================================================
+if [[ "$AUTO_SNAPSHOT" == "yes" ]]; then
+    step "Phase 3 — Snapshots (Linux VMs)"
+
+    snapshot_linux_vm() {
+        local vmid="$1" hostname="$2" os_key="$3"
+        shift 7
+        local vm_type
+        vm_type=$(get_image_type "$os_key" "$IMAGES_CONF")
+        [[ "$vm_type" != "linux" ]] && return 0
+
+        if qm status "$vmid" 2>/dev/null | grep -q "running"; then
+            echo "  Attente cloud-init VM $vmid ($hostname)..."
+            for _ in $(seq 1 30); do
+                if qm guest exec "$vmid" -- test -f /var/lib/cloud/instance/boot-finished 2>/dev/null; then
                     break
                 fi
                 sleep 10
             done
-            run_cmd qm snapshot "$VMID" clean-state --description "Lab NTL — config initiale"
-            log "Snapshot 'clean-state' cree pour VM $VMID"
+            run_cmd qm snapshot "$vmid" clean-state --description "NTL Lab — config initiale"
+            log "  Snapshot 'clean-state' pour VM $vmid ($hostname)"
         fi
-    done
+    }
+
+    parse_vms "$VMS_CSV" snapshot_linux_vm
 
     echo ""
-    echo "Pour les VMs Windows, creez les snapshots APRES l'install manuelle :"
-    echo "  qm snapshot ${DC01_VMID} clean-state --description 'AD/DNS configure'"
-    echo "  qm snapshot ${CLIENT_VMID} clean-state --description 'Client pret'"
-    echo "  qm snapshot ${SRVOLD_VMID} clean-state --description 'Legacy installe'"
+    echo "Pour les VMs Windows, les snapshots seront crees apres l'install automatique."
+    echo "Comptez ~30-60 min pour l'install Windows + post-install."
+    echo "Verifiez ensuite avec: qm list | grep -E '10[0-9]{2}'"
+fi
+
+# ==============================================================================
+# PHASE 4 — VERIFICATION
+# ==============================================================================
+step "Phase 4 — Verification"
+
+echo ""
+echo "Tests de connectivite (apres quelques minutes de boot)..."
+echo ""
+
+verify_vm() {
+    local vmid="$1" hostname="$2" os_key="$3" ip_suffix="$4"
+    shift 4; shift 3; shift
+    local ip="${SUBNET}.${ip_suffix}"
+    if ping -c 1 -W 2 "$ip" &>/dev/null; then
+        log "  $hostname ($ip) — reachable"
+    else
+        warn "  $hostname ($ip) — not yet reachable (may still be booting)"
+    fi
+}
+
+parse_vms "$VMS_CSV" verify_vm
+
+# Quick service checks
+echo ""
+echo "Tests de services (si les VMs sont pretes)..."
+# AD/LDAP on DC01
+DC01_IP="${SUBNET}.10"
+if timeout 2 bash -c "echo > /dev/tcp/${DC01_IP}/389" 2>/dev/null; then
+    log "  LDAP (389) on DC01 ($DC01_IP) — OK"
+else
+    warn "  LDAP (389) on DC01 ($DC01_IP) — not ready"
+fi
+
+# MySQL on WMS-DB
+WMSDB_IP="${SUBNET}.21"
+if timeout 2 bash -c "echo > /dev/tcp/${WMSDB_IP}/3306" 2>/dev/null; then
+    log "  MySQL (3306) on WMS-DB ($WMSDB_IP) — OK"
+else
+    warn "  MySQL (3306) on WMS-DB ($WMSDB_IP) — not ready"
+fi
+
+# SSH on WMS-DB
+if timeout 2 bash -c "echo > /dev/tcp/${WMSDB_IP}/22" 2>/dev/null; then
+    log "  SSH (22) on WMS-DB ($WMSDB_IP) — OK"
+else
+    warn "  SSH (22) on WMS-DB ($WMSDB_IP) — not ready"
 fi
 
 # ==============================================================================
@@ -388,14 +307,33 @@ fi
 step "Resume du lab"
 
 echo ""
-printf "%-10s %-15s %-20s %-18s %s\n" "VM ID" "Nom" "OS" "IP" "Status"
-printf "%-10s %-15s %-20s %-18s %s\n" "-----" "---" "--" "--" "------"
-printf "%-10s %-15s %-20s %-18s %s\n" "$DC01_VMID" "$DC01_NAME" "Win Server 2022" "$DC01_IP" "Install manuelle"
-printf "%-10s %-15s %-20s %-18s %s\n" "$WMSDB_VMID" "$WMSDB_NAME" "Ubuntu 20.04" "$WMSDB_IP" "Auto (cloud-init)"
-printf "%-10s %-15s %-20s %-18s %s\n" "$CLIENT_VMID" "$CLIENT_NAME" "Windows 10" "$CLIENT_IP" "Install manuelle"
-printf "%-10s %-15s %-20s %-18s %s\n" "$SRVOLD_VMID" "$SRVOLD_NAME" "Win Server 2012 R2" "$SRVOLD_IP" "Install manuelle"
-printf "%-10s %-15s %-20s %-18s %s\n" "$SRVLEG_VMID" "$SRVLEG_NAME" "Ubuntu 18.04" "$SRVLEG_IP" "Auto (cloud-init)"
+printf "%-7s %-15s %-22s %-18s %s\n" "VMID" "Hostname" "OS" "IP" "Type"
+printf "%-7s %-15s %-22s %-18s %s\n" "-----" "--------" "--" "--" "----"
+
+print_summary() {
+    local vmid="$1" hostname="$2" os_key="$3" ip_suffix="$4"
+    shift 4; shift 3; shift
+    local ip="${SUBNET}.${ip_suffix}"
+    local vm_type
+    vm_type=$(get_image_type "$os_key" "$IMAGES_CONF")
+    local status="cloud-init"
+    [[ "$vm_type" == "windows" ]] && status="autounattend"
+    printf "%-7s %-15s %-22s %-18s %s\n" "$vmid" "$hostname" "$os_key" "$ip" "$status"
+}
+
+parse_vms "$VMS_CSV" print_summary
+
 echo ""
-echo "Reseau : ${SUBNET}.0/${CIDR} sur bridge ${BRIDGE}"
+echo "Reseau  : ${SUBNET}.0/${CIDR} sur bridge ${BRIDGE}"
+echo "Gateway : ${GATEWAY}"
+echo "DNS     : ${DNS_SERVER}"
+echo "NAT     : ${ENABLE_NAT} (via ${NAT_INTERFACE})"
+echo ""
+echo "Crees   : $CREATED_LINUX Linux + $CREATED_WINDOWS Windows"
+[[ $FAILED -gt 0 ]] && err "Echecs  : $FAILED"
+echo ""
+echo "Credentials Linux  : ${LINUX_USER} / ${LINUX_PASSWORD}"
+echo "Credentials Windows: Administrator / ${WINDOWS_ADMIN_PASSWORD}"
+echo "AD Domain          : ${AD_DOMAIN}"
 echo ""
 echo "=== Setup termine ==="

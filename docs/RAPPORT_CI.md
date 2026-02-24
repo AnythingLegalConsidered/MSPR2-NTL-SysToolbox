@@ -104,7 +104,7 @@ La pipeline comprend **deux jobs qui s'exécutent en parallèle** :
 | Checkout | `actions/checkout@v4` | Clone le repository |
 | Setup Python | `actions/setup-python@v5` | Installe Python (matrice 3.10/3.11/3.12) |
 | Install deps | `pip install -r requirements-dev.txt` | Installe les dépendances |
-| Tests | `pytest tests/ -v --cov=src --cov-report=xml` | Exécute les tests avec couverture |
+| Tests | `pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing` | Exécute les tests avec couverture |
 | Artefact | `actions/upload-artifact@v4` | Upload le rapport de couverture |
 
 ### 3.3 Stratégie de matrice
@@ -158,6 +158,7 @@ select = ["E", "F", "W", "I"]    # erreurs, pyflakes, warnings, imports
 [tool.mypy]
 python_version = "3.10"
 ignore_missing_imports = true
+check_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

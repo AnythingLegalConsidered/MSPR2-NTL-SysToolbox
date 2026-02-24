@@ -1,0 +1,110 @@
+{
+  "Windows Server 2022": {
+    "eol_date": "2031-10-14",
+    "eol_extended": "2031-10-14",
+    "vendor": "Microsoft",
+    "category": "server"
+  },
+  "Windows Server 2019": {
+    "eol_date": "2029-01-09",
+    "eol_extended": "2029-01-09",
+    "vendor": "Microsoft",
+    "category": "server"
+  },
+  "Windows Server 2016": {
+    "eol_date": "2027-01-12",
+    "eol_extended": "2027-01-12",
+    "vendor": "Microsoft",
+    "category": "server"
+  },
+  "Windows Server 2012 R2": {
+    "eol_date": "2023-10-10",
+    "eol_extended": "2026-10-13",
+    "vendor": "Microsoft",
+    "category": "server"
+  },
+  "Windows Server 2012": {
+    "eol_date": "2023-10-10",
+    "eol_extended": "2026-10-13",
+    "vendor": "Microsoft",
+    "category": "server"
+  },
+  "Windows Server 2008 R2": {
+    "eol_date": "2020-01-14",
+    "eol_extended": "2023-01-10",
+    "vendor": "Microsoft",
+    "category": "server"
+  },
+  "Windows 11": {
+    "eol_date": "2027-10-14",
+    "eol_extended": null,
+    "vendor": "Microsoft",
+    "category": "desktop"
+  },
+  "Windows 10": {
+    "eol_date": "2025-10-14",
+    "eol_extended": "2028-10-14",
+    "vendor": "Microsoft",
+    "category": "desktop"
+  },
+  "Windows 7": {
+    "eol_date": "2020-01-14",
+    "eol_extended": "2023-01-10",
+    "vendor": "Microsoft",
+    "category": "desktop"
+  },
+  "Ubuntu 24.04 LTS": {
+    "eol_date": "2029-04-01",
+    "eol_extended": "2034-04-01",
+    "vendor": "Canonical",
+    "category": "server"
+  },
+  "Ubuntu 22.04 LTS": {
+    "eol_date": "2027-04-01",
+    "eol_extended": "2032-04-01",
+    "vendor": "Canonical",
+    "category": "server"
+  },
+  "Ubuntu 20.04 LTS": {
+    "eol_date": "2025-04-02",
+    "eol_extended": "2030-04-02",
+    "vendor": "Canonical",
+    "category": "server"
+  },
+  "Ubuntu 18.04 LTS": {
+    "eol_date": "2023-04-01",
+    "eol_extended": "2028-04-01",
+    "vendor": "Canonical",
+    "category": "server"
+  },
+  "Ubuntu 16.04 LTS": {
+    "eol_date": "2021-04-01",
+    "eol_extended": "2026-04-01",
+    "vendor": "Canonical",
+    "category": "server"
+  },
+  "Debian 12": {
+    "eol_date": "2028-06-01",
+    "eol_extended": null,
+    "vendor": "Debian",
+    "category": "server"
+  },
+  "Debian 11": {
+    "eol_date": "2026-06-01",
+    "eol_extended": null,
+    "vendor": "Debian",
+    "category": "server"
+  },
+  "Debian 10": {
+    "eol_date": "2024-06-30",
+    "eol_extended": null,
+    "vendor": "Debian",
+    "category": "server"
+  },
+  "CentOS 7": {
+    "eol_date": "2024-06-30",
+    "eol_extended": null,
+    "vendor": "Red Hat",
+    "category": "server"
+  }
+}
