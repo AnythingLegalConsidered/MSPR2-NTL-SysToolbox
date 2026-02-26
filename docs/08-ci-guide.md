@@ -1,6 +1,6 @@
 # Guide CI/CD — NTL-SysToolbox
 
-> Pour les justifications techniques et comparatifs d'outils, voir le [Rapport technique CI](RAPPORT_CI.md).
+> Pour les justifications techniques et comparatifs d'outils, voir le [Rapport technique CI](09-ci-report.md).
 
 ## Comment ça marche
 

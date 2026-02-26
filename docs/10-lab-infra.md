@@ -1,6 +1,6 @@
 # Infrastructure Lab — Proxmox
 
-> Dossier : `scripts/proxmox/`, `scripts/post-install/`
+> Dossier : `infra/proxmox/`, `infra/post-install/`
 > Rôle : Créer automatiquement le lab NordTransit (18 VMs) sur un serveur Proxmox.
 
 ## Vue d'ensemble
@@ -45,7 +45,7 @@ Domaine : ntl.local
 
 ## Ce que fait chaque script
 
-### Scripts Proxmox (`scripts/proxmox/`)
+### Scripts Proxmox (`infra/proxmox/`)
 
 | Script | Rôle |
 |--------|------|
@@ -57,7 +57,7 @@ Domaine : ntl.local
 | `setup-lab.sh` | Crée tout le lab (VMs + réseau + snapshots) |
 | `teardown-lab.sh` | Détruit tout le lab (avec confirmation) |
 
-### Scripts post-install (`scripts/post-install/`)
+### Scripts post-install (`infra/post-install/`)
 
 | Script | Machine | Ce qu'il fait |
 |--------|---------|---------------|

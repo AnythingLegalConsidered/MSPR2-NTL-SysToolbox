@@ -101,7 +101,7 @@ La pipeline GitHub Actions s'exécute automatiquement sur les branches `main`, `
 - **Type check** — Mypy (cohérence des types)
 - **Tests** — Pytest sur Python 3.10, 3.11, 3.12 avec rapport de couverture
 
-Voir [docs/GUIDE_CI.md](docs/GUIDE_CI.md) pour le guide d'utilisation et [docs/RAPPORT_CI.md](docs/RAPPORT_CI.md) pour le rapport technique.
+Voir [docs/08-ci-guide.md](docs/08-ci-guide.md) pour le guide d'utilisation et [docs/09-ci-report.md](docs/09-ci-report.md) pour le rapport technique.
 
 ## Infrastructure de lab
 
@@ -115,7 +115,7 @@ Le lab de développement est déployé sur Proxmox avec les VMs suivantes :
 | SRV-LEGACY | Ubuntu 18.04 | Serveur legacy (tests EOL) | 192.168.10.18 |
 | CLIENT-01 | Windows 10 | Poste d'exécution de l'outil | 192.168.10.50 |
 
-Scripts de déploiement dans [`scripts/proxmox/`](scripts/proxmox/).
+Scripts de déploiement dans [`infra/proxmox/`](infra/proxmox/).
 
 ## Stack technique
 
@@ -136,18 +136,25 @@ Scripts de déploiement dans [`scripts/proxmox/`](scripts/proxmox/).
 
 ## Par où commencer
 
+Voir [PROJECT_MAP.md](PROJECT_MAP.md) pour une vue d'ensemble en 5 minutes.
+
 | Vous êtes... | Lisez |
 |---------------|-------|
-| **Développeur, prêt à coder** | [_specs/GUIDE.md](_specs/GUIDE.md) — **tout ce qu'il faut** |
+| **Nouveau, première fois** | [docs/01-getting-started.md](docs/01-getting-started.md) — installation + setup |
+| **Développeur, prêt à coder** | [docs/02-team-guide.md](docs/02-team-guide.md) — ton module, ton workflow |
 | Besoin de détails techniques | [_specs/PLAN_COMPLET.md](_specs/PLAN_COMPLET.md) — référence complète |
-| Aide-mémoire pendant le dev | [_specs/AIDE_MEMOIRE.md](_specs/AIDE_MEMOIRE.md) — 1 page, l'essentiel |
+| Aide-mémoire pendant le dev | [docs/cheatsheet.md](docs/cheatsheet.md) — 1 page, l'essentiel |
 
 ## Documentation
 
+Toute la doc est dans [docs/](docs/) avec un [index numéroté](docs/00-index.md).
+
 | Document | Emplacement |
 |----------|-------------|
-| **Guide équipe (lire en premier)** | [_specs/GUIDE.md](_specs/GUIDE.md) |
+| **Démarrage (lire en premier)** | [docs/01-getting-started.md](docs/01-getting-started.md) |
+| Guide équipe | [docs/02-team-guide.md](docs/02-team-guide.md) |
+| Logique des modules | [docs/03-module-logic.md](docs/03-module-logic.md) |
 | Plan projet complet | [_specs/PLAN_COMPLET.md](_specs/PLAN_COMPLET.md) |
 | Décisions d'équipe (archive) | [_specs/DECISIONS_PRISES.md](_specs/DECISIONS_PRISES.md) |
-| Guide CI | [docs/GUIDE_CI.md](docs/GUIDE_CI.md) |
-| Rapport technique CI | [docs/RAPPORT_CI.md](docs/RAPPORT_CI.md) |
+| Guide CI | [docs/08-ci-guide.md](docs/08-ci-guide.md) |
+| Rapport technique CI | [docs/09-ci-report.md](docs/09-ci-report.md) |

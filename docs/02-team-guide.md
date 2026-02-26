@@ -1,7 +1,7 @@
 # Guide Equipe — NTL-SysToolbox
 
-> **C'est le seul document que tu dois lire pour coder ton module.**
-> Tout ce dont tu as besoin est ici. Pas besoin d'aller chercher ailleurs.
+> **C'est le document de reference pour coder ton module.**
+> Setup deja fait ? Commence ici. Sinon, va d'abord lire [01-getting-started.md](01-getting-started.md).
 
 ---
 
@@ -35,88 +35,6 @@ Utilisateur                    Ton code                    Resultat
 
 ---
 
-## Se connecter a GitHub (une seule fois)
-
-Le repo est prive. Tu dois d'abord te connecter a ton compte GitHub sinon tu auras une erreur "access denied".
-
-### Option A — En ligne de commande (Git Bash / terminal)
-
-1. Ouvre un terminal et tape :
-
-```bash
-gh auth login
-```
-
-2. Choisis **GitHub.com**, puis **HTTPS**, puis **Login with a web browser**
-3. Ca ouvre ton navigateur — connecte-toi avec ton compte GitHub
-4. C'est bon, tu es connecte
-
-> **Tu n'as pas `gh` ?** Installe-le : https://cli.github.com/
-> Sinon, Git te demandera ton login/mot de passe au moment du `git clone`. Dans ce cas le mot de passe est un **Personal Access Token** (pas ton mot de passe GitHub). Pour en creer un : GitHub > Settings > Developer settings > Personal access tokens > Generate new token (cocher `repo`).
-
-### Option B — Avec VSCode
-
-1. Ouvre VSCode
-2. Clique sur l'icone de profil en bas a gauche (ou en haut a droite)
-3. Clique **Sign in with GitHub**
-4. Ca ouvre ton navigateur — connecte-toi avec ton compte GitHub
-5. Autorise VSCode quand il demande
-6. C'est bon, VSCode peut acceder aux repos prives
-
----
-
-## Cloner le repo (une seule fois)
-
-### En ligne de commande
-
-```bash
-git clone https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox.git
-cd MSPR2-NTL-SysToolbox
-```
-
-### Avec VSCode
-
-1. Ouvre VSCode
-2. `Ctrl+Shift+P` → tape **Git: Clone**
-3. Colle l'URL : `https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox.git`
-4. Choisis un dossier ou sauvegarder le projet
-5. Clique **Open** quand VSCode propose d'ouvrir le repo
-
-### Installer les dependances
-
-```bash
-pip install -r requirements.txt
-```
-
-C'est fait. Tu ne refais plus jamais ces etapes.
-
----
-
-## Le workflow Git — 5 commandes
-
-Tu n'as besoin que de ces 5 commandes. Rien d'autre.
-
-**Avant de coder (une seule fois au debut de chaque session) :**
-
-```bash
-git checkout feature/module-XXX      # remplace XXX par ton module
-git pull origin master                # recupere les derniers changements
-```
-
-**Apres avoir code :**
-
-```bash
-git add src/modules/XXX.py            # remplace XXX par ton fichier
-git commit -m "feat: add nom_fonction()"
-git push origin feature/module-XXX
-```
-
-**Ensuite, previens Ianis sur WhatsApp.** Il s'occupe du merge. C'est tout.
-
-Pas de Pull Request. Pas d'issue. Pas de review formelle. Tu codes, tu push, Ianis merge.
-
----
-
 ## Les 4 roles
 
 | Qui | Branche | Fichier | Role |
@@ -130,69 +48,59 @@ Pas de Pull Request. Pas d'issue. Pas de review formelle. Tu codes, tu push, Ian
 
 ---
 
-## Pour commencer — Copier le template
-
-Avant de coder quoi que ce soit, copie le fichier template :
-
-```bash
-cp src/modules/_template.py src/modules/diagnostic.py   # Blaise
-cp src/modules/_template.py src/modules/backup.py       # Ojvind
-cp src/modules/_template.py src/modules/audit.py        # Zaid
-```
-
-Puis ouvre ton fichier et change la ligne :
-```python
-MODULE_NAME = "[nom]"
-```
-Par le nom de ton module (`"diagnostic"`, `"backup"` ou `"audit"`).
-
----
-
 ## Le pattern de base — Comment ecrire une fonction
 
-Voici un exemple COMPLET d'une fonction qui marche. Lis-le, comprends-le, puis adapte-le.
+Chaque fonction que tu codes doit suivre ce pattern. **Copie-le et adapte-le** :
 
 ```python
-import socket
-from src.interfaces import build_result, EXIT_OK, EXIT_UNKNOWN
+def ma_fonction(config: dict, target: str) -> dict[str, Any]:
+    """Description de ce que fait la fonction."""
+    logger.info("Running ma_fonction on %s", target)
+    timeout = config.get("general", {}).get("timeout", 10)
 
-def check_mysql(config: dict, target: str) -> dict:
-    """Verifie que MySQL repond sur le serveur cible."""
     try:
-        # 1. On essaie de se connecter au port 3306 (MySQL)
-        sock = socket.socket()
-        sock.settimeout(10)
-        sock.connect((target, 3306))
-        sock.close()
+        # --- Ta logique ici ---
+        result_data = {"mon_test": True}
 
-        # 2. Ca a marche -> on renvoie OK
         return build_result(
-            module="diagnostic",
-            function="check_mysql",
+            module=MODULE_NAME,
+            function="ma_fonction",
             status="OK",
             exit_code=EXIT_OK,
             target=target,
-            details={"port_3306": True},
-            message=f"MySQL repond sur {target}",
+            details=result_data,
+            message=f"Tout est OK sur {target}",
         )
 
-    except Exception as e:
-        # 3. Ca n'a pas marche -> on renvoie UNKNOWN (pas de crash !)
+    except ConnectionError as e:
         return build_result(
-            module="diagnostic",
-            function="check_mysql",
+            module=MODULE_NAME,
+            function="ma_fonction",
             status="UNKNOWN",
             exit_code=EXIT_UNKNOWN,
             target=target,
             details={"error": str(e)},
-            message=f"Impossible de joindre MySQL sur {target}: {e}",
+            message=f"Impossible de joindre {target}: {e}",
+        )
+
+    except Exception as e:
+        logger.error("ma_fonction failed: %s", e)
+        return build_result(
+            module=MODULE_NAME,
+            function="ma_fonction",
+            status="CRITICAL",
+            exit_code=EXIT_CRITICAL,
+            target=target,
+            details={"error": str(e)},
+            message=f"Erreur sur {target}: {e}",
         )
 ```
 
-**Les 3 regles a retenir :**
-1. **Toujours utiliser `build_result()`** pour renvoyer le resultat
-2. **Toujours mettre un `try/except`** — ta fonction ne doit JAMAIS planter
-3. **Les status possibles :** `"OK"`, `"WARNING"`, `"CRITICAL"`, `"UNKNOWN"`
+**Les regles d'or :**
+1. **Toujours** retourner `build_result()` — jamais un dict fait a la main
+2. **Jamais** de crash non gere — tout est dans un `try/except`
+3. **Jamais** de mot de passe en dur — tout vient de `config`
+4. **Toujours** fermer les connexions (MySQL, SSH) dans un `finally`
 
 ---
 
@@ -211,22 +119,14 @@ def check_mysql(config: dict, target: str) -> dict:
 | `check_ubuntu()` | Recupere les metriques du serveur Linux via SSH (CPU, RAM, disque) |
 | `run()` | Recoit l'action choisie par l'utilisateur et appelle la bonne fonction (deja dans le template) |
 
-### Decisions a prendre ensemble avant de coder
-
-On verra ca en session de travail. Les questions qu'on tranchera :
-
-- Comment tester le port LDAP 389 ? (indice : `check_port()` existe deja dans `src/utils/network.py`)
-- Comment se connecter en SSH pour executer des commandes sur Ubuntu ? (on utilisera `paramiko`)
-- Quelles commandes Linux donnent le CPU, la RAM, le disque ? (`free -m`, `df -h`, `uptime`)
-- Comment recuperer les metriques Windows a distance ?
-- Quand est-ce qu'on met WARNING vs OK ? (regle : > 80% = WARNING)
-
 ### Par ou commencer
 
-1. Copie le template (voir section au-dessus)
+1. Copie le template (voir [01-getting-started.md](01-getting-started.md#6-creer-ta-branche-et-commencer))
 2. Commence par `check_ad_dns()` — c'est la plus simple
 3. Utilise `check_port()` de `src/utils/network.py` (deja code !) pour tester le port 389
 4. Utilise `resolve_dns()` de `src/utils/network.py` (deja code !) pour tester le DNS
+
+> Logique detaillee de chaque fonction : [03-module-logic.md](03-module-logic.md#module-1--diagnostic)
 
 ---
 
@@ -243,20 +143,14 @@ On verra ca en session de travail. Les questions qu'on tranchera :
 | `export_table_csv()` | Se connecte a MySQL, fait un `SELECT *` sur une table, et ecrit le resultat dans un fichier CSV |
 | `run()` | Recoit l'action et appelle la bonne fonction |
 
-### Decisions a prendre ensemble avant de coder
-
-- C'est quoi `mysqldump` ? (un programme qui exporte toute une base de donnees en fichier texte)
-- Comment executer une commande sur un serveur distant ? (SSH avec `paramiko`)
-- Comment calculer le SHA256 d'un fichier en Python ? (`hashlib`)
-- Comment ecrire un fichier CSV en Python ? (module `csv` integre)
-- Ou sauvegarder les fichiers ? (`output/backups/`)
-
 ### Par ou commencer
 
 1. Copie le template
 2. Commence par `export_table_csv()` — c'est la plus simple
 3. Tu te connectes a MySQL, tu fais un SELECT, tu ecris dans un fichier CSV
 4. Puis attaque `backup_database()` — plus complexe car il faut SSH + mysqldump
+
+> Logique detaillee de chaque fonction : [03-module-logic.md](03-module-logic.md#module-2--backup)
 
 ---
 
@@ -275,21 +169,14 @@ On verra ca en session de travail. Les questions qu'on tranchera :
 | `generate_report()` | Genere un rapport colore qui trie les machines par urgence (expire > bientot > ok) |
 | `run()` | Recoit l'action et appelle la bonne fonction |
 
-### Decisions a prendre ensemble avant de coder
-
-- Comment utiliser `python-nmap` pour scanner ? (on verra ensemble la syntaxe)
-- Comment lire un fichier JSON en Python ? (`json.load()`)
-- Comment lire un fichier CSV ? (`csv.DictReader`)
-- Comment croiser deux sources de donnees ? (boucle + dictionnaire)
-- Comment afficher un tableau colore ? (la lib `rich` — `Table()`)
-- Qu'est-ce que "bientot expire" ? (regle : dans moins de 6 mois)
-
 ### Par ou commencer
 
 1. Copie le template
 2. Commence par `list_os_eol()` — c'est la plus simple (juste lire un fichier JSON)
 3. Puis `audit_from_csv()` — lire un CSV et croiser avec le JSON
 4. `scan_network()` et `generate_report()` sont plus complexes, on les fera ensemble
+
+> Logique detaillee de chaque fonction : [03-module-logic.md](03-module-logic.md#module-3--audit)
 
 ---
 
@@ -320,26 +207,22 @@ La config est chargee depuis `config/config.yaml`. Elle arrive dans ta fonction 
 
 ```python
 def check_mysql(config: dict, target: str) -> dict:
-    # Lire le port MySQL depuis la config
     port = config.get("mysql", {}).get("port", 3306)
     user = config.get("mysql", {}).get("user", "root")
     password = config.get("mysql", {}).get("password", "")
-
-    # Lire le timeout general
     timeout = config.get("general", {}).get("timeout", 10)
 ```
 
-Les secrets (mots de passe) sont dans le fichier `.env` et sont automatiquement injectes dans la config. Tu n'as rien a faire pour ca.
+Les secrets (mots de passe) sont dans le fichier `.env` et sont automatiquement injectes dans la config.
 
 ---
 
-## Si tu es bloque
+## Tester ta fonction en isolation
 
-1. **Regle des 30 minutes :** si tu bloques plus de 30 min, envoie un message sur WhatsApp
-2. **L'erreur la plus courante :** oublier le `try/except` — ta fonction doit TOUJOURS renvoyer un `build_result()`, meme quand ca plante
-3. **Pour tester ton module tout seul :** cree un petit fichier `test_rapide.py` a la racine :
+Tu n'as PAS besoin de lancer tout le menu pour tester. Cree un fichier temporaire `test_manual.py` a la racine :
 
 ```python
+"""Test rapide — a supprimer avant le merge."""
 from src.config_loader import load_config
 from src.modules.diagnostic import check_ad_dns  # adapte a ta fonction
 
@@ -348,22 +231,55 @@ result = check_ad_dns(config, "192.168.10.10")
 print(result)
 ```
 
-4. **Si ton `import` ne marche pas :** lance Python depuis la racine du projet :
+Lance le test :
 ```bash
-cd MSPR2-NTL-SysToolbox
-python -m src.modules.diagnostic    # ou ton module
+python test_manual.py
 ```
+
+> **IMPORTANT** : supprime `test_manual.py` avant de prevenir Ianis ! Ne le commit pas.
 
 ---
 
-## Conventions de commit
+## Workflow Git — pas a pas
 
-| Prefixe | Quand | Exemple |
-|---------|-------|---------|
-| `feat:` | Nouvelle fonction | `feat: add check_ad_dns()` |
-| `fix:` | Correction de bug | `fix: handle timeout in backup` |
-| `test:` | Ajout de test | `test: add diagnostic tests` |
+### Sauvegarder ton travail (a faire souvent !)
+
+```bash
+git status                                        # Voir ce qui a change
+git add src/modules/diagnostic.py                 # Ton fichier uniquement
+git commit -m "feat: add check_ad_dns()"          # Message clair
+git push -u origin feature/module-diagnostic      # Premier push
+git push                                          # Push suivants
+```
+
+### Convention des messages de commit
+
+| Prefix | Quand l'utiliser | Exemple |
+|--------|-----------------|---------|
+| `feat:` | Nouvelle fonctionnalite | `feat: add check_ad_dns()` |
+| `fix:` | Correction de bug | `fix: handle MySQL timeout` |
 | `docs:` | Documentation | `docs: update README` |
+| `test:` | Tests | `test: add test for check_mysql` |
+
+### Quand ton module est pret
+
+1. Push ta branche (`git push`)
+2. Previens Ianis sur WhatsApp : "Ma branche est prete"
+3. Ianis s'occupe du merge. Tu n'as rien d'autre a faire.
+
+---
+
+## Checklist avant de prevenir Ianis
+
+- [ ] Toutes mes fonctions sont codees
+- [ ] Mon module ne crash jamais (teste avec des mauvaises valeurs aussi)
+- [ ] Toutes mes fonctions retournent `build_result()`
+- [ ] La connexion MySQL/SSH est toujours fermee (meme en cas d'erreur)
+- [ ] Aucun mot de passe n'est ecrit en dur dans le code
+- [ ] `make lint` passe sans erreur
+- [ ] `make test` passe sans erreur
+- [ ] J'ai supprime `test_manual.py`
+- [ ] Mes commits suivent la convention (`feat:`, `fix:`, etc.)
 
 ---
 
@@ -378,4 +294,7 @@ Etape 5 : Documentation + slides
 Etape 6 : Soutenance
 ```
 
-On en est a l'etape 1. On ne code pas encore. On discute d'abord.
+---
+
+*Reference detaillee par fonction : [03-module-logic.md](03-module-logic.md)*
+*Aide-memoire rapide : [cheatsheet.md](cheatsheet.md)*
