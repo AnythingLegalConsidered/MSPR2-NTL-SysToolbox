@@ -7,32 +7,68 @@
 
 ## 1. Prerequis a installer
 
-Avant de toucher au code, tu dois avoir ces outils sur ton PC :
+Avant de toucher au code, tu dois avoir ces outils sur ton PC.
 
-### Python 3.10+
+> **Astuce Windows** : utilise `winget` (gestionnaire de paquets integre a Windows 10/11) pour tout installer d'un coup depuis PowerShell ou cmd.
 
-- **Windows** : Telecharge depuis [python.org](https://www.python.org/downloads/). **COCHE la case "Add Python to PATH"** pendant l'installation.
-- **Linux** : `sudo apt install python3 python3-venv python3-pip`
+### Installation rapide (Windows, via winget)
 
-Verifie que c'est installe :
 ```bash
-python --version
-# Doit afficher Python 3.10.x ou plus
+winget install Python.Python.3.12
+winget install Git.Git
+winget install GitHub.cli
+winget install GnuWin32.Make
+winget install Microsoft.VisualStudioCode
 ```
+
+> **Ferme et reouvre ton terminal** apres les installations pour que les commandes soient reconnues.
+
+### Installation rapide (Linux)
+
+```bash
+sudo apt install python3 python3-venv python3-pip git gh make nmap
+```
+
+### Verification
+
+Verifie que tout est installe :
+```bash
+python --version     # Python 3.10+ (Linux: python3)
+git --version        # Git 2.x+
+gh --version         # GitHub CLI 2.x+
+make --version       # GNU Make 4.x+
+pip --version        # pip 22+ (installe automatiquement avec Python)
+```
+
+### Details par outil
+
+#### Python 3.10+
+
+- **Windows** : `winget install Python.Python.3.12`. **COCHE la case "Add Python to PATH"** pendant l'installation. `pip` est inclus automatiquement.
+- **Linux** : `sudo apt install python3 python3-venv python3-pip`
 
 > Sur Linux, la commande est peut-etre `python3` au lieu de `python`.
 
-### Git
+#### Git
 
-- **Windows** : Telecharge [Git for Windows](https://git-scm.com/download/win). Installe avec les options par defaut. Ca installe aussi **Git Bash** (un terminal que tu utiliseras).
+- **Windows** : `winget install Git.Git`. Ca installe aussi **Git Bash** (un terminal que tu utiliseras).
 - **Linux** : `sudo apt install git`
 
-Verifie :
-```bash
-git --version
-```
+#### GitHub CLI (gh)
 
-### nmap (uniquement si tu travailles sur le module Audit)
+Necessaire pour s'authentifier sur GitHub depuis le terminal (`gh auth login`).
+
+- **Windows** : `winget install GitHub.cli`
+- **Linux** : `sudo apt install gh` (ou voir [cli.github.com](https://cli.github.com/))
+
+#### Make
+
+Necessaire pour utiliser les commandes `make setup`, `make test`, etc. du projet.
+
+- **Windows** : `winget install GnuWin32.Make`
+- **Linux** : `sudo apt install make` (generalement deja installe)
+
+#### nmap (uniquement si tu travailles sur le module Audit)
 
 - **Windows** : Telecharge depuis [nmap.org](https://nmap.org/download.html) et installe.
 - **Linux** : `sudo apt install nmap`
@@ -42,9 +78,9 @@ Verifie :
 nmap --version
 ```
 
-### Editeur de code
+#### Editeur de code
 
-On recommande **VS Code** : [code.visualstudio.com](https://code.visualstudio.com/).
+On recommande **VS Code** : `winget install Microsoft.VisualStudioCode` (ou [code.visualstudio.com](https://code.visualstudio.com/)).
 Extensions utiles : Python (Microsoft), GitLens.
 
 ---

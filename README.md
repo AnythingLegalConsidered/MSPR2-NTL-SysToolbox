@@ -43,6 +43,18 @@ Les sorties sont horodatées en JSON avec des codes de retour exploitables en su
 | `2` | CRITICAL | Service down, backup échoué |
 | `3` | UNKNOWN | Cible injoignable, timeout |
 
+## Prérequis
+
+```bash
+# Windows (PowerShell ou cmd)
+winget install Python.Python.3.12 Git.Git GitHub.cli GnuWin32.Make
+
+# Linux (Debian/Ubuntu)
+sudo apt install python3 python3-venv python3-pip git gh make
+```
+
+> Fermer et rouvrir le terminal après installation. `pip` est inclus avec Python.
+
 ## Quick Start
 
 ```bash

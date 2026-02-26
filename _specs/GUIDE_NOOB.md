@@ -17,11 +17,17 @@ Avant de commencer, un petit QCM rapide :
 
 ## Etape 1 — Installer les logiciels (oui, AVANT de coder, incroyable)
 
-| Logiciel | Lien | Explication pour les... debutants |
-|----------|------|----------------------------------|
-| **Python** | https://www.python.org/downloads/ | Le langage qu'on utilise. Non, on peut pas faire le projet en Scratch. J'ai deja demande. |
-| **Git** | https://git-scm.com/downloads | Le truc qui fait que quand tu supprimes tout par accident a 3h du mat', c'est pas grave. En theorie. |
-| **VSCode** | https://code.visualstudio.com/ | L'editeur de code. Si tu codes sur Notepad, on est pas amis. Si tu codes sur Word, on est pas de la meme espece. |
+| Logiciel | Installation | Explication pour les... debutants |
+|----------|-------------|----------------------------------|
+| **Python** | `winget install Python.Python.3.12` | Le langage qu'on utilise. Non, on peut pas faire le projet en Scratch. J'ai deja demande. |
+| **Git** | `winget install Git.Git` | Le truc qui fait que quand tu supprimes tout par accident a 3h du mat', c'est pas grave. En theorie. |
+| **GitHub CLI** | `winget install GitHub.cli` | Ca te permet de te connecter a GitHub depuis le terminal. Sans ca, `gh auth login` ca fait rien du tout. |
+| **Make** | `winget install GnuWin32.Make` | L'outil qui fait que tu tapes `make setup` au lieu de 14 commandes. Si tu l'installes pas, le reste du guide sert a rien. |
+| **VSCode** | `winget install Microsoft.VisualStudioCode` | L'editeur de code. Si tu codes sur Notepad, on est pas amis. Si tu codes sur Word, on est pas de la meme espece. |
+
+> **C'est quoi `winget` ?** C'est le gestionnaire de paquets de Windows. Ouvre un terminal (PowerShell ou cmd), tape la commande, et ca installe tout seul. Si `winget` est pas reconnu, t'es probablement sur Windows 7, et la faut qu'on parle serieusement de ta vie.
+>
+> **pip**, le gestionnaire de paquets Python, s'installe automatiquement avec Python. Si t'arrives a casser ca, c'est un talent.
 
 ### Le piege de l'installation Python
 
@@ -54,7 +60,7 @@ gh auth login
 
 Tu choisis GitHub.com, HTTPS, "Login with a web browser". Ca ouvre ton navigateur. Tu te connectes. Tu autorises. C'est exactement la meme chose qu'au-dessus mais en moins joli et en plus lent. Mais au moins tu te sens comme dans Matrix.
 
-> Pas de `gh` ? → https://cli.github.com/
+> Pas de `gh` ? → `winget install GitHub.cli` et reessaie.
 > Pas de navigateur ? → T'es sur quoi la, une Nintendo DS ?
 
 ---
@@ -148,6 +154,8 @@ Ensuite, message WhatsApp a Ianis : "C'est push". Pas besoin d'un roman. Pas bes
 |-------------|--------------|---------------|
 | `access denied` | T'as pas fait l'etape 2. T'as SAUTE une etape. Dans un guide de 7 etapes. | Retourne a l'etape 2. Lentement. |
 | `pip not found` | La fameuse case. LA CASE. | Reinstalle Python + coche la case. Tatoue-toi "PATH" sur le bras si ca peut aider. |
+| `make: command not found` | T'as pas installe `make`. On l'a dit a l'etape 1. | `winget install GnuWin32.Make`, ferme et reouvre ton terminal. |
+| `gh: command not found` | Pareil, t'as pas installe GitHub CLI. | `winget install GitHub.cli`. Tu veux qu'on te tienne la main aussi ? |
 | `ModuleNotFoundError` | T'as pas fait `pip install`. Tu voulais que les modules s'installent par la pensee ? | `pip install -r requirements.txt` |
 | `not a git repository` | T'es perdu dans ton propre PC. | `cd MSPR2-NTL-SysToolbox` et reflechis a ta vie. |
 | `everything up to date` apres un push | T'as oublie de `git add` et `git commit`. T'as push du VIDE. Comme ton regard en ce moment. | Fais le `git add` et `git commit` d'abord. |
