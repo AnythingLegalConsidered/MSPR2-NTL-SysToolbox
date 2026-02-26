@@ -1,13 +1,9 @@
 # Workflow NTL-SysToolbox — Guide linéaire
 
-> Ce document se lit **de haut en bas**, étape par étape.
-> Chaque étape a des prérequis et une définition de "fini".
-> Cochez les cases au fur et à mesure.
+> **VERSION SIMPLIFIEE DISPONIBLE :** Pour coder ton module, lis directement [GUIDE.md](GUIDE.md).
+> Ce document ci-dessous est la reference detaillee du planning. Tu n'as pas besoin de le lire pour coder.
 >
-> **Temps total prévu : 19h | Marge : quasi nulle**
-> **Priorité absolue : code fonctionnel > documentation > slides**
->
-> **Voir aussi :** [PLAN_PROJET.md](PLAN_PROJET.md) pour les détails techniques | [QUICKREF.md](QUICKREF.md) pendant le dev | [GUIDE_EQUIPE.md](GUIDE_EQUIPE.md) pour les issues GitHub
+> **Temps total prévu : 19h | Priorité : code fonctionnel > documentation > slides**
 
 ---
 
@@ -15,8 +11,8 @@
 
 **Qui :** Tous (4 personnes)
 **Quand :** Début du projet, avant toute ligne de code
-**Prérequis :** Avoir lu [PLAN_PROJET.md](PLAN_PROJET.md) en diagonale (sections 1 et 2)
-**Document support :** `_specs/DECISIONS.md`
+**Prérequis :** Avoir lu [PLAN_COMPLET.md](PLAN_COMPLET.md) en diagonale (sections 1 et 2)
+**Document support :** `_specs/DECISIONS_PRISES.md`
 
 ### Déroulement
 
@@ -32,7 +28,7 @@
    - Thème 6.1 : Date du merge collectif, date du code freeze
    - Thème 7.1 : Répartition docs (noter les noms, on y reviendra en étape 7)
    - Thème 7.3 : Répartition soutenance (idem)
-5. [ ] Remplir le **tableau récapitulatif** en bas de DECISIONS.md
+5. [ ] Remplir le **tableau récapitulatif** en bas de DECISIONS_PRISES.md
 6. [ ] Commit : `docs: decisions equipe validees`
 
 **Fini quand :** Toutes les colonnes "Décision" sont remplies. Chacun connaît son rôle et ses fichiers.
@@ -43,7 +39,7 @@
 
 **Qui :** Réparti selon les décisions (Thème 5.1)
 **Prérequis :** Étape 0 terminée
-**Référence :** [PLAN_PROJET.md](PLAN_PROJET.md) sections 1.1 à 1.3
+**Référence :** [PLAN_COMPLET.md](PLAN_COMPLET.md) sections 1.1 à 1.3
 
 ### Track A — DC01 (personne désignée)
 
@@ -58,7 +54,7 @@
 - [ ] Installer Ubuntu 20.04 (VM)
 - [ ] IP statique : 192.168.10.21
 - [ ] Installer MySQL Server
-- [ ] Créer la base `wms` + tables (script SQL dans [PLAN_PROJET.md](PLAN_PROJET.md) section 1)
+- [ ] Créer la base `wms` + tables (script SQL dans [PLAN_COMPLET.md](PLAN_COMPLET.md) section 1)
 - [ ] Créer un utilisateur MySQL dédié (pas root !)
 - [ ] Activer SSH
 
@@ -77,7 +73,7 @@
 
 **Qui :** Tous
 **Prérequis :** Étape 1 terminée
-**Référence :** `DECISIONS.md` section 5.2 (checklist)
+**Référence :** `DECISIONS_PRISES.md` section 5.2 (checklist)
 
 Parcourir la checklist ensemble :
 
@@ -96,7 +92,7 @@ Parcourir la checklist ensemble :
 
 **Qui :** Chacun sur sa branche
 **Prérequis :** Étape 2 terminée + lab fonctionnel
-**Référence :** [PLAN_PROJET.md](PLAN_PROJET.md) section 2 (fiches par personne), `_specs/QUICKREF.md`
+**Référence :** [PLAN_COMPLET.md](PLAN_COMPLET.md) section 2 (fiches par personne), `_specs/AIDE_MEMOIRE.md`
 
 ### Règles communes
 
@@ -114,7 +110,7 @@ Parcourir la checklist ensemble :
 - [ ] Tester le menu avec le module template (dry run)
 - [ ] Être disponible pour débloquer les autres
 
-### Track Diagnostic (Personne B)
+### Track Diagnostic (Blaise WANDA NKONG)
 
 - [ ] `check_ad_dns()` : LDAP port 389 + DNS résolution via `dnspython`
 - [ ] `check_mysql()` : connexion + `SHOW DATABASES` + `SHOW STATUS`
@@ -123,7 +119,7 @@ Parcourir la checklist ensemble :
 - [ ] `run()` : dispatcher vers les 4 fonctions selon kwargs
 - [ ] Tester chaque fonction individuellement sur le lab
 
-### Track Backup (Personne C)
+### Track Backup (Ojvind LANTSIGBLE)
 
 - [ ] `backup_database()` : `mysqldump` via subprocess, fichier nommé
 - [ ] SHA256 automatique après dump
@@ -131,7 +127,7 @@ Parcourir la checklist ensemble :
 - [ ] `run()` : dispatcher vers les fonctions
 - [ ] Tester sur le lab : vérifier fichiers dans `output/backups/`
 
-### Track Audit (Personne D)
+### Track Audit (Zaid ABOUYAALA)
 
 - [ ] Créer `data/eol_database.json` avec les dates EOL connues
 - [ ] Créer `data/sample_inventory.csv` avec l'inventaire NTL
@@ -149,31 +145,29 @@ Parcourir la checklist ensemble :
 
 **Qui :** Chaque dev sur sa branche
 **Prérequis :** Son module est codé (étape 3 terminée pour soi)
-**Référence :** `DECISIONS.md` section 6.2 (checklist pré-merge par module)
+**Référence :** `DECISIONS_PRISES.md` section 6.2 (checklist pré-merge par module)
 
-- [ ] Parcourir la checklist de **son module** dans `DECISIONS.md` section 6.2
 - [ ] Toutes les fonctions retournent le format JSON commun
 - [ ] Gestion d'erreur : timeout/host down → UNKNOWN, pas de crash
 - [ ] Fichiers écrits dans le bon dossier (`output/logs`, `backups`, `reports`)
 - [ ] Commit final : `feat: module <nom> ready for merge`
-- [ ] Ouvrir une **PR vers main**
+- [ ] Push sur ta branche + prevenir Ianis sur WhatsApp
 
-**Fini quand :** PR ouverte, tous les tests du module passent sur le lab.
+**Fini quand :** Branche pushee, Ianis prevenu, tests du module passent sur le lab.
 
 ---
 
 ## Étape 5 — Intégration / merge (~1h30)
 
-**Qui :** Lead + tous en support
-**Prérequis :** Toutes les PRs ouvertes (étape 4)
-**Référence :** `DECISIONS.md` section 6.1
+**Qui :** Lead (Ianis) + tous en support
+**Prérequis :** Toutes les branches pushees (étape 4)
 
-### Ordre de merge (décidé en étape 0)
+### Ordre de merge (Ianis s'en charge)
 
-1. [ ] Merge PR `feature/cli-menu` (Lead)
-2. [ ] Merge PR `feature/module-diagnostic`
-3. [ ] Merge PR `feature/module-backup`
-4. [ ] Merge PR `feature/module-audit`
+1. [ ] Merge `feature/cli-menu` (Lead)
+2. [ ] Merge `feature/module-diagnostic`
+3. [ ] Merge `feature/module-backup`
+4. [ ] Merge `feature/module-audit`
 
 ### Après chaque merge
 
@@ -194,7 +188,7 @@ Parcourir la checklist ensemble :
 
 **Qui :** Tous ensemble
 **Prérequis :** Étape 5 terminée
-**Référence :** `DECISIONS.md` section 6.2 (checklist "Intégration")
+**Référence :** `DECISIONS_PRISES.md` section 6.2 (checklist "Intégration")
 
 - [ ] Menu CLI affiche les 3 modules
 - [ ] Module 1 : diagnostic DC01 → JSON OK
@@ -209,8 +203,7 @@ Parcourir la checklist ensemble :
 
 ### Si un bug est trouvé
 
-- Créer une branche `fix/<description>`
-- Corriger, PR, merge rapide
+- Ianis corrige directement sur master ou sur la branche concernee
 - Re-tester
 
 **Fini quand :** Toute la checklist est verte. Commit : `chore: e2e validation passed`
@@ -245,8 +238,8 @@ Parcourir la checklist ensemble :
 **Qui :** Tous
 **Prérequis :** Étape 7 terminée
 
-- [ ] Créer les slides (répartition Thème 7.3 de `DECISIONS.md`)
-- [ ] Préparer le script de démo (voir `DECISIONS.md` section 7.2)
+- [ ] Créer les slides (répartition Thème 7.3 de `DECISIONS_PRISES.md`)
+- [ ] Préparer le script de démo (voir `DECISIONS_PRISES.md` section 7.2)
 - [ ] Vérifier que le lab est UP
 - [ ] Préparer un **backup de la démo** : screenshots ou vidéo au cas où le lab plante
 - [ ] Tag `v1.0` sur main : `git tag -a v1.0 -m "Release soutenance"`
@@ -295,4 +288,4 @@ Parcourir la checklist ensemble :
 
 ---
 
-*Voir `DECISIONS.md` pour les choix techniques | [PLAN_PROJET.md](PLAN_PROJET.md) pour les détails complets | `QUICKREF.md` pour l'aide-mémoire dev*
+*Pour coder ton module → [GUIDE.md](GUIDE.md)*

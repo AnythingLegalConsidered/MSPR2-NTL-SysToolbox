@@ -1,13 +1,11 @@
 # Décisions d'équipe — NTL-SysToolbox
 
-> **Objectif :** Parcourir ce document ensemble en ~50 min.
-> Chaque question a une **recommandation pré-remplie**. L'équipe **valide** ou **surcharge**.
-> Le scribe remplit la colonne "Décision". À la fin, chacun repart avec ses specs.
->
-> **Date de la réunion :** 26 février 2026
-> **Présents :** Ianis PUICHAUD, Zaid ABOUYAALA, Ojvind LANTSIGBLE, Blaise WANDA NKONG
->
-> **Voir aussi :** [PLAN_PROJET.md](PLAN_PROJET.md) pour le plan complet | [WORKFLOW.md](WORKFLOW.md) pour le déroulement | [QUICKREF.md](QUICKREF.md) pour l'aide-mémoire dev
+> **STATUT : TERMINE** — Toutes les decisions ont ete prises le 26/02/2026.
+> Ce document est une archive de reference. Il n'y a plus rien a remplir.
+> **Pour coder ton module** → [GUIDE.md](GUIDE.md)
+
+Date de la réunion : 26 février 2026
+Présents : Ianis PUICHAUD, Zaid ABOUYAALA, Ojvind LANTSIGBLE, Blaise WANDA NKONG
 
 ---
 
@@ -31,9 +29,9 @@
 | Rôle | Responsabilité | Qui ? |
 |------|----------------|-------|
 | **Lead / Intégrateur** | `main.py`, menu CLI, config_loader, utils, merge final | **Ianis PUICHAUD** |
-| **Dev Diagnostic** | `modules/diagnostic.py` — checks AD, DNS, MySQL, serveurs | À attribuer (Zaid / Ojvind / Blaise) |
-| **Dev Backup** | `modules/backup.py` — dump MySQL, export CSV, SHA256 | À attribuer (Zaid / Ojvind / Blaise) |
-| **Dev Audit** | `modules/audit.py` — scan nmap, EOL, rapport | À attribuer (Zaid / Ojvind / Blaise) |
+| **Dev Diagnostic** | `modules/diagnostic.py` — checks AD, DNS, MySQL, serveurs | **Blaise WANDA NKONG** |
+| **Dev Backup** | `modules/backup.py` — dump MySQL, export CSV, SHA256 | **Ojvind LANTSIGBLE** |
+| **Dev Audit** | `modules/audit.py` — scan nmap, EOL, rapport | **Zaid ABOUYAALA** |
 
 > **Règle :** Le Lead est le seul à toucher `main.py` et `src/utils/`. Les devs ne modifient QUE leur module.
 
@@ -203,7 +201,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 
 ## Thème 4 — Modules
 
-### 4.1 Module Diagnostic (Personne B)
+### 4.1 Module Diagnostic (Blaise WANDA NKONG)
 
 | Question | Options | Recommandé | Décision |
 |----------|---------|------------|----------|
@@ -215,7 +213,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 | Lib LDAP sur Windows ? | A) `ldap3` (pure Python, cross-platform) — B) `python-ldap` (compile C) | **A) `ldap3`** — pure Python, zéro galère d'install | A) `ldap3` |
 | Timeout SSH pour les checks ? | A) 10s — B) 15s — C) Valeur du config.yaml | **C) Valeur du config.yaml** — cohérent avec le timeout global | C) Valeur config.yaml |
 
-### 4.2 Module Backup (Personne C)
+### 4.2 Module Backup (Ojvind LANTSIGBLE)
 
 | Question | Options | Recommandé | Décision |
 |----------|---------|------------|----------|
@@ -227,7 +225,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 | Vérification SHA256 : quand ? | A) Après chaque backup automatiquement — B) Fonction séparée à appeler | **A) Auto** — zéro oubli, intégrité garantie | A) Auto |
 | Où stocker les backups ? | A) `output/backups/` — B) Configurable dans le YAML | **A) `output/backups/`** — cohérent avec la structure du repo | A) `output/backups/` |
 
-### 4.3 Module Audit (Personne D)
+### 4.3 Module Audit (Zaid ABOUYAALA)
 
 | Question | Options | Recommandé | Décision |
 |----------|---------|------------|----------|
@@ -265,7 +263,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 - [ ] Ubuntu 20.04 installé, IP 192.168.10.21
 - [ ] MySQL Server installé et démarré
 - [ ] Base `wms` créée avec tables `shipments` + `inventory`
-- [ ] Données de démo insérées (voir script SQL dans PLAN_PROJET.md)
+- [ ] Données de démo insérées (voir script SQL dans PLAN_COMPLET.md)
 - [ ] SSH actif, connexion possible depuis le client
 - [ ] Utilisateur MySQL créé pour l'outil (pas root !)
 
@@ -277,7 +275,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 
 | Donnée | Responsable | Fichier |
 |--------|-------------|---------|
-| Base MySQL `wms` (shipments + inventory) | Personne qui monte WMS-DB | Script SQL dans PLAN_PROJET.md |
+| Base MySQL `wms` (shipments + inventory) | Ianis PUICHAUD | Script SQL dans PLAN_COMPLET.md |
 | Base EOL (`eol_database.json`) | Dev Audit | `data/eol_database.json` |
 | Inventaire CSV (`sample_inventory.csv`) | Dev Audit | `data/sample_inventory.csv` |
 
@@ -348,7 +346,7 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 |----------|-------------|----------|
 | Document technique et fonctionnel | **Ianis PUICHAUD** | 31 mars 2026 |
 | Manuel d'installation et d'utilisation | **Ianis PUICHAUD** | 31 mars 2026 |
-| Rapport d'exécution de l'audit | **Dev Audit** (à confirmer) | 31 mars 2026 |
+| Rapport d'exécution de l'audit | **Zaid ABOUYAALA** | 31 mars 2026 |
 | Résumé en anglais | **Ianis PUICHAUD** | 31 mars 2026 |
 | Slides de soutenance | Tous — **Ianis** pilote | 4 avril 2026 |
 
@@ -371,8 +369,8 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 |-------|---------|-------|
 | 0-3 min | Contexte NTL, problématique | **Ianis** (présentation globale) |
 | 3-7 min | Architecture technique | **Ianis** (Lead) |
-| 7-11 min | Démo Modules 1 + 2 | **Dev Diagnostic** + **Dev Backup** (chacun son script) |
-| 11-15 min | Démo Module 3 | **Dev Audit** (son script) |
+| 7-11 min | Démo Modules 1 + 2 | **Blaise WANDA NKONG** + **Ojvind LANTSIGBLE** (chacun son script) |
+| 11-15 min | Démo Module 3 | **Zaid ABOUYAALA** (son script) |
 | 15-18 min | Difficultés et solutions | **Chacun** sur son module |
 | 18-20 min | Perspectives + conclusion | **Ianis** |
 
@@ -407,4 +405,4 @@ NTL_GENERAL_LOG_LEVEL=DEBUG
 ---
 
 *Document généré le 2026-02-24 — à parcourir en réunion d'équipe avant de coder.*
-*Voir `WORKFLOW.md` pour le déroulement étape par étape du projet.*
+*Voir `ETAPES.md` pour le déroulement étape par étape du projet.*
