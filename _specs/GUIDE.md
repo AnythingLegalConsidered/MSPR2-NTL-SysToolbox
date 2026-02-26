@@ -35,20 +35,60 @@ Utilisateur                    Ton code                    Resultat
 
 ---
 
+## Se connecter a GitHub (une seule fois)
+
+Le repo est prive. Tu dois d'abord te connecter a ton compte GitHub sinon tu auras une erreur "access denied".
+
+### Option A — En ligne de commande (Git Bash / terminal)
+
+1. Ouvre un terminal et tape :
+
+```bash
+gh auth login
+```
+
+2. Choisis **GitHub.com**, puis **HTTPS**, puis **Login with a web browser**
+3. Ca ouvre ton navigateur — connecte-toi avec ton compte GitHub
+4. C'est bon, tu es connecte
+
+> **Tu n'as pas `gh` ?** Installe-le : https://cli.github.com/
+> Sinon, Git te demandera ton login/mot de passe au moment du `git clone`. Dans ce cas le mot de passe est un **Personal Access Token** (pas ton mot de passe GitHub). Pour en creer un : GitHub > Settings > Developer settings > Personal access tokens > Generate new token (cocher `repo`).
+
+### Option B — Avec VSCode
+
+1. Ouvre VSCode
+2. Clique sur l'icone de profil en bas a gauche (ou en haut a droite)
+3. Clique **Sign in with GitHub**
+4. Ca ouvre ton navigateur — connecte-toi avec ton compte GitHub
+5. Autorise VSCode quand il demande
+6. C'est bon, VSCode peut acceder aux repos prives
+
+---
+
 ## Cloner le repo (une seule fois)
+
+### En ligne de commande
 
 ```bash
 git clone https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox.git
 cd MSPR2-NTL-SysToolbox
 ```
 
-Ensuite installe les dependances :
+### Avec VSCode
+
+1. Ouvre VSCode
+2. `Ctrl+Shift+P` → tape **Git: Clone**
+3. Colle l'URL : `https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox.git`
+4. Choisis un dossier ou sauvegarder le projet
+5. Clique **Open** quand VSCode propose d'ouvrir le repo
+
+### Installer les dependances
 
 ```bash
 pip install -r requirements.txt
 ```
 
-C'est fait. Tu ne refais plus jamais cette etape.
+C'est fait. Tu ne refais plus jamais ces etapes.
 
 ---
 
