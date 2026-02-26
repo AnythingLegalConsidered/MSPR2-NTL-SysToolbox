@@ -32,7 +32,7 @@ src/
     └── network.py       # Helpers réseau (ping, port check)
 ```
 
-> Les fichiers marqués ✔ sont implémentés. Les autres seront créés au fur et à mesure du développement (voir les [issues GitHub](https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox/issues)).
+> Les fichiers marqués ✔ sont implémentés. Les autres seront créés au fur et à mesure du développement.
 
 Les sorties sont horodatées en JSON avec des codes de retour exploitables en supervision :
 
@@ -126,15 +126,16 @@ Scripts de déploiement dans [`scripts/proxmox/`](scripts/proxmox/).
 
 | Vous êtes... | Lisez |
 |---------------|-------|
-| Nouveau sur le projet | [_specs/PLAN_PROJET.md](_specs/PLAN_PROJET.md) — vue d'ensemble complète |
-| Développeur prêt à coder | [_specs/QUICKREF.md](_specs/QUICKREF.md) — aide-mémoire à garder ouvert |
-| Besoin du workflow étape par étape | [_specs/WORKFLOW.md](_specs/WORKFLOW.md) — checklist chronologique |
+| **Développeur, prêt à coder** | [_specs/GUIDE.md](_specs/GUIDE.md) — **tout ce qu'il faut** |
+| Besoin de détails techniques | [_specs/PLAN_COMPLET.md](_specs/PLAN_COMPLET.md) — référence complète |
+| Aide-mémoire pendant le dev | [_specs/AIDE_MEMOIRE.md](_specs/AIDE_MEMOIRE.md) — 1 page, l'essentiel |
 
 ## Documentation
 
 | Document | Emplacement |
 |----------|-------------|
-| Plan projet complet | [_specs/PLAN_PROJET.md](_specs/PLAN_PROJET.md) |
-| Décisions d'équipe | [_specs/DECISIONS.md](_specs/DECISIONS.md) |
-| Guide CI pour l'équipe | [docs/GUIDE_CI.md](docs/GUIDE_CI.md) |
+| **Guide équipe (lire en premier)** | [_specs/GUIDE.md](_specs/GUIDE.md) |
+| Plan projet complet | [_specs/PLAN_COMPLET.md](_specs/PLAN_COMPLET.md) |
+| Décisions d'équipe (archive) | [_specs/DECISIONS_PRISES.md](_specs/DECISIONS_PRISES.md) |
+| Guide CI | [docs/GUIDE_CI.md](docs/GUIDE_CI.md) |
 | Rapport technique CI | [docs/RAPPORT_CI.md](docs/RAPPORT_CI.md) |

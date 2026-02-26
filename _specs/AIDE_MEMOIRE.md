@@ -1,6 +1,7 @@
 # Quick Reference — NTL-SysToolbox
 
 > Aide-mémoire à garder ouvert pendant le dev. 1 page, l'essentiel.
+> Pour le guide complet → [GUIDE.md](GUIDE.md)
 
 ## Mon module
 
@@ -19,15 +20,12 @@
 git checkout -b feature/module-<nom>
 
 # Workflow quotidien
+git pull origin master                      # Recuperer les changements
 git add src/modules/<nom>.py
 git commit -m "feat: add check_xxx()"
 git push -u origin feature/module-<nom>    # Premier push
 git push                                    # Push suivants
-
-# Avant de merger
-git checkout main && git pull
-git checkout feature/module-<nom>
-git rebase main                             # Mettre à jour ma branche
+# Puis prevenir Ianis sur WhatsApp
 ```
 
 ---
@@ -85,10 +83,6 @@ make clean          # Nettoyer les artefacts générés
 
 ## Si je suis bloqué
 
-1. Relire [PLAN_PROJET.md](PLAN_PROJET.md) section de mon module
+1. Relire [GUIDE.md](GUIDE.md) — section de mon module
 2. Relire `src/modules/_template.py` pour le pattern
-3. **Si > 30 min** : message sur le canal + ping le Lead
-
----
-
-*Voir [WORKFLOW.md](WORKFLOW.md) pour les étapes | [DECISIONS.md](DECISIONS.md) pour les choix validés*
+3. **Si > 30 min** : message sur WhatsApp + ping Ianis
