@@ -35,6 +35,23 @@ Utilisateur                    Ton code                    Resultat
 
 ---
 
+## Cloner le repo (une seule fois)
+
+```bash
+git clone https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox.git
+cd MSPR2-NTL-SysToolbox
+```
+
+Ensuite installe les dependances :
+
+```bash
+pip install -r requirements.txt
+```
+
+C'est fait. Tu ne refais plus jamais cette etape.
+
+---
+
 ## Le workflow Git — 5 commandes
 
 Tu n'as besoin que de ces 5 commandes. Rien d'autre.
