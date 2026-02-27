@@ -1,0 +1,11 @@
+CRITICAL_PORTS = [53, 88, 389]
+IMPORTANT_PORTS = [445, 3268]
+
+SERVICES = ["NTDS", "DNS", "Netlogon"]
+
+EXIT_CODES = {
+    "OK": 0,
+    "WARNING": 1,
+    "CRITICAL": 2,
+    "UNKNOWN": 3
+}
