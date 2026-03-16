@@ -1,7 +1,7 @@
 # Quick Reference — NTL-SysToolbox
 
 > Aide-mémoire à garder ouvert pendant le dev. 1 page, l'essentiel.
-> Pour le guide complet → [GUIDE.md](GUIDE.md)
+> Pour le guide complet → [02-team-guide.md](02-team-guide.md)
 
 ## Mon module
 
@@ -83,6 +83,6 @@ make clean          # Nettoyer les artefacts générés
 
 ## Si je suis bloqué
 
-1. Relire [GUIDE.md](GUIDE.md) — section de mon module
+1. Relire [02-team-guide.md](02-team-guide.md) — section de mon module
 2. Relire `src/modules/_template.py` pour le pattern
 3. **Si > 30 min** : message sur WhatsApp + ping Ianis

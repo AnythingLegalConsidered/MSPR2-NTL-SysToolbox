@@ -2,7 +2,7 @@
 
 > **STATUT : TERMINE** — Toutes les decisions ont ete prises le 26/02/2026.
 > Ce document est une archive de reference. Il n'y a plus rien a remplir.
-> **Pour coder ton module** → [GUIDE.md](GUIDE.md)
+> **Pour coder ton module** → [docs/02-team-guide.md](../docs/02-team-guide.md)
 
 Date de la réunion : 26 février 2026
 Présents : Ianis PUICHAUD, Zaid ABOUYAALA, Ojvind LANTSIGBLE, Blaise WANDA NKONG

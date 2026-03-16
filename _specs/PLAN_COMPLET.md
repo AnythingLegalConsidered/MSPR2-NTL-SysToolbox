@@ -6,8 +6,8 @@
 **Équipe :** 4 personnes | **Durée :** 19h | **Soutenance :** 20 min + 30 min questions
 **Contraintes :** Cross-platform (Win + Linux), sorties JSON horodatées, codes retour, menu interactif.
 
-> **Pour coder ton module** → [GUIDE.md](GUIDE.md)
-> **Etapes du projet :** [ETAPES.md](ETAPES.md) | **Decisions prises :** [DECISIONS_PRISES.md](DECISIONS_PRISES.md) | **Aide-memoire :** [AIDE_MEMOIRE.md](AIDE_MEMOIRE.md)
+> **Pour coder ton module** → [docs/02-team-guide.md](../docs/02-team-guide.md)
+> **Etapes du projet :** [ETAPES.md](ETAPES.md) | **Decisions prises :** [DECISIONS_PRISES.md](DECISIONS_PRISES.md) | **Aide-memoire :** [docs/cheatsheet.md](../docs/cheatsheet.md)
 
 ---
 

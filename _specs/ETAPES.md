@@ -1,6 +1,6 @@
 # Workflow NTL-SysToolbox — Guide linéaire
 
-> **VERSION SIMPLIFIEE DISPONIBLE :** Pour coder ton module, lis directement [GUIDE.md](GUIDE.md).
+> **VERSION SIMPLIFIEE DISPONIBLE :** Pour coder ton module, lis directement [docs/02-team-guide.md](../docs/02-team-guide.md).
 > Ce document ci-dessous est la reference detaillee du planning. Tu n'as pas besoin de le lire pour coder.
 >
 > **Temps total prévu : 19h | Priorité : code fonctionnel > documentation > slides**
@@ -92,7 +92,7 @@ Parcourir la checklist ensemble :
 
 **Qui :** Chacun sur sa branche
 **Prérequis :** Étape 2 terminée + lab fonctionnel
-**Référence :** [PLAN_COMPLET.md](PLAN_COMPLET.md) section 2 (fiches par personne), `_specs/AIDE_MEMOIRE.md`
+**Référence :** [PLAN_COMPLET.md](PLAN_COMPLET.md) section 2 (fiches par personne), [docs/cheatsheet.md](../docs/cheatsheet.md)
 
 ### Règles communes
 
@@ -288,4 +288,4 @@ Parcourir la checklist ensemble :
 
 ---
 
-*Pour coder ton module → [GUIDE.md](GUIDE.md)*
+*Pour coder ton module → [docs/02-team-guide.md](../docs/02-team-guide.md)*
