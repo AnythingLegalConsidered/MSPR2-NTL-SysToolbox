@@ -28,6 +28,9 @@ MODULE_NAME = "[audit]"
 # Days before EOL to trigger WARNING
 WARNING_DAYS = 180
 
+# Severity priority for overall status (higher = worse)
+_SEVERITY = {EXIT_OK: 0, EXIT_UNKNOWN: 1, EXIT_WARNING: 2, EXIT_CRITICAL: 3}
+
 
 # ---------------------------------------------------------------------------
 # Entry point
@@ -257,7 +260,7 @@ def audit_from_csv(csv_path: str, eol_path: str) -> dict[str, Any]:
                 eol_info = eol_data.get(os_key)
                 status, exit_code = _get_eol_status(eol_info)
 
-                if exit_code > worst_exit:
+                if _SEVERITY.get(exit_code, 0) > _SEVERITY.get(worst_exit, 0):
                     worst_exit = exit_code
 
                 entry: dict[str, Any] = {
