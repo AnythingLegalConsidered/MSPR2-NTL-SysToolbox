@@ -1,0 +1,36 @@
+---
+# === Proxmox API connection ===
+proxmox_api_host: "172.16.60.15"
+proxmox_api_port: 8006
+proxmox_api_user: "ipuichaud@openldap"
+proxmox_api_password: "{{ vault_proxmox_password }}"
+proxmox_node: "hv-epyc-02"
+
+# === Network ===
+lab_subnet: "192.168.10.0/24"
+lab_gateway: "192.168.10.1"
+lab_dns: "192.168.10.10"
+lab_bridge: "vmbr10"
+
+# === ISOs (storage: ISOs) ===
+iso_win_server_2022: "ISOs:iso/WINDOWS_SERVER_2022_EVAL_x64FRE_fr-fr.iso"
+iso_win10: "ISOs:iso/Windows.10.22H2.FR.EVAL.iso"
+iso_ubuntu_2204: "ISOs:iso/ubuntu-22.04.3-live-server-amd64.iso"
+iso_virtio: "ISOs:iso/virtio-win-0.1.266.iso"
+
+# === VM Storage ===
+vm_storage: "local-lvm"
+iso_storage: "ISOs"
+
+# === Domain ===
+domain_name: "ntl.local"
+domain_netbios: "NTL"
+
+# === Windows credentials (post-install) ===
+ansible_winrm_user: "Administrateur"
+ansible_winrm_pass: "{{ vault_windows_admin_password }}"
+
+# === MySQL ===
+mysql_db_name: "wms"
+mysql_db_user: "wms_user"
+mysql_db_password: "{{ vault_mysql_wms_password }}"

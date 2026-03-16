@@ -1,0 +1,22 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Full orchestration
+# ==============================================================================
+# Usage:
+#   ansible-playbook playbooks/site.yml --ask-vault-pass
+#
+# Or step by step:
+#   ansible-playbook playbooks/01-create-vms.yml --ask-vault-pass
+#   # ... install OS manually via Proxmox console ...
+#   ansible-playbook playbooks/02-configure-dc01.yml --ask-vault-pass
+#   ansible-playbook playbooks/03-configure-wmsdb.yml --ask-vault-pass
+# ==============================================================================
+
+- name: "Phase 1: Create VMs on Proxmox"
+  ansible.builtin.import_playbook: 01-create-vms.yml
+
+- name: "Phase 2: Configure DC01 (AD/DNS)"
+  ansible.builtin.import_playbook: 02-configure-dc01.yml
+
+- name: "Phase 3: Configure WMS-DB (MySQL)"
+  ansible.builtin.import_playbook: 03-configure-wmsdb.yml

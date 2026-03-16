@@ -1,0 +1,140 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Post-install WMS-DB (Ubuntu 22.04)
+# ==============================================================================
+# Prerequisites:
+#   - Ubuntu 22.04 installed manually via Proxmox console
+#   - Static IP 192.168.10.21 configured
+#   - SSH accessible with user sysadmin
+#
+# Usage:
+#   ansible-playbook playbooks/03-configure-wmsdb.yml --ask-vault-pass
+# ==============================================================================
+
+- name: Configure WMS-DB — MySQL database server
+  hosts: WMS-DB
+  gather_facts: true
+  become: true
+
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  tasks:
+    - name: Wait for SSH to be available
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+
+    # ------------------------------------------------------------------
+    # Step 1: Install packages
+    # ------------------------------------------------------------------
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install MySQL and required packages
+      ansible.builtin.apt:
+        name:
+          - mysql-server
+          - mysql-client
+          - openssh-server
+          - net-tools
+          - curl
+          - python3-pymysql
+        state: present
+
+    # ------------------------------------------------------------------
+    # Step 2: Configure MySQL
+    # ------------------------------------------------------------------
+    - name: Set MySQL bind-address to 0.0.0.0
+      ansible.builtin.lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: '^bind-address'
+        line: 'bind-address = 0.0.0.0'
+      notify: restart mysql
+
+    - name: Ensure MySQL is started and enabled
+      ansible.builtin.service:
+        name: mysql
+        state: started
+        enabled: true
+
+    # ------------------------------------------------------------------
+    # Step 3: Import database
+    # ------------------------------------------------------------------
+    - name: Copy seed-wms.sql to server
+      ansible.builtin.copy:
+        src: ../files/seed-wms.sql
+        dest: /tmp/seed-wms.sql
+        mode: '0644'
+
+    - name: Create wms database
+      community.mysql.mysql_db:
+        name: wms
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Import seed data
+      community.mysql.mysql_db:
+        name: wms
+        state: import
+        target: /tmp/seed-wms.sql
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      register: import_result
+      failed_when: false
+
+    - name: Create MySQL user wms_user
+      community.mysql.mysql_user:
+        name: "{{ mysql_db_user }}"
+        password: "{{ mysql_db_password }}"
+        host: '%'
+        priv: 'wms.*:ALL'
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    # ------------------------------------------------------------------
+    # Step 4: Configure SSH
+    # ------------------------------------------------------------------
+    - name: Enable password authentication for SSH
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication yes'
+      notify: restart sshd
+
+    - name: Ensure SSH is started and enabled
+      ansible.builtin.service:
+        name: ssh
+        state: started
+        enabled: true
+
+    # ------------------------------------------------------------------
+    # Step 5: Clean up
+    # ------------------------------------------------------------------
+    - name: Remove temp SQL file
+      ansible.builtin.file:
+        path: /tmp/seed-wms.sql
+        state: absent
+
+    - name: WMS-DB configuration complete
+      ansible.builtin.debug:
+        msg: |
+          === WMS-DB Configuration Complete ===
+          MySQL: port 3306
+            Database: {{ mysql_db_name }}
+            User: {{ mysql_db_user }}
+          SSH: port 22
+            User: sysadmin
+          Test: mysql -h 192.168.10.21 -u {{ mysql_db_user }} -p {{ mysql_db_name }} -e 'SELECT COUNT(*) FROM shipments;'
+
+  handlers:
+    - name: restart mysql
+      ansible.builtin.service:
+        name: mysql
+        state: restarted
+
+    - name: restart sshd
+      ansible.builtin.service:
+        name: ssh
+        state: restarted

@@ -1,0 +1,231 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Create VMs on Proxmox (Essential profile: 3 VMs)
+# ==============================================================================
+# Usage:
+#   ansible-playbook playbooks/01-create-vms.yml --ask-vault-pass
+#   ansible-playbook playbooks/01-create-vms.yml --ask-vault-pass --check  (dry-run)
+# ==============================================================================
+
+- name: Create NTL lab VMs on Proxmox
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  tasks:
+    # ------------------------------------------------------------------
+    # Pre-check: verify bridge exists
+    # ------------------------------------------------------------------
+    - name: Check if bridge {{ lab_bridge }} exists on {{ proxmox_node }}
+      ansible.builtin.uri:
+        url: "https://{{ proxmox_api_host }}:{{ proxmox_api_port }}/api2/json/nodes/{{ proxmox_node }}/network/{{ lab_bridge }}"
+        method: GET
+        validate_certs: false
+        headers:
+          Authorization: "PVEAuthCookie={{ proxmox_ticket.json.data.ticket }}"
+          CSRFPreventionToken: "{{ proxmox_ticket.json.data.CSRFPreventionToken }}"
+        status_code: [200, 404]
+      register: bridge_check
+      when: proxmox_ticket is defined
+
+    - name: Get Proxmox API ticket
+      ansible.builtin.uri:
+        url: "https://{{ proxmox_api_host }}:{{ proxmox_api_port }}/api2/json/access/ticket"
+        method: POST
+        validate_certs: false
+        body_format: form-urlencoded
+        body:
+          username: "{{ proxmox_api_user }}"
+          password: "{{ proxmox_api_password }}"
+      register: proxmox_ticket
+
+    - name: Verify bridge {{ lab_bridge }} exists on {{ proxmox_node }}
+      ansible.builtin.uri:
+        url: "https://{{ proxmox_api_host }}:{{ proxmox_api_port }}/api2/json/nodes/{{ proxmox_node }}/network/{{ lab_bridge }}"
+        method: GET
+        validate_certs: false
+        headers:
+          Cookie: "PVEAuthCookie={{ proxmox_ticket.json.data.ticket }}"
+        status_code: [200]
+      register: bridge_result
+      failed_when: false
+
+    - name: Display bridge status
+      ansible.builtin.debug:
+        msg: >-
+          Bridge {{ lab_bridge }} on {{ proxmox_node }}:
+          {{ 'EXISTS' if bridge_result.status == 200 else 'NOT FOUND - please create it manually or use an existing bridge' }}
+
+    - name: Fail if bridge does not exist
+      ansible.builtin.fail:
+        msg: |
+          Bridge {{ lab_bridge }} not found on {{ proxmox_node }}.
+          Create it manually on the Proxmox host or update lab_bridge in group_vars/all.yml.
+      when: bridge_result.status != 200
+
+    # ------------------------------------------------------------------
+    # VM 1010 — DC01 (Windows Server 2022)
+    # UEFI/OVMF + TPM 2.0 + q35
+    # ------------------------------------------------------------------
+    - name: Create VM 1010 — DC01 (Windows Server 2022)
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_port: "{{ proxmox_api_port }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_password: "{{ proxmox_api_password }}"
+        validate_certs: false
+        node: "{{ proxmox_node }}"
+        vmid: 1010
+        name: DC01
+        machine: q35
+        bios: ovmf
+        efidisk0:
+          storage: "{{ vm_storage }}"
+          format: raw
+          efitype: 4m
+          pre_enrolled_keys: false
+        tpmstate0:
+          storage: "{{ vm_storage }}"
+          version: v2.0
+        cores: 2
+        memory: 4096
+        scsihw: virtio-scsi-single
+        scsi:
+          scsi0: "{{ vm_storage }}:40,format=raw,iothread=1"
+        ide:
+          ide0: "{{ iso_virtio }},media=cdrom"
+          ide2: "{{ iso_win_server_2022 }},media=cdrom"
+        net:
+          net0: "virtio,bridge={{ lab_bridge }},firewall=0"
+        boot: order=ide2;scsi0
+        ostype: win11
+        agent:
+          enabled: true
+        onboot: false
+        state: present
+      register: dc01_result
+
+    - name: DC01 creation result
+      ansible.builtin.debug:
+        msg: "DC01 (VMID 1010): {{ dc01_result.msg | default('created') }}"
+
+    # ------------------------------------------------------------------
+    # VM 1021 — WMS-DB (Ubuntu 22.04)
+    # BIOS SeaBIOS
+    # ------------------------------------------------------------------
+    - name: Create VM 1021 — WMS-DB (Ubuntu 22.04)
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_port: "{{ proxmox_api_port }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_password: "{{ proxmox_api_password }}"
+        validate_certs: false
+        node: "{{ proxmox_node }}"
+        vmid: 1021
+        name: WMS-DB
+        bios: seabios
+        cores: 2
+        memory: 2048
+        scsihw: virtio-scsi-single
+        scsi:
+          scsi0: "{{ vm_storage }}:20,format=raw,iothread=1"
+        ide:
+          ide2: "{{ iso_ubuntu_2204 }},media=cdrom"
+        net:
+          net0: "virtio,bridge={{ lab_bridge }},firewall=0"
+        boot: order=ide2;scsi0
+        ostype: l26
+        agent:
+          enabled: true
+        onboot: false
+        state: present
+      register: wmsdb_result
+
+    - name: WMS-DB creation result
+      ansible.builtin.debug:
+        msg: "WMS-DB (VMID 1021): {{ wmsdb_result.msg | default('created') }}"
+
+    # ------------------------------------------------------------------
+    # VM 1050 — PC-SIEGE-01 (Windows 10)
+    # UEFI/OVMF + q35
+    # ------------------------------------------------------------------
+    - name: Create VM 1050 — PC-SIEGE-01 (Windows 10)
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_port: "{{ proxmox_api_port }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_password: "{{ proxmox_api_password }}"
+        validate_certs: false
+        node: "{{ proxmox_node }}"
+        vmid: 1050
+        name: PC-SIEGE-01
+        machine: q35
+        bios: ovmf
+        efidisk0:
+          storage: "{{ vm_storage }}"
+          format: raw
+          efitype: 4m
+          pre_enrolled_keys: false
+        cores: 2
+        memory: 4096
+        scsihw: virtio-scsi-single
+        scsi:
+          scsi0: "{{ vm_storage }}:40,format=raw,iothread=1"
+        ide:
+          ide0: "{{ iso_virtio }},media=cdrom"
+          ide2: "{{ iso_win10 }},media=cdrom"
+        net:
+          net0: "virtio,bridge={{ lab_bridge }},firewall=0"
+        boot: order=ide2;scsi0
+        ostype: win10
+        agent:
+          enabled: true
+        onboot: false
+        state: present
+      register: pc01_result
+
+    - name: PC-SIEGE-01 creation result
+      ansible.builtin.debug:
+        msg: "PC-SIEGE-01 (VMID 1050): {{ pc01_result.msg | default('created') }}"
+
+    # ------------------------------------------------------------------
+    # Start VMs for OS installation
+    # ------------------------------------------------------------------
+    - name: Start all VMs for OS installation
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_port: "{{ proxmox_api_port }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_password: "{{ proxmox_api_password }}"
+        validate_certs: false
+        node: "{{ proxmox_node }}"
+        vmid: "{{ item }}"
+        state: started
+      loop:
+        - 1010
+        - 1021
+        - 1050
+      tags: start
+
+    # ------------------------------------------------------------------
+    # Summary
+    # ------------------------------------------------------------------
+    - name: Display summary
+      ansible.builtin.debug:
+        msg: |
+          === NTL Lab VMs Created ===
+          VMID 1010 - DC01          - Windows Server 2022 - 192.168.10.10
+          VMID 1021 - WMS-DB        - Ubuntu 22.04        - 192.168.10.21
+          VMID 1050 - PC-SIEGE-01   - Windows 10          - 192.168.10.50
+
+          Next steps:
+          1. Open Proxmox console for each VM
+          2. Install OS from ISO (follow installers)
+          3. Configure static IPs
+          4. Run post-install playbooks:
+             ansible-playbook playbooks/02-configure-dc01.yml --ask-vault-pass
+             ansible-playbook playbooks/03-configure-wmsdb.yml --ask-vault-pass
