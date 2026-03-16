@@ -40,13 +40,13 @@ class TestRun:
     def test_dispatches_check_windows_server(self):
         with patch("src.modules.diagnostic.check_windows_server") as mock:
             mock.return_value = {"status": "OK"}
-            result = run(BASE_CONFIG, TARGET_DC, action="check_windows_server")
+            run(BASE_CONFIG, TARGET_DC, action="check_windows_server")
         mock.assert_called_once_with(BASE_CONFIG, TARGET_DC)
 
     def test_dispatches_check_ubuntu(self):
         with patch("src.modules.diagnostic.check_ubuntu") as mock:
             mock.return_value = {"status": "OK"}
-            result = run(BASE_CONFIG, TARGET_DB, action="check_ubuntu")
+            run(BASE_CONFIG, TARGET_DB, action="check_ubuntu")
         mock.assert_called_once_with(BASE_CONFIG, TARGET_DB)
 
     def test_raises_on_unknown_action(self):
