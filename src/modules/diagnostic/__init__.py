@@ -1,6 +1,6 @@
 """
 Module: Diagnostic
-Description: Vérification de l'état des services AD/DNS, MySQL, Windows et Ubuntu.
+Description: Vérification de l'état des services AD/DNS, MySQL, Linux et HTTP.
 Responsable: Blaise
 """
 
@@ -26,7 +26,7 @@ def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
         config: Configuration complète (config.yaml).
         target: IP ou hostname de la cible.
         **kwargs: action= parmi check_ad_dns, check_mysql,
-                  check_windows_server, check_ubuntu.
+                  check_linux, check_http.
 
     Returns:
         Résultat standardisé (build_result).
@@ -61,55 +61,67 @@ def _check_ad_dns(config: dict, target: str) -> dict[str, Any]:
     """Exécute les checks AD/DNS (DNS, ports, LDAP, services WinRM)."""
     from .checks import check_dns, check_ldap, check_ports, check_services
 
-    details: dict[str, Any] = {}
+    try:
+        details: dict[str, Any] = {}
 
-    # DNS
-    dns_server = config.get("targets", {}).get("dc01", {}).get("host")
-    dns_ok, dns_info = check_dns(target, dns_server)
-    details["dns"] = {"ok": dns_ok, "info": dns_info}
+        # DNS
+        dns_server = config.get("targets", {}).get("dc01", {}).get("host")
+        dns_ok, dns_info = check_dns(target, dns_server)
+        details["dns"] = {"ok": dns_ok, "info": dns_info}
 
-    # Ports
-    port_status, port_results = check_ports(target)
-    details["ports"] = {"status": port_status, "results": {str(k): v for k, v in port_results.items()}}
+        # Ports
+        port_status, port_results = check_ports(target)
+        details["ports"] = {"status": port_status, "results": {str(k): v for k, v in port_results.items()}}
 
-    # LDAP
-    ldap_ok = check_ldap(target)
-    details["ldap"] = {"ok": ldap_ok}
+        # LDAP
+        ldap_ok = check_ldap(target)
+        details["ldap"] = {"ok": ldap_ok}
 
-    # Services WinRM (optionnel, nécessite credentials)
-    winrm_user = config.get("winrm", {}).get("user", "")
-    winrm_pass = config.get("winrm", {}).get("password", "")
-    if winrm_user and winrm_pass:
-        svc_status, svc_results = check_services(target, winrm_user, winrm_pass)
-        details["services"] = {"status": svc_status, "results": svc_results}
-    else:
-        svc_status = "UNKNOWN"
-        details["services"] = {"status": "UNKNOWN", "results": "Credentials WinRM non configurés"}
+        # Services WinRM (optionnel, nécessite credentials)
+        winrm_user = config.get("winrm", {}).get("user", "")
+        winrm_pass = config.get("winrm", {}).get("password", "")
+        if winrm_user and winrm_pass:
+            svc_status, svc_results = check_services(target, winrm_user, winrm_pass)
+            details["services"] = {"status": svc_status, "results": svc_results}
+        else:
+            svc_status = "UNKNOWN"
+            details["services"] = {"status": "UNKNOWN", "results": "Credentials WinRM non configurés"}
 
-    # Status global
-    statuses = [
-        "OK" if dns_ok else "CRITICAL",
-        port_status,
-        "OK" if ldap_ok else "CRITICAL",
-        svc_status,
-    ]
+        # Status global
+        statuses = [
+            "OK" if dns_ok else "CRITICAL",
+            port_status,
+            "OK" if ldap_ok else "CRITICAL",
+            svc_status,
+        ]
 
-    if "CRITICAL" in statuses:
-        overall, code = "CRITICAL", EXIT_CRITICAL
-    elif "UNKNOWN" in statuses:
-        overall, code = "OK", EXIT_OK  # WinRM manquant ne bloque pas
-    else:
-        overall, code = "OK", EXIT_OK
+        if "CRITICAL" in statuses:
+            overall, code = "CRITICAL", EXIT_CRITICAL
+        elif "UNKNOWN" in statuses:
+            overall, code = "OK", EXIT_OK  # WinRM manquant ne bloque pas
+        else:
+            overall, code = "OK", EXIT_OK
 
-    return build_result(
-        module=MODULE_NAME,
-        function="check_ad_dns",
-        status=overall,
-        exit_code=code,
-        target=target,
-        details=details,
-        message=f"AD/DNS check {overall} sur {target}",
-    )
+        return build_result(
+            module=MODULE_NAME,
+            function="check_ad_dns",
+            status=overall,
+            exit_code=code,
+            target=target,
+            details=details,
+            message=f"AD/DNS check {overall} sur {target}",
+        )
+    except Exception as exc:
+        logger.error("check_ad_dns failed: %s", exc)
+        return build_result(
+            module=MODULE_NAME,
+            function="check_ad_dns",
+            status="UNKNOWN",
+            exit_code=EXIT_UNKNOWN,
+            target=target,
+            details={"error": str(exc)},
+            message=f"Erreur lors du check AD/DNS sur {target}: {exc}",
+        )
 
 
 def _check_mysql(config: dict, target: str) -> dict[str, Any]:
@@ -196,12 +208,14 @@ def _check_http(config: dict, target: str) -> dict[str, Any]:
     from .checks import check_http as _http_check
 
     try:
-        # Determine port: try 443 first hint from target, default 80
         port = 80
         if ":" in target:
             parts = target.rsplit(":", 1)
-            target = parts[0]
-            port = int(parts[1])
+            try:
+                port = int(parts[1])
+                target = parts[0]
+            except ValueError:
+                pass  # Not a port suffix, keep target as-is
 
         result = _http_check(target, port)
 

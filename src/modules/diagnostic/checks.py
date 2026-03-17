@@ -5,10 +5,7 @@ Basé sur le travail de Blaise, étendu pour le réseau école.
 
 import logging
 import socket
-
-import dns.resolver
-import winrm
-from ldap3 import ALL, Connection, Server
+from typing import Any, Optional
 
 from src.utils.network import check_port, grab_banner, grab_mysql_version, http_check
 
@@ -17,10 +14,18 @@ from .constant import CRITICAL_PORTS, DISCOVERY_PORTS, IMPORTANT_PORTS, SERVICE_
 logger = logging.getLogger(__name__)
 
 
-# DNS
-def check_dns(host, dns_server=None, timeout=3):
+# ---------------------------------------------------------------------------
+# AD/DNS checks (nécessitent dnspython, ldap3, pywinrm)
+# ---------------------------------------------------------------------------
+
+def check_dns(
+    host: str, dns_server: Optional[str] = None, timeout: int = 3
+) -> tuple[bool, str]:
+    """Resolve hostname via DNS."""
     try:
         if dns_server:
+            import dns.resolver
+
             resolver = dns.resolver.Resolver()
             resolver.nameservers = [dns_server]
             resolver.timeout = timeout
@@ -28,15 +33,14 @@ def check_dns(host, dns_server=None, timeout=3):
             answers = resolver.resolve(host, "A")
             return True, answers[0].to_text()
         else:
-            socket.setdefaulttimeout(timeout)
             return True, socket.gethostbyname(host)
     except Exception as e:
         return False, str(e)
 
 
-# Ports
-def check_ports(host, timeout=2):
-    results = {}
+def check_ports(host: str, timeout: int = 2) -> tuple[str, dict[int, bool]]:
+    """Check critical and important AD ports."""
+    results: dict[int, bool] = {}
     overall = "OK"
 
     for port in CRITICAL_PORTS + IMPORTANT_PORTS:
@@ -51,9 +55,11 @@ def check_ports(host, timeout=2):
     return overall, results
 
 
-# LDAP
-def check_ldap(host):
+def check_ldap(host: str) -> bool:
+    """Test LDAP connectivity."""
     try:
+        from ldap3 import ALL, Connection, Server
+
         server = Server(host, get_info=ALL)
         conn = Connection(server, auto_bind=True)
         conn.unbind()
@@ -62,9 +68,16 @@ def check_ldap(host):
         return False
 
 
-# WinRM Services
-def check_services(host, username, password):
-    results = {}
+def check_services(
+    host: str, username: str, password: str
+) -> tuple[str, dict[str, Any]]:
+    """Check Windows services via WinRM."""
+    try:
+        import winrm
+    except ImportError:
+        return "UNKNOWN", {"error": "pywinrm non installé"}
+
+    results: dict[str, Any] = {}
     overall = "OK"
 
     try:
@@ -93,14 +106,14 @@ def check_services(host, username, password):
 # Discovery checks (sans authentification)
 # ---------------------------------------------------------------------------
 
-def check_mysql_port(host: str, port: int = 3306, timeout: int = 3) -> dict:
+def check_mysql_port(host: str, port: int = 3306, timeout: int = 3) -> dict[str, Any]:
     """Check MySQL port and grab server version without credentials.
 
     Returns:
         Dict with keys: reachable, port, version (or None), banner.
     """
     reachable = check_port(host, port, timeout=timeout)
-    result: dict = {"reachable": reachable, "port": port, "version": None, "banner": None}
+    result: dict[str, Any] = {"reachable": reachable, "port": port, "version": None, "banner": None}
 
     if reachable:
         version = grab_mysql_version(host, port, timeout)
@@ -114,7 +127,7 @@ def check_mysql_port(host: str, port: int = 3306, timeout: int = 3) -> dict:
     return result
 
 
-def check_http(host: str, port: int = 80, timeout: int = 5) -> dict:
+def check_http(host: str, port: int = 80, timeout: int = 5) -> dict[str, Any]:
     """Check HTTP(S) service and return response metadata.
 
     Returns:
@@ -123,7 +136,9 @@ def check_http(host: str, port: int = 80, timeout: int = 5) -> dict:
     return http_check(host, port, timeout=timeout)
 
 
-def check_host_services(host: str, ports: list[int] | None = None, timeout: int = 2) -> dict:
+def check_host_services(
+    host: str, ports: list[int] | None = None, timeout: int = 2
+) -> dict[str, Any]:
     """Scan multiple ports and categorize discovered services.
 
     Args:
@@ -138,7 +153,7 @@ def check_host_services(host: str, ports: list[int] | None = None, timeout: int 
     if ports is None:
         ports = DISCOVERY_PORTS
 
-    open_ports = []
+    open_ports: list[dict[str, Any]] = []
     categories: set[str] = set()
 
     for port in ports:
@@ -148,7 +163,7 @@ def check_host_services(host: str, ports: list[int] | None = None, timeout: int 
         if is_open:
             categories.add(service)
 
-    result = {
+    result: dict[str, Any] = {
         "host": host,
         "open_ports": open_ports,
         "categories": sorted(categories),

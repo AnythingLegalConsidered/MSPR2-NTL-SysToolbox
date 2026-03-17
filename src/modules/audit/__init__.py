@@ -11,6 +11,7 @@ from src.interfaces import (
     EXIT_CRITICAL,
     EXIT_OK,
     EXIT_UNKNOWN,
+    EXIT_WARNING,
     build_result,
 )
 
@@ -119,11 +120,16 @@ def _list_os_eol(config: dict, target: str) -> dict[str, Any]:
 
         eol_count = result.get("eol_count", 0)
         total = result.get("total", 0)
+        if eol_count > 0:
+            status, code = "WARNING", EXIT_WARNING
+        else:
+            status, code = "OK", EXIT_OK
+
         return build_result(
             module=MODULE_NAME,
             function="list_os_eol",
-            status="WARNING" if eol_count > 0 else "OK",
-            exit_code=EXIT_OK,
+            status=status,
+            exit_code=code,
             target="eol_database",
             details=result,
             message=f"{eol_count}/{total} OS en fin de vie",
@@ -191,15 +197,23 @@ def _generate_report(config: dict, target: str) -> dict[str, Any]:
     try:
         result = generate_report(config)
         report_path = result.get("report_path", "")
+        has_errors = result.get("has_errors", False)
+
+        if has_errors:
+            status, code = "WARNING", EXIT_WARNING
+            msg = f"Rapport généré avec des erreurs: {report_path}" if report_path else "Rapport échoué"
+        else:
+            status, code = "OK", EXIT_OK
+            msg = f"Rapport généré: {report_path}"
 
         return build_result(
             module=MODULE_NAME,
             function="generate_report",
-            status="OK",
-            exit_code=EXIT_OK,
+            status=status,
+            exit_code=code,
             target=config.get("audit", {}).get("network_range", "172.16.135.0/24"),
             details=result,
-            message=f"Rapport généré: {report_path}",
+            message=msg,
         )
     except Exception as exc:
         logger.error("generate_report failed: %s", exc)

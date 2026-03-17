@@ -7,12 +7,14 @@ Provides port checking, ping, DNS resolution, banner grabbing, and HTTP checks.
 import logging
 import platform
 import socket
-import struct
 import subprocess
 import time
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
+
+# Maximum bytes to read from HTTP response body (1 MB)
+_MAX_HTTP_BODY = 1024 * 1024
 
 
 def check_port(host: str, port: int, timeout: int = 10) -> bool:
@@ -153,17 +155,19 @@ def grab_mysql_version(host: str, port: int = 3306, timeout: int = 3) -> Optiona
                 return None
             # MySQL packet: 3 bytes length + 1 byte seq + 1 byte protocol + null-terminated version
             version_start = 5
+            # ValueError raised if no null byte found (service is not MySQL)
             version_end = data.index(b"\x00", version_start)
             version = data[version_start:version_end].decode("utf-8", errors="replace")
             logger.debug("MySQL version on %s:%d -> %s", host, port, version)
             return version
-    except (OSError, TimeoutError, ValueError, struct.error) as exc:
+    except (OSError, TimeoutError, ValueError) as exc:
         logger.debug("MySQL version grab failed on %s:%d: %s", host, port, exc)
     return None
 
 
 def http_check(
-    host: str, port: int = 80, path: str = "/", timeout: int = 5
+    host: str, port: int = 80, path: str = "/", timeout: int = 5,
+    verify_ssl: bool = False,
 ) -> dict[str, Any]:
     """Perform an HTTP GET request and return response metadata.
 
@@ -172,10 +176,12 @@ def http_check(
         port: HTTP port (default 80).
         path: URL path to request.
         timeout: Timeout in seconds.
+        verify_ssl: If False, disable certificate verification (default for lab use).
 
     Returns:
         Dict with keys: ok, status_code, server, content_length, response_time_ms.
     """
+    import ssl
     import urllib.error
     import urllib.request
 
@@ -183,17 +189,20 @@ def http_check(
     url = f"{scheme}://{host}:{port}{path}"
 
     try:
-        import ssl
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+        if verify_ssl:
+            ctx = ssl.create_default_context()
+        else:
+            logger.debug("SSL verification disabled for %s", url)
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
 
         req = urllib.request.Request(url, method="GET")
         req.add_header("User-Agent", "NTL-SysToolbox/1.0")
 
         start = time.monotonic()
         with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
-            body = resp.read()
+            body = resp.read(_MAX_HTTP_BODY)
             elapsed = (time.monotonic() - start) * 1000
 
             result: dict[str, Any] = {

@@ -153,11 +153,12 @@ def _get_default_target(action: str, config: dict[str, Any]) -> str:
     """Return a sensible default target based on the action and config."""
     targets = config.get("targets", {})
     discovery_range = config.get("discovery", {}).get("network_range", "172.16.135.0/24")
+    first_target = targets.get("wms_db", {}).get("host", discovery_range.rsplit("/", 1)[0])
     defaults: dict[str, str] = {
         "check_ad_dns": targets.get("dc01", {}).get("host", "192.168.10.10"),
-        "check_mysql": config.get("mysql", {}).get("host", "172.16.135.17"),
-        "check_linux": "172.16.135.12",
-        "check_http": "172.16.135.12",
+        "check_mysql": config.get("mysql", {}).get("host", first_target),
+        "check_linux": first_target,
+        "check_http": first_target,
         "backup_database": config.get("mysql", {}).get("database", "wms"),
         "export_table_csv": "shipments",
         "scan_network": config.get("audit", {}).get("network_range", discovery_range),
