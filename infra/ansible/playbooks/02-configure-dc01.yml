@@ -156,7 +156,10 @@
           $groups = @(
             @{ Name = "GRP-IT-Admins"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
             @{ Name = "GRP-WMS-Users"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
-            @{ Name = "GRP-Entrepot"; Path = "OU=NTL-Groups,DC=ntl,DC=local" }
+            @{ Name = "GRP-Entrepot"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-Comptabilite"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-RH"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-Direction"; Path = "OU=NTL-Groups,DC=ntl,DC=local" }
           )
           foreach ($grp in $groups) {
             try {
@@ -166,7 +169,7 @@
             }
           }
 
-    - name: Create test users
+    - name: Create users
       ansible.windows.win_powershell:
         script: |
           Import-Module ActiveDirectory
@@ -174,7 +177,12 @@
           $users = @(
             @{ Name = "Jean Dupont"; SAM = "jdupont"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-IT-Admins") },
             @{ Name = "Marie Martin"; SAM = "mmartin"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-WMS-Users") },
-            @{ Name = "Pierre Durand"; SAM = "pdurand"; OU = "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Entrepot","GRP-WMS-Users") }
+            @{ Name = "Pierre Durand"; SAM = "pdurand"; OU = "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Entrepot","GRP-WMS-Users") },
+            @{ Name = "Sophie Leroy"; SAM = "sleroy"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-IT-Admins","GRP-Direction") },
+            @{ Name = "Thomas Bernard"; SAM = "tbernard"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Comptabilite") },
+            @{ Name = "Claire Moreau"; SAM = "cmoreau"; OU = "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Entrepot","GRP-WMS-Users") },
+            @{ Name = "Lucas Petit"; SAM = "lpetit"; OU = "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Entrepot") },
+            @{ Name = "Emilie Roux"; SAM = "eroux"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-RH") }
           )
           foreach ($u in $users) {
             try {
@@ -211,6 +219,40 @@
             }
           }
 
+    # ------------------------------------------------------------------
+    # Step 7: Deploy login script for mapped drives
+    # ------------------------------------------------------------------
+    - name: Create NETLOGON login script for mapped drives
+      ansible.windows.win_powershell:
+        script: |
+          $netlogon = "C:\Windows\SYSVOL\sysvol\ntl.local\scripts"
+          $scriptContent = @'
+          @echo off
+          REM NTL Login Script — Mapped network drives
+          REM Commun drive for everyone
+          net use K: \\SRV-FILES\Commun /persistent:yes 2>nul
+
+          REM Group-specific drives
+          net group "GRP-WMS-Users" %USERNAME% /domain >nul 2>&1
+          if %ERRORLEVEL% EQU 0 net use L: \\SRV-FILES\Siege /persistent:yes 2>nul
+
+          net group "GRP-Entrepot" %USERNAME% /domain >nul 2>&1
+          if %ERRORLEVEL% EQU 0 net use L: \\SRV-FILES\Entrepot /persistent:yes 2>nul
+
+          net group "GRP-IT-Admins" %USERNAME% /domain >nul 2>&1
+          if %ERRORLEVEL% EQU 0 net use M: \\SRV-FILES\IT /persistent:yes 2>nul
+          '@
+          Set-Content -Path "$netlogon\ntl-login.bat" -Value $scriptContent -Encoding ASCII
+
+    - name: Configure login script via AD user profiles
+      ansible.windows.win_powershell:
+        script: |
+          Import-Module ActiveDirectory
+          $users = Get-ADUser -Filter * -SearchBase "OU=NTL-Users,DC=ntl,DC=local"
+          foreach ($u in $users) {
+            Set-ADUser -Identity $u -ScriptPath "ntl-login.bat"
+          }
+
     - name: DC01 configuration complete
       ansible.builtin.debug:
         msg: |
@@ -218,5 +260,6 @@
           Domain: {{ domain_name }}
           IP: 192.168.10.10
           OUs: NTL-Users (Siege, Entrepot), NTL-Computers, NTL-Groups
-          Users: jdupont, mmartin, pdurand
-          Groups: GRP-IT-Admins, GRP-WMS-Users, GRP-Entrepot
+          Users: jdupont, mmartin, pdurand, sleroy, tbernard, cmoreau, lpetit, eroux
+          Groups: GRP-IT-Admins, GRP-WMS-Users, GRP-Entrepot, GRP-Comptabilite, GRP-RH, GRP-Direction
+          Login script: ntl-login.bat (K: Commun, L: group-specific, M: IT)

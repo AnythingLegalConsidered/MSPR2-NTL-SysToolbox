@@ -1,6 +1,6 @@
 ---
 # === Proxmox API connection ===
-proxmox_api_host: "172.16.60.15"
+proxmox_api_host: "172.16.254.31"
 proxmox_api_port: 8006
 proxmox_api_user: "ipuichaud@openldap"
 proxmox_api_password: "{{ vault_proxmox_password }}"
@@ -10,7 +10,7 @@ proxmox_node: "hv-epyc-02"
 lab_subnet: "192.168.10.0/24"
 lab_gateway: "192.168.10.1"
 lab_dns: "192.168.10.10"
-lab_bridge: "vmbr10"
+lab_bridge: "vmbr1024"
 
 # === ISOs (storage: ISOs) ===
 iso_win_server_2022: "ISOs:iso/WINDOWS_SERVER_2022_EVAL_x64FRE_fr-fr.iso"
@@ -19,7 +19,8 @@ iso_ubuntu_2204: "ISOs:iso/ubuntu-22.04.3-live-server-amd64.iso"
 iso_virtio: "ISOs:iso/virtio-win-0.1.266.iso"
 
 # === VM Storage ===
-vm_storage: "local-lvm"
+vm_storage: "B3-12T"
+proxmox_pool: "B3"
 iso_storage: "ISOs"
 
 # === Domain ===
@@ -30,7 +31,27 @@ domain_netbios: "NTL"
 ansible_winrm_user: "Administrateur"
 ansible_winrm_pass: "{{ vault_windows_admin_password }}"
 
+# === Autoinstall ISOs (generated, stored on ISOs storage) ===
+iso_autoinstall_srvfiles: "ISOs:iso/autounattend-srvfiles.iso"
+iso_autoinstall_entrepot01: "ISOs:iso/autounattend-entrepot01.iso"
+iso_autoinstall_wmsapp: "ISOs:iso/autoinstall-wmsapp.iso"
+iso_autoinstall_backup: "ISOs:iso/autoinstall-backup.iso"
+
 # === MySQL ===
 mysql_db_name: "wms"
 mysql_db_user: "wms_user"
 mysql_db_password: "{{ vault_mysql_wms_password }}"
+
+# === WMS App ===
+wms_app_port: 8000
+wms_app_path: "/opt/wms-app"
+wms_db_host: "192.168.10.21"
+
+# === Server IPs ===
+ip_dc01: "192.168.10.10"
+ip_srvfiles: "192.168.10.11"
+ip_wmsdb: "192.168.10.21"
+ip_wmsapp: "192.168.10.22"
+ip_backup: "192.168.10.30"
+ip_pc_siege: "192.168.10.50"
+ip_pc_entrepot: "192.168.10.51"

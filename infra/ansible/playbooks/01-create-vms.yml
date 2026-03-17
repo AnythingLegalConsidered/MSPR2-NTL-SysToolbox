@@ -1,6 +1,6 @@
 ---
 # ==============================================================================
-# NTL-SysToolbox — Create VMs on Proxmox (Essential profile: 3 VMs)
+# NTL-SysToolbox — Create VMs on Proxmox (Full profile: 7 VMs)
 # ==============================================================================
 # Usage:
 #   ansible-playbook playbooks/01-create-vms.yml --ask-vault-pass
@@ -16,62 +16,19 @@
     - ../group_vars/all.yml
     - ../group_vars/vault.yml
 
+  vars:
+    vm_tag: "mspr2-grp2-ntl"
+
   tasks:
-    # ------------------------------------------------------------------
-    # Pre-check: verify bridge exists
-    # ------------------------------------------------------------------
-    - name: Check if bridge {{ lab_bridge }} exists on {{ proxmox_node }}
-      ansible.builtin.uri:
-        url: "https://{{ proxmox_api_host }}:{{ proxmox_api_port }}/api2/json/nodes/{{ proxmox_node }}/network/{{ lab_bridge }}"
-        method: GET
-        validate_certs: false
-        headers:
-          Authorization: "PVEAuthCookie={{ proxmox_ticket.json.data.ticket }}"
-          CSRFPreventionToken: "{{ proxmox_ticket.json.data.CSRFPreventionToken }}"
-        status_code: [200, 404]
-      register: bridge_check
-      when: proxmox_ticket is defined
-
-    - name: Get Proxmox API ticket
-      ansible.builtin.uri:
-        url: "https://{{ proxmox_api_host }}:{{ proxmox_api_port }}/api2/json/access/ticket"
-        method: POST
-        validate_certs: false
-        body_format: form-urlencoded
-        body:
-          username: "{{ proxmox_api_user }}"
-          password: "{{ proxmox_api_password }}"
-      register: proxmox_ticket
-
-    - name: Verify bridge {{ lab_bridge }} exists on {{ proxmox_node }}
-      ansible.builtin.uri:
-        url: "https://{{ proxmox_api_host }}:{{ proxmox_api_port }}/api2/json/nodes/{{ proxmox_node }}/network/{{ lab_bridge }}"
-        method: GET
-        validate_certs: false
-        headers:
-          Cookie: "PVEAuthCookie={{ proxmox_ticket.json.data.ticket }}"
-        status_code: [200]
-      register: bridge_result
-      failed_when: false
-
-    - name: Display bridge status
+    - name: Display target configuration
       ansible.builtin.debug:
-        msg: >-
-          Bridge {{ lab_bridge }} on {{ proxmox_node }}:
-          {{ 'EXISTS' if bridge_result.status == 200 else 'NOT FOUND - please create it manually or use an existing bridge' }}
-
-    - name: Fail if bridge does not exist
-      ansible.builtin.fail:
-        msg: |
-          Bridge {{ lab_bridge }} not found on {{ proxmox_node }}.
-          Create it manually on the Proxmox host or update lab_bridge in group_vars/all.yml.
-      when: bridge_result.status != 200
+        msg: "Deploying on {{ proxmox_node }} | bridge {{ lab_bridge }} | storage {{ vm_storage }} | pool {{ proxmox_pool }} | tag {{ vm_tag }}"
 
     # ------------------------------------------------------------------
-    # VM 1010 — DC01 (Windows Server 2022)
+    # VM 32029 — DC01 (Windows Server 2022)
     # UEFI/OVMF + TPM 2.0 + q35
     # ------------------------------------------------------------------
-    - name: Create VM 1010 — DC01 (Windows Server 2022)
+    - name: Create VM 32029 — DC01 (Windows Server 2022)
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
@@ -79,8 +36,11 @@
         api_password: "{{ proxmox_api_password }}"
         validate_certs: false
         node: "{{ proxmox_node }}"
-        vmid: 1010
-        name: DC01
+        pool: "{{ proxmox_pool }}"
+        vmid: 32029
+        name: B3-MSPR2-GRP2-DC01
+        tags:
+          - "{{ vm_tag }}"
         machine: q35
         bios: ovmf
         efidisk0:
@@ -90,12 +50,12 @@
           pre_enrolled_keys: false
         tpmstate0:
           storage: "{{ vm_storage }}"
-          version: v2.0
+          version: "2.0"
         cores: 2
         memory: 4096
         scsihw: virtio-scsi-single
         scsi:
-          scsi0: "{{ vm_storage }}:40,format=raw,iothread=1"
+          scsi0: "{{ vm_storage }}:40,iothread=1"
         ide:
           ide0: "{{ iso_virtio }},media=cdrom"
           ide2: "{{ iso_win_server_2022 }},media=cdrom"
@@ -103,21 +63,20 @@
           net0: "virtio,bridge={{ lab_bridge }},firewall=0"
         boot: order=ide2;scsi0
         ostype: win11
-        agent:
-          enabled: true
+        agent: "enabled=1"
         onboot: false
         state: present
       register: dc01_result
 
     - name: DC01 creation result
       ansible.builtin.debug:
-        msg: "DC01 (VMID 1010): {{ dc01_result.msg | default('created') }}"
+        msg: "DC01 (VMID 32029): {{ dc01_result.msg | default('created') }}"
 
     # ------------------------------------------------------------------
-    # VM 1021 — WMS-DB (Ubuntu 22.04)
+    # VM 32030 — WMS-DB (Ubuntu 22.04)
     # BIOS SeaBIOS
     # ------------------------------------------------------------------
-    - name: Create VM 1021 — WMS-DB (Ubuntu 22.04)
+    - name: Create VM 32030 — WMS-DB (Ubuntu 22.04)
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
@@ -125,35 +84,37 @@
         api_password: "{{ proxmox_api_password }}"
         validate_certs: false
         node: "{{ proxmox_node }}"
-        vmid: 1021
-        name: WMS-DB
+        pool: "{{ proxmox_pool }}"
+        vmid: 32030
+        name: B3-MSPR2-GRP2-WMS-DB
+        tags:
+          - "{{ vm_tag }}"
         bios: seabios
         cores: 2
         memory: 2048
         scsihw: virtio-scsi-single
         scsi:
-          scsi0: "{{ vm_storage }}:20,format=raw,iothread=1"
+          scsi0: "{{ vm_storage }}:20,iothread=1"
         ide:
           ide2: "{{ iso_ubuntu_2204 }},media=cdrom"
         net:
           net0: "virtio,bridge={{ lab_bridge }},firewall=0"
         boot: order=ide2;scsi0
         ostype: l26
-        agent:
-          enabled: true
+        agent: "enabled=1"
         onboot: false
         state: present
       register: wmsdb_result
 
     - name: WMS-DB creation result
       ansible.builtin.debug:
-        msg: "WMS-DB (VMID 1021): {{ wmsdb_result.msg | default('created') }}"
+        msg: "WMS-DB (VMID 32030): {{ wmsdb_result.msg | default('created') }}"
 
     # ------------------------------------------------------------------
-    # VM 1050 — PC-SIEGE-01 (Windows 10)
+    # VM 32031 — PC-SIEGE-01 (Windows 10)
     # UEFI/OVMF + q35
     # ------------------------------------------------------------------
-    - name: Create VM 1050 — PC-SIEGE-01 (Windows 10)
+    - name: Create VM 32031 — PC-SIEGE-01 (Windows 10)
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
@@ -161,8 +122,11 @@
         api_password: "{{ proxmox_api_password }}"
         validate_certs: false
         node: "{{ proxmox_node }}"
-        vmid: 1050
-        name: PC-SIEGE-01
+        pool: "{{ proxmox_pool }}"
+        vmid: 32031
+        name: B3-MSPR2-GRP2-PC-SIEGE-01
+        tags:
+          - "{{ vm_tag }}"
         machine: q35
         bios: ovmf
         efidisk0:
@@ -174,7 +138,7 @@
         memory: 4096
         scsihw: virtio-scsi-single
         scsi:
-          scsi0: "{{ vm_storage }}:40,format=raw,iothread=1"
+          scsi0: "{{ vm_storage }}:40,iothread=1"
         ide:
           ide0: "{{ iso_virtio }},media=cdrom"
           ide2: "{{ iso_win10 }},media=cdrom"
@@ -182,20 +146,20 @@
           net0: "virtio,bridge={{ lab_bridge }},firewall=0"
         boot: order=ide2;scsi0
         ostype: win10
-        agent:
-          enabled: true
+        agent: "enabled=1"
         onboot: false
         state: present
       register: pc01_result
 
     - name: PC-SIEGE-01 creation result
       ansible.builtin.debug:
-        msg: "PC-SIEGE-01 (VMID 1050): {{ pc01_result.msg | default('created') }}"
+        msg: "PC-SIEGE-01 (VMID 32031): {{ pc01_result.msg | default('created') }}"
 
     # ------------------------------------------------------------------
-    # Start VMs for OS installation
+    # VM 32033 — SRV-FILES (Windows Server 2022)
+    # UEFI/OVMF + TPM 2.0 + q35
     # ------------------------------------------------------------------
-    - name: Start all VMs for OS installation
+    - name: Create VM 32033 — SRV-FILES (Windows Server 2022)
       community.general.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
@@ -203,13 +167,162 @@
         api_password: "{{ proxmox_api_password }}"
         validate_certs: false
         node: "{{ proxmox_node }}"
-        vmid: "{{ item }}"
-        state: started
-      loop:
-        - 1010
-        - 1021
-        - 1050
-      tags: start
+        pool: "{{ proxmox_pool }}"
+        vmid: 32033
+        name: B3-MSPR2-GRP2-SRV-FILES
+        tags:
+          - "{{ vm_tag }}"
+        machine: q35
+        bios: ovmf
+        efidisk0:
+          storage: "{{ vm_storage }}"
+          format: raw
+          efitype: 4m
+          pre_enrolled_keys: false
+        tpmstate0:
+          storage: "{{ vm_storage }}"
+          version: "2.0"
+        cores: 2
+        memory: 4096
+        scsihw: virtio-scsi-single
+        scsi:
+          scsi0: "{{ vm_storage }}:60,iothread=1"
+        ide:
+          ide0: "{{ iso_virtio }},media=cdrom"
+          ide2: "{{ iso_win_server_2022 }},media=cdrom"
+        net:
+          net0: "virtio,bridge={{ lab_bridge }},firewall=0"
+        boot: order=ide2;scsi0
+        ostype: win11
+        agent: "enabled=1"
+        onboot: false
+        state: present
+      register: srvfiles_result
+
+    - name: SRV-FILES creation result
+      ansible.builtin.debug:
+        msg: "SRV-FILES (VMID 32033): {{ srvfiles_result.msg | default('created') }}"
+
+    # ------------------------------------------------------------------
+    # VM 32034 — SRV-WMS-APP (Ubuntu 22.04)
+    # BIOS SeaBIOS
+    # ------------------------------------------------------------------
+    - name: Create VM 32034 — SRV-WMS-APP (Ubuntu 22.04)
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_port: "{{ proxmox_api_port }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_password: "{{ proxmox_api_password }}"
+        validate_certs: false
+        node: "{{ proxmox_node }}"
+        pool: "{{ proxmox_pool }}"
+        vmid: 32034
+        name: B3-MSPR2-GRP2-SRV-WMS-APP
+        tags:
+          - "{{ vm_tag }}"
+        bios: seabios
+        cores: 2
+        memory: 2048
+        scsihw: virtio-scsi-single
+        scsi:
+          scsi0: "{{ vm_storage }}:20,iothread=1"
+        ide:
+          ide2: "{{ iso_ubuntu_2204 }},media=cdrom"
+        net:
+          net0: "virtio,bridge={{ lab_bridge }},firewall=0"
+        boot: order=ide2;scsi0
+        ostype: l26
+        agent: "enabled=1"
+        onboot: false
+        state: present
+      register: wmsapp_result
+
+    - name: SRV-WMS-APP creation result
+      ansible.builtin.debug:
+        msg: "SRV-WMS-APP (VMID 32034): {{ wmsapp_result.msg | default('created') }}"
+
+    # ------------------------------------------------------------------
+    # VM 32035 — PC-ENTREPOT-01 (Windows 10)
+    # UEFI/OVMF + q35
+    # ------------------------------------------------------------------
+    - name: Create VM 32035 — PC-ENTREPOT-01 (Windows 10)
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_port: "{{ proxmox_api_port }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_password: "{{ proxmox_api_password }}"
+        validate_certs: false
+        node: "{{ proxmox_node }}"
+        pool: "{{ proxmox_pool }}"
+        vmid: 32035
+        name: B3-MSPR2-GRP2-PC-ENTREPOT-01
+        tags:
+          - "{{ vm_tag }}"
+        machine: q35
+        bios: ovmf
+        efidisk0:
+          storage: "{{ vm_storage }}"
+          format: raw
+          efitype: 4m
+          pre_enrolled_keys: false
+        cores: 2
+        memory: 4096
+        scsihw: virtio-scsi-single
+        scsi:
+          scsi0: "{{ vm_storage }}:40,iothread=1"
+        ide:
+          ide0: "{{ iso_virtio }},media=cdrom"
+          ide2: "{{ iso_win10 }},media=cdrom"
+        net:
+          net0: "virtio,bridge={{ lab_bridge }},firewall=0"
+        boot: order=ide2;scsi0
+        ostype: win10
+        agent: "enabled=1"
+        onboot: false
+        state: present
+      register: entrepot_result
+
+    - name: PC-ENTREPOT-01 creation result
+      ansible.builtin.debug:
+        msg: "PC-ENTREPOT-01 (VMID 32035): {{ entrepot_result.msg | default('created') }}"
+
+    # ------------------------------------------------------------------
+    # VM 32036 — SRV-BACKUP (Ubuntu 22.04)
+    # BIOS SeaBIOS
+    # ------------------------------------------------------------------
+    - name: Create VM 32036 — SRV-BACKUP (Ubuntu 22.04)
+      community.general.proxmox_kvm:
+        api_host: "{{ proxmox_api_host }}"
+        api_port: "{{ proxmox_api_port }}"
+        api_user: "{{ proxmox_api_user }}"
+        api_password: "{{ proxmox_api_password }}"
+        validate_certs: false
+        node: "{{ proxmox_node }}"
+        pool: "{{ proxmox_pool }}"
+        vmid: 32036
+        name: B3-MSPR2-GRP2-SRV-BACKUP
+        tags:
+          - "{{ vm_tag }}"
+        bios: seabios
+        cores: 2
+        memory: 2048
+        scsihw: virtio-scsi-single
+        scsi:
+          scsi0: "{{ vm_storage }}:30,iothread=1"
+        ide:
+          ide2: "{{ iso_ubuntu_2204 }},media=cdrom"
+        net:
+          net0: "virtio,bridge={{ lab_bridge }},firewall=0"
+        boot: order=ide2;scsi0
+        ostype: l26
+        agent: "enabled=1"
+        onboot: false
+        state: present
+      register: backup_result
+
+    - name: SRV-BACKUP creation result
+      ansible.builtin.debug:
+        msg: "SRV-BACKUP (VMID 32036): {{ backup_result.msg | default('created') }}"
 
     # ------------------------------------------------------------------
     # Summary
@@ -217,15 +330,11 @@
     - name: Display summary
       ansible.builtin.debug:
         msg: |
-          === NTL Lab VMs Created ===
-          VMID 1010 - DC01          - Windows Server 2022 - 192.168.10.10
-          VMID 1021 - WMS-DB        - Ubuntu 22.04        - 192.168.10.21
-          VMID 1050 - PC-SIEGE-01   - Windows 10          - 192.168.10.50
-
-          Next steps:
-          1. Open Proxmox console for each VM
-          2. Install OS from ISO (follow installers)
-          3. Configure static IPs
-          4. Run post-install playbooks:
-             ansible-playbook playbooks/02-configure-dc01.yml --ask-vault-pass
-             ansible-playbook playbooks/03-configure-wmsdb.yml --ask-vault-pass
+          === NTL Lab VMs Created (tag: {{ vm_tag }}) ===
+          VMID 32029 - B3-MSPR2-GRP2-DC01           - Windows Server 2022
+          VMID 32030 - B3-MSPR2-GRP2-WMS-DB         - Ubuntu 22.04
+          VMID 32031 - B3-MSPR2-GRP2-PC-SIEGE-01    - Windows 10
+          VMID 32033 - B3-MSPR2-GRP2-SRV-FILES      - Windows Server 2022
+          VMID 32034 - B3-MSPR2-GRP2-SRV-WMS-APP    - Ubuntu 22.04
+          VMID 32035 - B3-MSPR2-GRP2-PC-ENTREPOT-01 - Windows 10
+          VMID 32036 - B3-MSPR2-GRP2-SRV-BACKUP     - Ubuntu 22.04
