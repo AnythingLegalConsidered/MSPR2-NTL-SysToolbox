@@ -189,6 +189,7 @@
           scsi0: "{{ vm_storage }}:60,iothread=1"
         ide:
           ide0: "{{ iso_virtio }},media=cdrom"
+          ide1: "{{ iso_autoinstall_srvfiles }},media=cdrom"
           ide2: "{{ iso_win_server_2022 }},media=cdrom"
         net:
           net0: "virtio,bridge={{ lab_bridge }},firewall=0"
@@ -227,6 +228,7 @@
         scsi:
           scsi0: "{{ vm_storage }}:20,iothread=1"
         ide:
+          ide0: "{{ iso_autoinstall_wmsapp }},media=cdrom"
           ide2: "{{ iso_ubuntu_2204 }},media=cdrom"
         net:
           net0: "virtio,bridge={{ lab_bridge }},firewall=0"
@@ -272,6 +274,7 @@
           scsi0: "{{ vm_storage }}:40,iothread=1"
         ide:
           ide0: "{{ iso_virtio }},media=cdrom"
+          ide1: "{{ iso_autoinstall_entrepot01 }},media=cdrom"
           ide2: "{{ iso_win10 }},media=cdrom"
         net:
           net0: "virtio,bridge={{ lab_bridge }},firewall=0"
@@ -310,6 +313,7 @@
         scsi:
           scsi0: "{{ vm_storage }}:30,iothread=1"
         ide:
+          ide0: "{{ iso_autoinstall_backup }},media=cdrom"
           ide2: "{{ iso_ubuntu_2204 }},media=cdrom"
         net:
           net0: "virtio,bridge={{ lab_bridge }},firewall=0"

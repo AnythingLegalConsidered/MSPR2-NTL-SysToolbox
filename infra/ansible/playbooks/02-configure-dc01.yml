@@ -229,17 +229,19 @@
           $scriptContent = @'
           @echo off
           REM NTL Login Script — Mapped network drives
-          REM Commun drive for everyone
+          REM K: Commun drive for everyone
           net use K: \\SRV-FILES\Commun /persistent:yes 2>nul
 
-          REM Group-specific drives
-          net group "GRP-WMS-Users" %USERNAME% /domain >nul 2>&1
+          REM L: Siege share (GRP-WMS-Users)
+          net group "GRP-WMS-Users" /domain | find /i "%USERNAME%" >nul 2>&1
           if %ERRORLEVEL% EQU 0 net use L: \\SRV-FILES\Siege /persistent:yes 2>nul
 
-          net group "GRP-Entrepot" %USERNAME% /domain >nul 2>&1
-          if %ERRORLEVEL% EQU 0 net use L: \\SRV-FILES\Entrepot /persistent:yes 2>nul
+          REM N: Entrepot share (GRP-Entrepot)
+          net group "GRP-Entrepot" /domain | find /i "%USERNAME%" >nul 2>&1
+          if %ERRORLEVEL% EQU 0 net use N: \\SRV-FILES\Entrepot /persistent:yes 2>nul
 
-          net group "GRP-IT-Admins" %USERNAME% /domain >nul 2>&1
+          REM M: IT share (GRP-IT-Admins)
+          net group "GRP-IT-Admins" /domain | find /i "%USERNAME%" >nul 2>&1
           if %ERRORLEVEL% EQU 0 net use M: \\SRV-FILES\IT /persistent:yes 2>nul
           '@
           Set-Content -Path "$netlogon\ntl-login.bat" -Value $scriptContent -Encoding ASCII
@@ -262,4 +264,4 @@
           OUs: NTL-Users (Siege, Entrepot), NTL-Computers, NTL-Groups
           Users: jdupont, mmartin, pdurand, sleroy, tbernard, cmoreau, lpetit, eroux
           Groups: GRP-IT-Admins, GRP-WMS-Users, GRP-Entrepot, GRP-Comptabilite, GRP-RH, GRP-Direction
-          Login script: ntl-login.bat (K: Commun, L: group-specific, M: IT)
+          Login script: ntl-login.bat (K: Commun, L: Siege, N: Entrepot, M: IT)
