@@ -5,11 +5,11 @@ Responsable: Zaid
 
 import csv
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
 
+from src.interfaces import EXIT_CRITICAL, EXIT_OK, EXIT_UNKNOWN, EXIT_WARNING
 from src.modules.audit import (
     _get_eol_status,
     audit_from_csv,
@@ -17,8 +17,6 @@ from src.modules.audit import (
     list_os_eol,
     list_os_eol_action,
 )
-from src.interfaces import EXIT_OK, EXIT_WARNING, EXIT_CRITICAL, EXIT_UNKNOWN
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
