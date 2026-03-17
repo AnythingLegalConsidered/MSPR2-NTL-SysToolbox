@@ -278,6 +278,8 @@ def export_table_csv(config: dict, table_name: str) -> dict[str, Any]:
 
         cursor.execute(f"SELECT * FROM `{table_name}`")  # noqa: S608
         rows = cursor.fetchall()
+        if cursor.description is None:
+            raise RuntimeError(f"No description returned for table {table_name!r}")
         columns = [desc[0] for desc in cursor.description]
 
         # Save CSV
