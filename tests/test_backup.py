@@ -9,9 +9,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.interfaces import EXIT_CRITICAL, EXIT_OK, ModuleConfigError
 from src.modules.backup import _sha256, backup_database, export_table_csv, run
-from src.interfaces import EXIT_OK, EXIT_CRITICAL, EXIT_UNKNOWN, ModuleConfigError
-
 
 # ---------------------------------------------------------------------------
 # Config fixture
