@@ -48,9 +48,9 @@ MAIN_MENU = """
 DIAGNOSTIC_MENU = """
 ── Diagnostic ──────────────────────
   1. Vérifier AD/DNS (DC01)
-  2. Vérifier MySQL (WMS-DB)
-  3. Vérifier Windows Server (métriques)
-  4. Vérifier Ubuntu (métriques)
+  2. Vérifier MySQL (port + version)
+  3. Vérifier services Linux (multi-ports)
+  4. Vérifier HTTP/HTTPS
   0. Retour
 """
 
@@ -73,9 +73,9 @@ AUDIT_MENU = """
 # Maps: sub-menu choice -> (function_kwarg_key, default_target_prompt)
 DIAGNOSTIC_ACTIONS: dict[str, tuple[str, str]] = {
     "1": ("check_ad_dns", "IP du DC (défaut: dc01) : "),
-    "2": ("check_mysql", "IP du serveur MySQL (défaut: wms_db) : "),
-    "3": ("check_windows_server", "IP du serveur Windows : "),
-    "4": ("check_ubuntu", "IP du serveur Ubuntu : "),
+    "2": ("check_mysql", "IP du serveur MySQL : "),
+    "3": ("check_linux", "IP du serveur Linux : "),
+    "4": ("check_http", "IP[:port] du serveur HTTP (défaut: port 80) : "),
 }
 
 BACKUP_ACTIONS: dict[str, tuple[str, str]] = {
@@ -152,14 +152,15 @@ def _handle_submenu(
 def _get_default_target(action: str, config: dict[str, Any]) -> str:
     """Return a sensible default target based on the action and config."""
     targets = config.get("targets", {})
+    discovery_range = config.get("discovery", {}).get("network_range", "172.16.135.0/24")
     defaults: dict[str, str] = {
         "check_ad_dns": targets.get("dc01", {}).get("host", "192.168.10.10"),
-        "check_mysql": targets.get("wms_db", {}).get("host", "192.168.10.21"),
-        "check_windows_server": targets.get("dc01", {}).get("host", "192.168.10.10"),
-        "check_ubuntu": targets.get("wms_db", {}).get("host", "192.168.10.21"),
+        "check_mysql": config.get("mysql", {}).get("host", "172.16.135.17"),
+        "check_linux": "172.16.135.12",
+        "check_http": "172.16.135.12",
         "backup_database": config.get("mysql", {}).get("database", "wms"),
         "export_table_csv": "shipments",
-        "scan_network": config.get("audit", {}).get("network_range", "192.168.10.0/24"),
+        "scan_network": config.get("audit", {}).get("network_range", discovery_range),
         "list_os_eol": "all",
         "audit_from_csv": config.get("audit", {}).get("inventory_csv", "./data/sample_inventory.csv"),
         "generate_report": "all",

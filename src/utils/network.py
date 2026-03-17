@@ -1,14 +1,16 @@
 """
 Network utility helpers used by diagnostic and audit modules.
 
-Provides port checking, ping, and DNS resolution.
+Provides port checking, ping, DNS resolution, banner grabbing, and HTTP checks.
 """
 
 import logging
 import platform
 import socket
+import struct
 import subprocess
-from typing import Optional
+import time
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -101,3 +103,125 @@ def resolve_dns(
     except socket.gaierror as exc:
         logger.debug("DNS resolution failed for %s: %s", hostname, exc)
         return None
+
+
+def grab_banner(host: str, port: int, timeout: int = 3) -> Optional[str]:
+    """Read the initial banner sent by a service (SSH version, MySQL greeting, etc.).
+
+    Args:
+        host: IP address or hostname.
+        port: TCP port number.
+        timeout: Timeout in seconds.
+
+    Returns:
+        Banner string (decoded, stripped), or None on failure.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(timeout)
+            sock.connect((host, port))
+            data = sock.recv(1024)
+            if data:
+                banner = data.decode("utf-8", errors="replace").strip()
+                logger.debug("Banner on %s:%d -> %s", host, port, banner[:80])
+                return banner
+    except (OSError, TimeoutError) as exc:
+        logger.debug("Banner grab failed on %s:%d: %s", host, port, exc)
+    return None
+
+
+def grab_mysql_version(host: str, port: int = 3306, timeout: int = 3) -> Optional[str]:
+    """Read the MySQL greeting packet and extract the server version.
+
+    The MySQL protocol sends a handshake packet upon connection.
+    No authentication is needed to read the version string.
+
+    Args:
+        host: IP address or hostname.
+        port: MySQL port (default 3306).
+        timeout: Timeout in seconds.
+
+    Returns:
+        MySQL version string, or None on failure.
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(timeout)
+            sock.connect((host, port))
+            data = sock.recv(1024)
+            if len(data) < 5:
+                return None
+            # MySQL packet: 3 bytes length + 1 byte seq + 1 byte protocol + null-terminated version
+            version_start = 5
+            version_end = data.index(b"\x00", version_start)
+            version = data[version_start:version_end].decode("utf-8", errors="replace")
+            logger.debug("MySQL version on %s:%d -> %s", host, port, version)
+            return version
+    except (OSError, TimeoutError, ValueError, struct.error) as exc:
+        logger.debug("MySQL version grab failed on %s:%d: %s", host, port, exc)
+    return None
+
+
+def http_check(
+    host: str, port: int = 80, path: str = "/", timeout: int = 5
+) -> dict[str, Any]:
+    """Perform an HTTP GET request and return response metadata.
+
+    Args:
+        host: IP address or hostname.
+        port: HTTP port (default 80).
+        path: URL path to request.
+        timeout: Timeout in seconds.
+
+    Returns:
+        Dict with keys: ok, status_code, server, content_length, response_time_ms.
+    """
+    import urllib.error
+    import urllib.request
+
+    scheme = "https" if port == 443 else "http"
+    url = f"{scheme}://{host}:{port}{path}"
+
+    try:
+        import ssl
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(url, method="GET")
+        req.add_header("User-Agent", "NTL-SysToolbox/1.0")
+
+        start = time.monotonic()
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+            body = resp.read()
+            elapsed = (time.monotonic() - start) * 1000
+
+            result: dict[str, Any] = {
+                "ok": True,
+                "status_code": resp.status,
+                "server": resp.headers.get("Server", ""),
+                "content_length": len(body),
+                "response_time_ms": round(elapsed, 1),
+            }
+            logger.debug("HTTP check %s -> %s", url, result)
+            return result
+
+    except urllib.error.HTTPError as exc:
+        return {
+            "ok": False,
+            "status_code": exc.code,
+            "server": exc.headers.get("Server", "") if exc.headers else "",
+            "content_length": 0,
+            "response_time_ms": 0.0,
+            "error": str(exc),
+        }
+    except Exception as exc:
+        logger.debug("HTTP check failed %s: %s", url, exc)
+        return {
+            "ok": False,
+            "status_code": 0,
+            "server": "",
+            "content_length": 0,
+            "response_time_ms": 0.0,
+            "error": str(exc),
+        }
