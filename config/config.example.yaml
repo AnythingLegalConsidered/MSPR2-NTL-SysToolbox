@@ -31,7 +31,19 @@ ssh:
   password: "${NTL_SSH_PASSWORD}"
   # key_file: ~/.ssh/id_rsa  # alternative au password
 
+discovery:
+  network_range: "172.16.135.0/24"    # Réseau école par défaut
+  timeout: 2
+  ports:
+    - 22    # SSH
+    - 80    # HTTP
+    - 443   # HTTPS
+    - 3306  # MySQL
+    - 5432  # PostgreSQL
+    - 8006  # Proxmox
+    - 8080  # HTTP proxy
+
 audit:
-  network_range: "192.168.10.0/24"
+  network_range: "172.16.135.0/24"
   eol_database: "./data/eol_database.json"
   inventory_csv: "./data/sample_inventory.csv"

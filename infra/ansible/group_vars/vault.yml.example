@@ -1,0 +1,13 @@
+---
+# ============================================================
+# ANSIBLE VAULT — Copy this file to vault.yml and fill in values:
+#   cp vault.yml.example vault.yml
+#   # edit vault.yml with your passwords
+#   ansible-vault encrypt vault.yml
+# ============================================================
+
+vault_proxmox_password: "CHANGE_ME"
+vault_windows_admin_password: "CHANGE_ME"
+vault_sysadmin_password: "CHANGE_ME"
+vault_mysql_wms_password: "CHANGE_ME"
+vault_safe_mode_password: "CHANGE_ME"
