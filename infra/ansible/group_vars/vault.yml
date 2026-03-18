@@ -1,0 +1,6 @@
+---
+vault_proxmox_password: "Passw0rd!"
+vault_windows_admin_password: "Admin123!"
+vault_sysadmin_password: "Sysadmin123!"
+vault_mysql_wms_password: "Mysql123!"
+vault_safe_mode_password: "Dsrm123!"

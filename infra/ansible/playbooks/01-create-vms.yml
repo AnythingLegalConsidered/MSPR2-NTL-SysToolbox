@@ -29,7 +29,7 @@
     # UEFI/OVMF + TPM 2.0 + q35
     # ------------------------------------------------------------------
     - name: Create VM 32029 — DC01 (Windows Server 2022)
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
         api_user: "{{ proxmox_api_user }}"
@@ -77,7 +77,7 @@
     # BIOS SeaBIOS
     # ------------------------------------------------------------------
     - name: Create VM 32030 — WMS-DB (Ubuntu 22.04)
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
         api_user: "{{ proxmox_api_user }}"
@@ -115,7 +115,7 @@
     # UEFI/OVMF + q35
     # ------------------------------------------------------------------
     - name: Create VM 32031 — PC-SIEGE-01 (Windows 10)
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
         api_user: "{{ proxmox_api_user }}"
@@ -160,7 +160,7 @@
     # UEFI/OVMF + TPM 2.0 + q35
     # ------------------------------------------------------------------
     - name: Create VM 32033 — SRV-FILES (Windows Server 2022)
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
         api_user: "{{ proxmox_api_user }}"
@@ -209,7 +209,7 @@
     # BIOS SeaBIOS
     # ------------------------------------------------------------------
     - name: Create VM 32034 — SRV-WMS-APP (Ubuntu 22.04)
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
         api_user: "{{ proxmox_api_user }}"
@@ -248,7 +248,7 @@
     # UEFI/OVMF + q35
     # ------------------------------------------------------------------
     - name: Create VM 32035 — PC-ENTREPOT-01 (Windows 10)
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
         api_user: "{{ proxmox_api_user }}"
@@ -294,7 +294,7 @@
     # BIOS SeaBIOS
     # ------------------------------------------------------------------
     - name: Create VM 32036 — SRV-BACKUP (Ubuntu 22.04)
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         api_host: "{{ proxmox_api_host }}"
         api_port: "{{ proxmox_api_port }}"
         api_user: "{{ proxmox_api_user }}"

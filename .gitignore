@@ -1,7 +1,6 @@
 # Secrets
 .env
 config/config.yaml
-infra/ansible/group_vars/vault.yml
 
 # Python
 __pycache__/
