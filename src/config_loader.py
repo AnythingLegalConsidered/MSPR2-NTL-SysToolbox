@@ -18,14 +18,26 @@ from src.interfaces import ModuleConfigError
 logger = logging.getLogger(__name__)
 
 _ENV_VAR_PATTERN = re.compile(r"\$\{([^}]+)\}")
+_MAX_RESOLVE_DEPTH = 20
 
 
-def _resolve_env_vars(data: Any, unresolved: list[str] | None = None) -> Any:
+def _resolve_env_vars(
+    data: Any, unresolved: list[str] | None = None, _depth: int = 0,
+) -> Any:
     """Recursively replace ${VAR} placeholders with environment variables.
 
     If a variable is not set, logs a warning and keeps the raw placeholder.
     When unresolved list is provided, collects unresolved variable names.
+
+    Raises:
+        ModuleConfigError: If recursion depth exceeds _MAX_RESOLVE_DEPTH.
     """
+    if _depth > _MAX_RESOLVE_DEPTH:
+        raise ModuleConfigError(
+            f"Config nesting too deep (>{_MAX_RESOLVE_DEPTH} levels). "
+            "Check for circular references in config."
+        )
+
     if isinstance(data, str):
         def _replacer(match: re.Match[str]) -> str:
             var_name = match.group(1)
@@ -39,10 +51,13 @@ def _resolve_env_vars(data: Any, unresolved: list[str] | None = None) -> Any:
         return _ENV_VAR_PATTERN.sub(_replacer, data)
 
     if isinstance(data, dict):
-        return {key: _resolve_env_vars(val, unresolved) for key, val in data.items()}
+        return {
+            key: _resolve_env_vars(val, unresolved, _depth + 1)
+            for key, val in data.items()
+        }
 
     if isinstance(data, list):
-        return [_resolve_env_vars(item, unresolved) for item in data]
+        return [_resolve_env_vars(item, unresolved, _depth + 1) for item in data]
 
     return data
 

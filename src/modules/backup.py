@@ -20,6 +20,7 @@ from src.interfaces import (
     ModuleConfigError,
     build_result,
 )
+from src.utils.validation import validate_path_within
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,10 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
 
     timeout = config.get("general", {}).get("timeout", 10)
     output_dir = config.get("general", {}).get("output_dir", "./output")
+    try:
+        validate_path_within(output_dir, [os.getcwd(), os.path.realpath(output_dir)])
+    except ValueError as exc:
+        raise ModuleConfigError(str(exc)) from exc
 
     host = mysql_cfg.get("host", "127.0.0.1")
     port = str(mysql_cfg.get("port", 3306))
@@ -108,6 +113,10 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
             database,
         ]
 
+        # SECURITY NOTE: MYSQL_PWD via env var is visible in /proc/PID/environ on Linux.
+        # However, this is the recommended approach per MySQL documentation:
+        # - --password on CLI is visible in `ps aux` (worse)
+        # - MYSQL_PWD env var is the least-bad option for automated tools.
         env = os.environ.copy()
         if password:
             env["MYSQL_PWD"] = password
@@ -225,6 +234,11 @@ def export_table_csv(config: dict, target: str) -> dict[str, Any]:
 
     timeout = config.get("general", {}).get("timeout", 10)
     output_dir = config.get("general", {}).get("output_dir", "./output")
+    try:
+        validate_path_within(output_dir, [os.getcwd(), os.path.realpath(output_dir)])
+    except ValueError as exc:
+        raise ModuleConfigError(str(exc)) from exc
+
     database = mysql_cfg.get("database", "wms")
 
     export_dir = Path(output_dir) / "exports"
@@ -245,8 +259,10 @@ def export_table_csv(config: dict, target: str) -> dict[str, Any]:
         )
         try:
             cursor = conn.cursor()
+            # Safety assertion: _VALID_TABLE_RE validated at function entry
+            assert _VALID_TABLE_RE.match(target), f"Table name validation bypass: {target!r}"
             cursor.execute(f"SELECT * FROM `{target}`")  # noqa: S608
-            columns = [desc[0] for desc in cursor.description]
+            columns = [desc[0] for desc in cursor.description]  # type: ignore[union-attr]
             rows = cursor.fetchall()
             cursor.close()
         finally:

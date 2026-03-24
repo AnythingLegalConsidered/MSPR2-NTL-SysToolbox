@@ -104,3 +104,33 @@ class TestCustomExceptions:
     def test_execution_error_message(self):
         err = ModuleExecutionError("timeout")
         assert str(err) == "timeout"
+
+
+class TestBuildResultValidation:
+    def test_rejects_invalid_status(self):
+        import pytest
+
+        with pytest.raises(ValueError, match="Invalid status"):
+            build_result(
+                module="diagnostic",
+                function="check_dns",
+                status="FOOBAR",
+                exit_code=EXIT_OK,
+                target="1.2.3.4",
+                details={},
+                message="test",
+            )
+
+    def test_rejects_invalid_exit_code(self):
+        import pytest
+
+        with pytest.raises(ValueError, match="Invalid exit_code"):
+            build_result(
+                module="diagnostic",
+                function="check_dns",
+                status="OK",
+                exit_code=99,
+                target="1.2.3.4",
+                details={},
+                message="test",
+            )

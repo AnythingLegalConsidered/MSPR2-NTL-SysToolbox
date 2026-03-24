@@ -5,6 +5,8 @@ Entry point: python src/main.py
 """
 
 import logging
+import os
+import re
 import sys
 from typing import Any
 
@@ -34,41 +36,60 @@ except ImportError:
 
 # --- Menu helpers -----------------------------------------------------------
 
-MAIN_MENU = """
-╔══════════════════════════════════╗
-║        NTL-SysToolbox           ║
-╠══════════════════════════════════╣
-║  1. Diagnostic                  ║
-║  2. Backup                      ║
-║  3. Audit                       ║
-║  0. Quitter                     ║
-╚══════════════════════════════════╝
-"""
+try:
+    from rich.console import Console
+    from rich.table import Table
 
-DIAGNOSTIC_MENU = """
-── Diagnostic ──────────────────────
-  1. Vérifier AD/DNS (DC01)
-  2. Vérifier MySQL (port + version)
-  3. Vérifier services Linux (multi-ports)
-  4. Vérifier HTTP/HTTPS
-  0. Retour
-"""
+    _console = Console()
+    _HAS_RICH = True
+except ImportError:
+    _HAS_RICH = False
 
-BACKUP_MENU = """
-── Backup ──────────────────────────
-  1. Backup base de données (dump SQL)
-  2. Export table en CSV
-  0. Retour
-"""
 
-AUDIT_MENU = """
-── Audit ───────────────────────────
-  1. Scanner le réseau
-  2. Lister les dates EOL
-  3. Auditer depuis un CSV
-  4. Générer le rapport complet
-  0. Retour
-"""
+def _print_menu(title: str, items: list[tuple[str, str]]) -> None:
+    """Print a menu using Rich tables if available, plain text otherwise."""
+    if _HAS_RICH:
+        table = Table(title=title, show_header=False, padding=(0, 2))
+        table.add_column(style="cyan bold", width=3)
+        table.add_column()
+        for key, label in items:
+            table.add_row(key, label)
+        _console.print(table)
+    else:
+        print(f"\n── {title} ──")
+        for key, label in items:
+            print(f"  {key}. {label}")
+        print()
+
+
+MAIN_MENU_ITEMS = [
+    ("1", "Diagnostic"),
+    ("2", "Backup"),
+    ("3", "Audit"),
+    ("0", "Quitter"),
+]
+
+DIAGNOSTIC_MENU_ITEMS = [
+    ("1", "Vérifier AD/DNS (DC01)"),
+    ("2", "Vérifier MySQL (port + version)"),
+    ("3", "Vérifier services Linux (multi-ports)"),
+    ("4", "Vérifier HTTP/HTTPS"),
+    ("0", "Retour"),
+]
+
+BACKUP_MENU_ITEMS = [
+    ("1", "Backup base de données (dump SQL)"),
+    ("2", "Export table en CSV"),
+    ("0", "Retour"),
+]
+
+AUDIT_MENU_ITEMS = [
+    ("1", "Scanner le réseau"),
+    ("2", "Lister les dates EOL"),
+    ("3", "Auditer depuis un CSV"),
+    ("4", "Générer le rapport complet"),
+    ("0", "Retour"),
+]
 
 # Maps: sub-menu choice -> (function_kwarg_key, default_target_prompt)
 DIAGNOSTIC_ACTIONS: dict[str, tuple[str, str]] = {
@@ -89,6 +110,23 @@ AUDIT_ACTIONS: dict[str, tuple[str, str]] = {
     "3": ("audit_from_csv", "Chemin du CSV (défaut: config) : "),
     "4": ("generate_report", "Appuyez sur Entrée pour continuer : "),
 }
+
+
+_SAFE_TARGET_RE = re.compile(r"^[a-zA-Z0-9._:/%\-]+$")
+_MAX_TARGET_LEN = 255
+
+
+def _validate_target(target: str) -> str | None:
+    """Return error message if target is invalid, None if OK."""
+    if not target:
+        return None  # Empty = use default
+    if len(target) > _MAX_TARGET_LEN:
+        return f"Cible trop longue ({len(target)} chars, max {_MAX_TARGET_LEN})"
+    if ".." in target:
+        return f"Cible contient '..': {target!r}"
+    if not _SAFE_TARGET_RE.match(target):
+        return f"Cible contient des caractères invalides: {target!r}"
+    return None
 
 
 def _prompt(text: str) -> str:
@@ -132,7 +170,8 @@ def _run_module_action(
 
 
 def _handle_submenu(
-    menu_text: str,
+    menu_title: str,
+    menu_items: list[tuple[str, str]],
     actions: dict[str, tuple[str, str]],
     module: Any,
     module_name: str,
@@ -140,7 +179,7 @@ def _handle_submenu(
 ) -> None:
     """Display a sub-menu loop for a given module."""
     while True:
-        print(menu_text)
+        _print_menu(menu_title, menu_items)
         choice = _prompt("  Choix : ")
         if choice == "0":
             return
@@ -150,6 +189,10 @@ def _handle_submenu(
 
         action, target_prompt = actions[choice]
         target = _prompt(f"  {target_prompt}")
+        err = _validate_target(target)
+        if err:
+            print(f"\n  {err}\n")
+            continue
         if not target:
             target = _get_default_target(action, config)
         _run_module_action(module, module_name, action, config, target)
@@ -182,6 +225,11 @@ def main() -> None:
     config_path = "config/config.yaml"
     if len(sys.argv) > 1 and sys.argv[1] == "--config" and len(sys.argv) > 2:
         config_path = sys.argv[2]
+        resolved = os.path.realpath(config_path)
+        cwd = os.path.realpath(".")
+        if not resolved.startswith(cwd):
+            print("Erreur: le fichier config doit être dans le répertoire du projet")
+            sys.exit(1)
 
     try:
         config = load_config(config_path)
@@ -196,18 +244,18 @@ def main() -> None:
     logger.info("NTL-SysToolbox started")
 
     while True:
-        print(MAIN_MENU)
+        _print_menu("NTL-SysToolbox", MAIN_MENU_ITEMS)
         choice = _prompt("  Choix : ")
 
         if choice == "0":
             print("\nAu revoir!")
             break
         elif choice == "1":
-            _handle_submenu(DIAGNOSTIC_MENU, DIAGNOSTIC_ACTIONS, diagnostic, "Diagnostic", config)
+            _handle_submenu("Diagnostic", DIAGNOSTIC_MENU_ITEMS, DIAGNOSTIC_ACTIONS, diagnostic, "Diagnostic", config)
         elif choice == "2":
-            _handle_submenu(BACKUP_MENU, BACKUP_ACTIONS, backup, "Backup", config)
+            _handle_submenu("Backup", BACKUP_MENU_ITEMS, BACKUP_ACTIONS, backup, "Backup", config)
         elif choice == "3":
-            _handle_submenu(AUDIT_MENU, AUDIT_ACTIONS, audit, "Audit", config)
+            _handle_submenu("Audit", AUDIT_MENU_ITEMS, AUDIT_ACTIONS, audit, "Audit", config)
         else:
             print("\n  Choix invalide.\n")
 

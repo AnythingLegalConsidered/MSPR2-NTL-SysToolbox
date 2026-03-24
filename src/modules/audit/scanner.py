@@ -6,16 +6,13 @@ import csv
 import json
 import logging
 import os
-import re
 from datetime import datetime, timezone
 from typing import Any
 
 from src.utils.network import check_port, resolve_dns
+from src.utils.validation import validate_network_range, validate_path_within
 
 logger = logging.getLogger(__name__)
-
-# Regex for valid nmap target: IPs, CIDR, ranges (e.g. 192.168.1.0/24, 10.0.0.1-50)
-_VALID_TARGET_RE = re.compile(r'^[\d./,:-]+$')
 
 # Valid TCP port range
 _MIN_PORT = 1
@@ -28,9 +25,7 @@ def _validate_target_range(target_range: str) -> str | None:
     Returns:
         Error message if invalid, None if valid.
     """
-    if not target_range or not _VALID_TARGET_RE.match(target_range):
-        return f"Format de plage réseau invalide: {target_range!r}"
-    return None
+    return validate_network_range(target_range)
 
 
 def _validate_ports(ports: list[Any]) -> list[int]:
@@ -189,6 +184,20 @@ def audit_from_csv(config: dict, csv_path: str) -> dict[str, Any]:
     if not csv_path or csv_path in ("all", ""):
         csv_path = config.get("audit", {}).get("inventory_csv", "./data/sample_inventory.csv")
 
+    # Validate CSV path against path traversal
+    allowed_dirs = [
+        os.path.realpath("./data"),
+        os.path.realpath(config.get("general", {}).get("output_dir", "./output")),
+    ]
+    try:
+        validate_path_within(csv_path, allowed_dirs)
+    except ValueError:
+        logger.error("CSV path outside allowed directories: %s", csv_path)
+        return {
+            "total_hosts": 0, "reachable": 0, "unreachable": 0,
+            "eol_hosts": 0, "hosts": [], "error": f"Chemin CSV non autorisé: {csv_path}",
+        }
+
     try:
         with open(csv_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -204,7 +213,7 @@ def audit_from_csv(config: dict, csv_path: str) -> dict[str, Any]:
     eol_data = list_os_eol(config)
     eol_lookup: dict[str, bool] = {}
     for entry in eol_data.get("entries", []):
-        eol_lookup[entry["os_name"]] = entry["is_eol"]
+        eol_lookup[entry["os_name"].lower()] = entry["is_eol"]
 
     timeout = config.get("discovery", {}).get("timeout", 2)
     hosts = []
@@ -225,7 +234,7 @@ def audit_from_csv(config: dict, csv_path: str) -> dict[str, Any]:
                 ip = resolved
 
         full_os = f"{os_name} {os_version}".strip()
-        is_eol = eol_lookup.get(full_os, False)
+        is_eol = eol_lookup.get(full_os.lower(), False)
         if is_eol:
             eol_count += 1
 

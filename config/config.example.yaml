@@ -43,6 +43,10 @@ discovery:
     - 8006  # Proxmox
     - 8080  # HTTP proxy
 
+winrm:
+  user: "${NTL_WINRM_USER}"
+  password: "${NTL_WINRM_PASSWORD}"
+
 audit:
   network_range: "172.16.135.0/24"
   eol_database: "./data/eol_database.json"

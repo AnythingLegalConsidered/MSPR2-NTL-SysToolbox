@@ -5,7 +5,7 @@ Basé sur le travail de Blaise, étendu pour le réseau école.
 
 import logging
 import socket
-from typing import Any, Optional
+from typing import Any
 
 from src.utils.network import check_port, grab_banner, grab_mysql_version, http_check
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 def check_dns(
-    host: str, dns_server: Optional[str] = None, timeout: int = 3
+    host: str, dns_server: str | None = None, timeout: int = 3
 ) -> tuple[bool, str]:
     """Resolve hostname via DNS."""
     try:
@@ -33,7 +33,12 @@ def check_dns(
             answers = resolver.resolve(host, "A")
             return True, answers[0].to_text()
         else:
-            return True, socket.gethostbyname(host)
+            old_timeout = socket.getdefaulttimeout()
+            try:
+                socket.setdefaulttimeout(timeout)
+                return True, socket.gethostbyname(host)
+            finally:
+                socket.setdefaulttimeout(old_timeout)
     except Exception as e:
         return False, str(e)
 
@@ -60,8 +65,8 @@ def check_ldap(host: str) -> bool:
     try:
         from ldap3 import ALL, Connection, Server
 
-        server = Server(host, get_info=ALL)
-        conn = Connection(server, auto_bind=True)
+        server = Server(host, get_info=ALL, connect_timeout=10)
+        conn = Connection(server, auto_bind=True, receive_timeout=10)
         conn.unbind()
         return True
     except Exception:
@@ -81,7 +86,12 @@ def check_services(
     overall = "OK"
 
     try:
-        session = winrm.Session(host, auth=(username, password))
+        session = winrm.Session(
+            host,
+            auth=(username, password),
+            read_timeout_sec=30,
+            operation_timeout_sec=20,
+        )
 
         for service in SERVICES:
             ps = f"Get-Service -Name {service} | Select-Object -ExpandProperty Status"

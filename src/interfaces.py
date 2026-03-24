@@ -37,6 +37,10 @@ class ModuleExecutionError(Exception):
 # Result builder
 # ---------------------------------------------------------------------------
 
+_VALID_STATUSES = {"OK", "WARNING", "CRITICAL", "UNKNOWN"}
+_VALID_EXIT_CODES = {EXIT_OK, EXIT_WARNING, EXIT_CRITICAL, EXIT_UNKNOWN}
+
+
 def build_result(
     module: str,
     function: str,
@@ -60,7 +64,15 @@ def build_result(
 
     Returns:
         Standardized result dict.
+
+    Raises:
+        ValueError: If status or exit_code is invalid.
     """
+    if status not in _VALID_STATUSES:
+        raise ValueError(f"Invalid status {status!r}, must be one of {_VALID_STATUSES}")
+    if exit_code not in _VALID_EXIT_CODES:
+        raise ValueError(f"Invalid exit_code {exit_code!r}, must be one of {_VALID_EXIT_CODES}")
+
     return {
         "module": module,
         "function": function,

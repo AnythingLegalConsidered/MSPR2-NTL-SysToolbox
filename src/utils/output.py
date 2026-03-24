@@ -42,9 +42,11 @@ def save_result_json(result: dict[str, Any], output_dir: str = "./output") -> Pa
     logs_dir = Path(output_dir) / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
 
+    from src.utils.validation import sanitize_filename_part
+
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    module = result.get("module", "unknown")
-    function = result.get("function", "unknown")
+    module = sanitize_filename_part(result.get("module", "unknown"))
+    function = sanitize_filename_part(result.get("function", "unknown"))
     filename = f"{timestamp}_{module}_{function}.json"
 
     filepath = logs_dir / filename

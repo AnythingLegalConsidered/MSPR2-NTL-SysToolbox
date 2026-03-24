@@ -79,6 +79,8 @@ def _check_ad_dns(config: dict, target: str) -> dict[str, Any]:
         details["ldap"] = {"ok": ldap_ok}
 
         # Services WinRM (optionnel, nécessite credentials)
+        # Credentials resolved from env vars via config_loader._resolve_env_vars()
+        # Config should use ${NTL_WINRM_USER} / ${NTL_WINRM_PASSWORD} placeholders
         winrm_user = config.get("winrm", {}).get("user", "")
         winrm_pass = config.get("winrm", {}).get("password", "")
         if winrm_user and winrm_pass:
@@ -209,6 +211,8 @@ def _check_http(config: dict, target: str) -> dict[str, Any]:
     from .checks import check_http as _http_check
 
     try:
+        # NOTE: IPv6 addresses like [::1]:8080 are not supported.
+        # To support IPv6, use urllib.parse.urlsplit() instead.
         port = 80
         if ":" in target:
             parts = target.rsplit(":", 1)

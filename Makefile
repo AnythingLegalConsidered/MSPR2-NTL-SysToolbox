@@ -25,7 +25,7 @@ run:
 
 # Run tests with coverage
 test:
-	python -m pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=xml
+	python -m pytest tests/ -v --cov=src --cov-report=term-missing --cov-report=xml --cov-fail-under=50
 
 # Lint (ruff)
 lint:

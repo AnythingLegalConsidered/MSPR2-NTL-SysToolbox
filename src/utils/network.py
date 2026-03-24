@@ -9,7 +9,7 @@ import platform
 import socket
 import subprocess
 import time
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,10 @@ def check_port(host: str, port: int, timeout: int = 10) -> bool:
     Returns:
         True if the port is open, False otherwise.
     """
+    if not (1 <= port <= 65535):
+        logger.warning("Invalid port number: %d", port)
+        return False
+
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.settimeout(timeout)
@@ -73,8 +77,8 @@ def ping_host(host: str, timeout: int = 10) -> bool:
 
 
 def resolve_dns(
-    hostname: str, dns_server: Optional[str] = None
-) -> Optional[str]:
+    hostname: str, dns_server: str | None = None
+) -> str | None:
     """Resolve a hostname to an IP address.
 
     Uses dnspython when a specific DNS server is provided,
@@ -97,8 +101,18 @@ def resolve_dns(
             ip = str(answers[0])
             logger.debug("Resolved %s -> %s (via %s)", hostname, ip, dns_server)
             return ip
-        except Exception as exc:
+        except (
+            dns.resolver.NXDOMAIN,
+            dns.resolver.Timeout,
+            dns.resolver.NoAnswer,
+            dns.resolver.NoNameservers,
+            socket.gaierror,
+            OSError,
+        ) as exc:
             logger.debug("DNS resolution failed for %s via %s: %s", hostname, dns_server, exc)
+            return None
+        except Exception as exc:
+            logger.debug("Unexpected DNS error for %s via %s: %s", hostname, dns_server, exc)
             return None
 
     try:
@@ -110,7 +124,7 @@ def resolve_dns(
         return None
 
 
-def grab_banner(host: str, port: int, timeout: int = 3) -> Optional[str]:
+def grab_banner(host: str, port: int, timeout: int = 3) -> str | None:
     """Read the initial banner sent by a service (SSH version, MySQL greeting, etc.).
 
     Args:
@@ -135,7 +149,7 @@ def grab_banner(host: str, port: int, timeout: int = 3) -> Optional[str]:
     return None
 
 
-def grab_mysql_version(host: str, port: int = 3306, timeout: int = 3) -> Optional[str]:
+def grab_mysql_version(host: str, port: int = 3306, timeout: int = 3) -> str | None:
     """Read the MySQL greeting packet and extract the server version.
 
     The MySQL protocol sends a handshake packet upon connection.
@@ -229,7 +243,7 @@ def http_check(
             "response_time_ms": 0.0,
             "error": str(exc),
         }
-    except Exception as exc:
+    except (urllib.error.URLError, socket.timeout, ssl.SSLError, OSError) as exc:
         logger.debug("HTTP check failed %s: %s", url, exc)
         return {
             "ok": False,
