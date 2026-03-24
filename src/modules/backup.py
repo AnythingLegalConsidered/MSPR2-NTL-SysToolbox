@@ -6,6 +6,8 @@ Responsable: Ojvind
 
 import csv
 import logging
+import os
+import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -16,13 +18,15 @@ from src.interfaces import (
     EXIT_OK,
     EXIT_UNKNOWN,
     ModuleConfigError,
-    ModuleExecutionError,
     build_result,
 )
 
 logger = logging.getLogger(__name__)
 
 MODULE_NAME = "backup"
+
+# Regex for valid SQL table names (letters, digits, underscores, max 64 chars)
+_VALID_TABLE_RE = re.compile(r"^[a-zA-Z_]\w{0,63}$")
 
 
 # ---------------------------------------------------------------------------
@@ -37,9 +41,6 @@ def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
         config: Config complete chargee depuis config.yaml.
         target: Nom de la base ou de la table selon l'action.
         **kwargs: action = "backup_database" | "export_table_csv"
-
-    Raises:
-        ModuleExecutionError: Si l'action est inconnue.
     """
     action = kwargs.get("action", "")
     logger.info("Backup action=%s sur cible: %s", action, target)
@@ -49,7 +50,15 @@ def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
     elif action == "export_table_csv":
         return export_table_csv(config, target)
     else:
-        raise ModuleExecutionError(f"Action inconnue: {action}")
+        return build_result(
+            module=MODULE_NAME,
+            function=action or "run",
+            status="UNKNOWN",
+            exit_code=EXIT_UNKNOWN,
+            target=target,
+            details={},
+            message=f"Action '{action}' non reconnue.",
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -94,17 +103,21 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
             f"--host={host}",
             f"--port={port}",
             f"--user={user}",
-            f"--password={password}",
             "--single-transaction",
             "--routines",
             database,
         ]
+
+        env = os.environ.copy()
+        if password:
+            env["MYSQL_PWD"] = password
 
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=env,
         )
 
         if result.returncode != 0:
@@ -207,6 +220,9 @@ def export_table_csv(config: dict, target: str) -> dict[str, Any]:
     if not target:
         raise ModuleConfigError("Nom de table requis pour l'export CSV")
 
+    if not _VALID_TABLE_RE.match(target):
+        raise ModuleConfigError(f"Nom de table invalide: {target!r}")
+
     timeout = config.get("general", {}).get("timeout", 10)
     output_dir = config.get("general", {}).get("output_dir", "./output")
     database = mysql_cfg.get("database", "wms")
@@ -227,14 +243,14 @@ def export_table_csv(config: dict, target: str) -> dict[str, Any]:
             database=database,
             connection_timeout=timeout,
         )
-        cursor = conn.cursor()
-
-        cursor.execute(f"SELECT * FROM `{target}`")  # noqa: S608
-        columns = [desc[0] for desc in cursor.description]
-        rows = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(f"SELECT * FROM `{target}`")  # noqa: S608
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            cursor.close()
+        finally:
+            conn.close()
 
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)

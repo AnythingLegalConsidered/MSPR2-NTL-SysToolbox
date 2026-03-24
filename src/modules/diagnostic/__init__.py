@@ -11,6 +11,7 @@ from src.interfaces import (
     EXIT_CRITICAL,
     EXIT_OK,
     EXIT_UNKNOWN,
+    EXIT_WARNING,
     build_result,
 )
 
@@ -98,7 +99,7 @@ def _check_ad_dns(config: dict, target: str) -> dict[str, Any]:
         if "CRITICAL" in statuses:
             overall, code = "CRITICAL", EXIT_CRITICAL
         elif "UNKNOWN" in statuses:
-            overall, code = "OK", EXIT_OK  # WinRM manquant ne bloque pas
+            overall, code = "WARNING", EXIT_WARNING  # Couverture partielle (WinRM non configure)
         else:
             overall, code = "OK", EXIT_OK
 

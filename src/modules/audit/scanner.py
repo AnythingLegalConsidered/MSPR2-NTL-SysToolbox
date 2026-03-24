@@ -15,7 +15,7 @@ from src.utils.network import check_port, resolve_dns
 logger = logging.getLogger(__name__)
 
 # Regex for valid nmap target: IPs, CIDR, ranges (e.g. 192.168.1.0/24, 10.0.0.1-50)
-_VALID_TARGET_RE = re.compile(r'^[\d./:, -]+$')
+_VALID_TARGET_RE = re.compile(r'^[\d./,:-]+$')
 
 # Valid TCP port range
 _MIN_PORT = 1
@@ -324,14 +324,7 @@ def generate_report(config: dict) -> dict[str, Any]:
 
 def _categorize_port(port: int) -> list[str]:
     """Return service categories for a given port."""
-    categories: dict[int, str] = {
-        22: "SSH server",
-        80: "Web server",
-        443: "Web server",
-        3306: "MySQL server",
-        5432: "PostgreSQL server",
-        8006: "Proxmox node",
-        8080: "Web server",
-    }
-    cat = categories.get(port)
-    return [cat] if cat else []
+    from src.modules.diagnostic.constant import SERVICE_NAMES
+
+    name = SERVICE_NAMES.get(port)
+    return [name] if name else []

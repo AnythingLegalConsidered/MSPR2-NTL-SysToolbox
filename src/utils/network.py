@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 # Maximum bytes to read from HTTP response body (1 MB)
 _MAX_HTTP_BODY = 1024 * 1024
 
+# Common HTTPS ports for automatic scheme detection
+_HTTPS_PORTS = {443, 8443, 4443, 9443}
+
 
 def check_port(host: str, port: int, timeout: int = 10) -> bool:
     """Check if a TCP port is open on a host.
@@ -167,7 +170,7 @@ def grab_mysql_version(host: str, port: int = 3306, timeout: int = 3) -> Optiona
 
 def http_check(
     host: str, port: int = 80, path: str = "/", timeout: int = 5,
-    verify_ssl: bool = False,
+    verify_ssl: bool = False, scheme: str | None = None,
 ) -> dict[str, Any]:
     """Perform an HTTP GET request and return response metadata.
 
@@ -185,7 +188,8 @@ def http_check(
     import urllib.error
     import urllib.request
 
-    scheme = "https" if port == 443 else "http"
+    if scheme is None:
+        scheme = "https" if port in _HTTPS_PORTS else "http"
     url = f"{scheme}://{host}:{port}{path}"
 
     try:
@@ -211,6 +215,7 @@ def http_check(
                 "server": resp.headers.get("Server", ""),
                 "content_length": len(body),
                 "response_time_ms": round(elapsed, 1),
+                "error": None,
             }
             logger.debug("HTTP check %s -> %s", url, result)
             return result

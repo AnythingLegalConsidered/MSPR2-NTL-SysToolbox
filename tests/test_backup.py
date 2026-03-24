@@ -1,11 +1,11 @@
 """Tests pour le module backup — utilise des mocks, pas de MySQL requis."""
 
 import subprocess
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.interfaces import EXIT_CRITICAL, EXIT_OK, EXIT_UNKNOWN, ModuleConfigError, ModuleExecutionError
+from src.interfaces import EXIT_CRITICAL, EXIT_OK, EXIT_UNKNOWN, ModuleConfigError
 from src.modules.backup import backup_database, export_table_csv, run
 
 TARGET_DB = "wms"
@@ -37,13 +37,15 @@ class TestRun:
         mock.assert_called_once_with(BASE_CONFIG, TARGET_TABLE)
         assert result == {"status": "OK"}
 
-    def test_raises_on_unknown_action(self):
-        with pytest.raises(ModuleExecutionError, match="Action inconnue"):
-            run(BASE_CONFIG, TARGET_DB, action="foobar")
+    def test_unknown_on_invalid_action(self):
+        result = run(BASE_CONFIG, TARGET_DB, action="foobar")
+        assert result["status"] == "UNKNOWN"
+        assert result["exit_code"] == EXIT_UNKNOWN
 
-    def test_default_action_raises(self):
-        with pytest.raises(ModuleExecutionError):
-            run(BASE_CONFIG, TARGET_DB)
+    def test_unknown_on_default_action(self):
+        result = run(BASE_CONFIG, TARGET_DB)
+        assert result["status"] == "UNKNOWN"
+        assert result["exit_code"] == EXIT_UNKNOWN
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +104,8 @@ class TestBackupDatabase:
         assert "mysqldump" in result["message"]
 
     def test_unknown_on_timeout(self):
-        with patch("src.modules.backup.subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="mysqldump", timeout=10)):
+        side_effect = subprocess.TimeoutExpired(cmd="mysqldump", timeout=10)
+        with patch("src.modules.backup.subprocess.run", side_effect=side_effect):
             result = backup_database(BASE_CONFIG, "wms")
 
         assert result["status"] == "UNKNOWN"
@@ -124,6 +127,22 @@ class TestBackupDatabase:
             result = backup_database(config, "")
 
         assert result["details"]["database"] == "wms"
+
+    def test_password_not_in_cmd_args(self, tmp_path):
+        config = {**BASE_CONFIG, "general": {**BASE_CONFIG["general"], "output_dir": str(tmp_path)}}
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "-- dump"
+        mock_result.stderr = ""
+
+        with patch("src.modules.backup.subprocess.run", return_value=mock_result) as mock_run:
+            backup_database(config, "wms")
+
+        cmd_args = mock_run.call_args[0][0]
+        assert not any("--password" in arg for arg in cmd_args)
+        # Password should be passed via env var MYSQL_PWD
+        env = mock_run.call_args[1].get("env", {})
+        assert env.get("MYSQL_PWD") == "secret"
 
     def test_result_has_correct_module_and_function(self, tmp_path):
         config = {**BASE_CONFIG, "general": {**BASE_CONFIG["general"], "output_dir": str(tmp_path)}}
@@ -205,6 +224,14 @@ class TestExportTableCsv:
     def test_raises_config_error_when_no_table_name(self):
         with pytest.raises(ModuleConfigError, match="table"):
             export_table_csv(BASE_CONFIG, "")
+
+    def test_raises_config_error_on_sql_injection(self):
+        with pytest.raises(ModuleConfigError, match="invalide"):
+            export_table_csv(BASE_CONFIG, "x; DROP TABLE users")
+
+    def test_raises_config_error_on_backtick_injection(self):
+        with pytest.raises(ModuleConfigError, match="invalide"):
+            export_table_csv(BASE_CONFIG, "x`; --")
 
     def test_result_has_correct_module_and_function(self, tmp_path):
         config = {**BASE_CONFIG, "general": {**BASE_CONFIG["general"], "output_dir": str(tmp_path)}}

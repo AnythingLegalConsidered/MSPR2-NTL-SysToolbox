@@ -115,14 +115,20 @@ def _run_module_action(
         result = module.run(config, target, action=action)
         print_result(result)
         output_dir = config.get("general", {}).get("output_dir", "./output")
-        saved = save_result_json(result, output_dir)
-        logger.info("Result saved to %s", saved)
+        try:
+            saved = save_result_json(result, output_dir)
+            logger.info("Result saved to %s", saved)
+        except OSError as exc:
+            logger.warning("Impossible de sauvegarder le resultat JSON: %s", exc)
     except ModuleConfigError as exc:
         logger.error("Erreur de configuration: %s", exc)
         print(f"\n  Erreur config: {exc}\n")
     except ModuleExecutionError as exc:
         logger.error("Erreur d'exécution: %s", exc)
         print(f"\n  Erreur exécution: {exc}\n")
+    except Exception as exc:
+        logger.error("Erreur inattendue dans %s: %s", module_name, exc, exc_info=True)
+        print(f"\n  Erreur inattendue: {exc}\n")
 
 
 def _handle_submenu(

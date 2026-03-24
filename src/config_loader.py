@@ -20,10 +20,11 @@ logger = logging.getLogger(__name__)
 _ENV_VAR_PATTERN = re.compile(r"\$\{([^}]+)\}")
 
 
-def _resolve_env_vars(data: Any) -> Any:
+def _resolve_env_vars(data: Any, unresolved: list[str] | None = None) -> Any:
     """Recursively replace ${VAR} placeholders with environment variables.
 
     If a variable is not set, logs a warning and keeps the raw placeholder.
+    When unresolved list is provided, collects unresolved variable names.
     """
     if isinstance(data, str):
         def _replacer(match: re.Match[str]) -> str:
@@ -31,20 +32,22 @@ def _resolve_env_vars(data: Any) -> Any:
             value = os.environ.get(var_name)
             if value is None:
                 logger.warning("Environment variable %s is not set", var_name)
+                if unresolved is not None:
+                    unresolved.append(var_name)
                 return match.group(0)
             return value
         return _ENV_VAR_PATTERN.sub(_replacer, data)
 
     if isinstance(data, dict):
-        return {key: _resolve_env_vars(val) for key, val in data.items()}
+        return {key: _resolve_env_vars(val, unresolved) for key, val in data.items()}
 
     if isinstance(data, list):
-        return [_resolve_env_vars(item) for item in data]
+        return [_resolve_env_vars(item, unresolved) for item in data]
 
     return data
 
 
-def load_config(config_path: str = "config/config.yaml") -> dict[str, Any]:
+def load_config(config_path: str = "config/config.yaml", strict: bool = False) -> dict[str, Any]:
     """Load YAML configuration and resolve environment variable placeholders.
 
     1. Loads .env file (if present) via python-dotenv
@@ -53,12 +56,14 @@ def load_config(config_path: str = "config/config.yaml") -> dict[str, Any]:
 
     Args:
         config_path: Path to the YAML config file.
+        strict: If True, raise ModuleConfigError when env vars are unresolved.
 
     Returns:
         Configuration dict with resolved values.
 
     Raises:
-        ModuleConfigError: If the config file does not exist or is invalid.
+        ModuleConfigError: If the config file does not exist, is invalid,
+            or has unresolved env vars in strict mode.
     """
     load_dotenv()
 
@@ -78,6 +83,14 @@ def load_config(config_path: str = "config/config.yaml") -> dict[str, Any]:
     if not isinstance(config, dict):
         raise ModuleConfigError(f"Config file {config_path} must contain a YAML mapping, got {type(config).__name__}")
 
-    resolved = _resolve_env_vars(config)
+    unresolved: list[str] = []
+    resolved = _resolve_env_vars(config, unresolved)
+
+    if strict and unresolved:
+        raise ModuleConfigError(
+            f"Variables d'environnement non definies: {', '.join(sorted(set(unresolved)))}. "
+            "Verifiez votre fichier .env."
+        )
+
     logger.debug("Configuration loaded from %s", path.resolve())
     return resolved
