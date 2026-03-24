@@ -1,0 +1,267 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Post-install DC01 (Windows Server 2022)
+# ==============================================================================
+# Prerequisites:
+#   - Windows Server 2022 installed manually via Proxmox console
+#   - Static IP 192.168.10.10 configured
+#   - WinRM enabled (run on DC01 in PowerShell as Admin):
+#       winrm quickconfig -force
+#       Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value $true
+#       Set-Item WSMan:\localhost\Service\Auth\Basic -Value $true
+#
+# Usage:
+#   ansible-playbook playbooks/02-configure-dc01.yml --ask-vault-pass
+# ==============================================================================
+
+- name: Configure DC01 — Active Directory + DNS
+  hosts: DC01
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  vars:
+    ansible_user: "Administrateur"
+    ansible_password: "{{ vault_windows_admin_password }}"
+
+  tasks:
+    - name: Wait for WinRM to be available
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    # ------------------------------------------------------------------
+    # Step 1: Set hostname
+    # ------------------------------------------------------------------
+    - name: Set hostname to DC01
+      ansible.windows.win_hostname:
+        name: DC01
+      register: hostname_result
+
+    - name: Reboot after hostname change
+      ansible.windows.win_reboot:
+      when: hostname_result.reboot_required | default(false)
+
+    # ------------------------------------------------------------------
+    # Step 2: Configure static IP
+    # ------------------------------------------------------------------
+    - name: Configure static IP
+      ansible.windows.win_powershell:
+        script: |
+          $adapter = Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
+          Remove-NetIPAddress -InterfaceIndex $adapter.ifIndex -Confirm:$false -ErrorAction SilentlyContinue
+          Remove-NetRoute -InterfaceIndex $adapter.ifIndex -Confirm:$false -ErrorAction SilentlyContinue
+          New-NetIPAddress -InterfaceIndex $adapter.ifIndex -IPAddress "192.168.10.10" -PrefixLength 24 -DefaultGateway "192.168.10.1"
+          Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses "127.0.0.1"
+
+    # ------------------------------------------------------------------
+    # Step 3: Install AD DS + DNS roles
+    # ------------------------------------------------------------------
+    - name: Install AD DS and DNS roles
+      ansible.windows.win_feature:
+        name:
+          - AD-Domain-Services
+          - DNS
+        include_management_tools: true
+        state: present
+      register: ad_feature
+
+    - name: Reboot if needed after role install
+      ansible.windows.win_reboot:
+      when: ad_feature.reboot_required | default(false)
+
+    # ------------------------------------------------------------------
+    # Step 4: Promote to Domain Controller
+    # ------------------------------------------------------------------
+    - name: Check if already a Domain Controller
+      ansible.windows.win_powershell:
+        script: |
+          try {
+            Import-Module ActiveDirectory
+            $domain = Get-ADDomain
+            $Ansible.Result = @{ is_dc = $true; domain = $domain.DNSRoot }
+          } catch {
+            $Ansible.Result = @{ is_dc = $false }
+          }
+      register: dc_check
+
+    - name: Promote to Domain Controller (ntl.local)
+      ansible.windows.win_powershell:
+        script: |
+          $securePwd = ConvertTo-SecureString "{{ vault_safe_mode_password }}" -AsPlainText -Force
+          Install-ADDSForest `
+            -DomainName "{{ domain_name }}" `
+            -DomainNetBIOSName "{{ domain_netbios }}" `
+            -InstallDNS:$true `
+            -SafeModeAdministratorPassword $securePwd `
+            -CreateDnsDelegation:$false `
+            -NoRebootOnCompletion:$true `
+            -Force:$true
+      when: not (dc_check.result.is_dc | default(false))
+      register: promote_result
+
+    - name: Reboot after DC promotion
+      ansible.windows.win_reboot:
+        reboot_timeout: 600
+      when: promote_result is changed
+
+    - name: Wait for AD services to be ready
+      ansible.windows.win_powershell:
+        script: |
+          $timeout = 120
+          $elapsed = 0
+          while ($elapsed -lt $timeout) {
+            try {
+              Get-ADDomain | Out-Null
+              break
+            } catch {
+              Start-Sleep -Seconds 5
+              $elapsed += 5
+            }
+          }
+      when: promote_result is changed
+
+    # ------------------------------------------------------------------
+    # Step 5: Create OUs, users, groups
+    # ------------------------------------------------------------------
+    - name: Create Organizational Units
+      ansible.windows.win_powershell:
+        script: |
+          Import-Module ActiveDirectory
+          $ous = @(
+            "OU=NTL-Users,DC=ntl,DC=local",
+            "OU=NTL-Computers,DC=ntl,DC=local",
+            "OU=NTL-Groups,DC=ntl,DC=local",
+            "OU=Siege,OU=NTL-Users,DC=ntl,DC=local",
+            "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"
+          )
+          foreach ($ou in $ous) {
+            $name = ($ou -split ',')[0] -replace 'OU=',''
+            $path = ($ou -split ',',2)[1]
+            try {
+              Get-ADOrganizationalUnit -Identity $ou -ErrorAction Stop
+            } catch {
+              New-ADOrganizationalUnit -Name $name -Path $path -ProtectedFromAccidentalDeletion $false
+            }
+          }
+
+    - name: Create security groups
+      ansible.windows.win_powershell:
+        script: |
+          Import-Module ActiveDirectory
+          $groups = @(
+            @{ Name = "GRP-IT-Admins"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-WMS-Users"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-Entrepot"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-Comptabilite"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-RH"; Path = "OU=NTL-Groups,DC=ntl,DC=local" },
+            @{ Name = "GRP-Direction"; Path = "OU=NTL-Groups,DC=ntl,DC=local" }
+          )
+          foreach ($grp in $groups) {
+            try {
+              Get-ADGroup -Identity $grp.Name -ErrorAction Stop
+            } catch {
+              New-ADGroup -Name $grp.Name -SamAccountName $grp.Name -GroupScope Global -GroupCategory Security -Path $grp.Path
+            }
+          }
+
+    - name: Create users
+      ansible.windows.win_powershell:
+        script: |
+          Import-Module ActiveDirectory
+          $pwd = ConvertTo-SecureString "User2026!" -AsPlainText -Force
+          $users = @(
+            @{ Name = "Jean Dupont"; SAM = "jdupont"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-IT-Admins") },
+            @{ Name = "Marie Martin"; SAM = "mmartin"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-WMS-Users") },
+            @{ Name = "Pierre Durand"; SAM = "pdurand"; OU = "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Entrepot","GRP-WMS-Users") },
+            @{ Name = "Sophie Leroy"; SAM = "sleroy"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-IT-Admins","GRP-Direction") },
+            @{ Name = "Thomas Bernard"; SAM = "tbernard"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Comptabilite") },
+            @{ Name = "Claire Moreau"; SAM = "cmoreau"; OU = "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Entrepot","GRP-WMS-Users") },
+            @{ Name = "Lucas Petit"; SAM = "lpetit"; OU = "OU=Entrepot,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-Entrepot") },
+            @{ Name = "Emilie Roux"; SAM = "eroux"; OU = "OU=Siege,OU=NTL-Users,DC=ntl,DC=local"; Groups = @("GRP-RH") }
+          )
+          foreach ($u in $users) {
+            try {
+              Get-ADUser -Identity $u.SAM -ErrorAction Stop
+            } catch {
+              $first = ($u.Name -split ' ')[0]
+              $last = ($u.Name -split ' ')[1]
+              New-ADUser -Name $u.Name -SamAccountName $u.SAM -UserPrincipalName "$($u.SAM)@ntl.local" `
+                -GivenName $first -Surname $last -Path $u.OU `
+                -AccountPassword $pwd -Enabled $true -PasswordNeverExpires $true
+              foreach ($g in $u.Groups) {
+                Add-ADGroupMember -Identity $g -Members $u.SAM
+              }
+            }
+          }
+
+    # ------------------------------------------------------------------
+    # Step 6: Firewall
+    # ------------------------------------------------------------------
+    - name: Open firewall for AD/DNS/LDAP
+      ansible.windows.win_powershell:
+        script: |
+          $rules = @(
+            @{ Name = "NTL-LDAP"; Port = 389; Protocol = "TCP" },
+            @{ Name = "NTL-LDAPS"; Port = 636; Protocol = "TCP" },
+            @{ Name = "NTL-DNS-TCP"; Port = 53; Protocol = "TCP" },
+            @{ Name = "NTL-DNS-UDP"; Port = 53; Protocol = "UDP" },
+            @{ Name = "NTL-Kerberos"; Port = 88; Protocol = "TCP" }
+          )
+          foreach ($r in $rules) {
+            $existing = Get-NetFirewallRule -DisplayName $r.Name -ErrorAction SilentlyContinue
+            if (-not $existing) {
+              New-NetFirewallRule -DisplayName $r.Name -Direction Inbound -Action Allow -Protocol $r.Protocol -LocalPort $r.Port
+            }
+          }
+
+    # ------------------------------------------------------------------
+    # Step 7: Deploy login script for mapped drives
+    # ------------------------------------------------------------------
+    - name: Create NETLOGON login script for mapped drives
+      ansible.windows.win_powershell:
+        script: |
+          $netlogon = "C:\Windows\SYSVOL\sysvol\ntl.local\scripts"
+          $scriptContent = @'
+          @echo off
+          REM NTL Login Script — Mapped network drives
+          REM K: Commun drive for everyone
+          net use K: \\SRV-FILES\Commun /persistent:yes 2>nul
+
+          REM L: Siege share (GRP-WMS-Users)
+          net group "GRP-WMS-Users" /domain | find /i "%USERNAME%" >nul 2>&1
+          if %ERRORLEVEL% EQU 0 net use L: \\SRV-FILES\Siege /persistent:yes 2>nul
+
+          REM N: Entrepot share (GRP-Entrepot)
+          net group "GRP-Entrepot" /domain | find /i "%USERNAME%" >nul 2>&1
+          if %ERRORLEVEL% EQU 0 net use N: \\SRV-FILES\Entrepot /persistent:yes 2>nul
+
+          REM M: IT share (GRP-IT-Admins)
+          net group "GRP-IT-Admins" /domain | find /i "%USERNAME%" >nul 2>&1
+          if %ERRORLEVEL% EQU 0 net use M: \\SRV-FILES\IT /persistent:yes 2>nul
+          '@
+          Set-Content -Path "$netlogon\ntl-login.bat" -Value $scriptContent -Encoding ASCII
+
+    - name: Configure login script via AD user profiles
+      ansible.windows.win_powershell:
+        script: |
+          Import-Module ActiveDirectory
+          $users = Get-ADUser -Filter * -SearchBase "OU=NTL-Users,DC=ntl,DC=local"
+          foreach ($u in $users) {
+            Set-ADUser -Identity $u -ScriptPath "ntl-login.bat"
+          }
+
+    - name: DC01 configuration complete
+      ansible.builtin.debug:
+        msg: |
+          === DC01 Configuration Complete ===
+          Domain: {{ domain_name }}
+          IP: 192.168.10.10
+          OUs: NTL-Users (Siege, Entrepot), NTL-Computers, NTL-Groups
+          Users: jdupont, mmartin, pdurand, sleroy, tbernard, cmoreau, lpetit, eroux
+          Groups: GRP-IT-Admins, GRP-WMS-Users, GRP-Entrepot, GRP-Comptabilite, GRP-RH, GRP-Direction
+          Login script: ntl-login.bat (K: Commun, L: Siege, N: Entrepot, M: IT)

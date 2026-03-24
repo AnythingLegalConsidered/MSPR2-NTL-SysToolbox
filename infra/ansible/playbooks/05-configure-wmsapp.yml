@@ -1,0 +1,232 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Post-install SRV-WMS-APP (Ubuntu 22.04)
+# ==============================================================================
+# Prerequisites:
+#   - Ubuntu 22.04 installed (autoinstall)
+#   - SSH accessible with user sysadmin
+#   - WMS-DB (192.168.10.21) running with MySQL
+#
+# Usage:
+#   ansible-playbook playbooks/05-configure-wmsapp.yml --ask-vault-pass
+# ==============================================================================
+
+- name: Configure SRV-WMS-APP — Flask WMS Application
+  hosts: SRV-WMS-APP
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  tasks:
+    - name: Wait for SSH to be available
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    # ------------------------------------------------------------------
+    # Step 1: Install system packages
+    # ------------------------------------------------------------------
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - nginx
+          - curl
+          - net-tools
+        state: present
+
+    # ------------------------------------------------------------------
+    # Step 2: Create app directory and deploy files
+    # ------------------------------------------------------------------
+    - name: Create application directory
+      ansible.builtin.file:
+        path: "{{ wms_app_path }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create templates directory
+      ansible.builtin.file:
+        path: "{{ wms_app_path }}/templates"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Deploy Flask application
+      ansible.builtin.copy:
+        src: ../files/wms-app/app.py
+        dest: "{{ wms_app_path }}/app.py"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Deploy requirements.txt
+      ansible.builtin.copy:
+        src: ../files/wms-app/requirements.txt
+        dest: "{{ wms_app_path }}/requirements.txt"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Deploy HTML templates
+      ansible.builtin.copy:
+        src: "../files/wms-app/templates/{{ item }}"
+        dest: "{{ wms_app_path }}/templates/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - base.html
+        - dashboard.html
+        - inventory.html
+        - shipments.html
+
+    # ------------------------------------------------------------------
+    # Step 3: Create Python venv and install dependencies
+    # ------------------------------------------------------------------
+    - name: Create Python virtual environment
+      ansible.builtin.command:
+        cmd: python3 -m venv {{ wms_app_path }}/venv
+        creates: "{{ wms_app_path }}/venv/bin/activate"
+
+    - name: Install Python dependencies
+      ansible.builtin.pip:
+        requirements: "{{ wms_app_path }}/requirements.txt"
+        virtualenv: "{{ wms_app_path }}/venv"
+
+    # ------------------------------------------------------------------
+    # Step 4: Create systemd service
+    # ------------------------------------------------------------------
+    - name: Create wms-app systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/wms-app.service
+        content: |
+          [Unit]
+          Description=NTL WMS Flask Application
+          After=network.target
+
+          [Service]
+          Type=simple
+          User=root
+          WorkingDirectory={{ wms_app_path }}
+          Environment=WMS_DB_HOST={{ wms_db_host }}
+          Environment=WMS_DB_NAME={{ mysql_db_name }}
+          Environment=WMS_DB_USER={{ mysql_db_user }}
+          Environment=WMS_DB_PASSWORD={{ mysql_db_password }}
+          ExecStart={{ wms_app_path }}/venv/bin/gunicorn --bind 127.0.0.1:{{ wms_app_port }} --workers 2 app:app
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: "0644"
+      notify: restart wms-app
+
+    - name: Enable and start wms-app service
+      ansible.builtin.systemd:
+        name: wms-app
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    # ------------------------------------------------------------------
+    # Step 5: Configure Nginx reverse proxy
+    # ------------------------------------------------------------------
+    - name: Remove default Nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Create Nginx config for WMS app
+      ansible.builtin.copy:
+        dest: /etc/nginx/sites-available/wms-app
+        content: |
+          server {
+              listen 80;
+              server_name _;
+
+              location / {
+                  proxy_pass http://127.0.0.1:{{ wms_app_port }};
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+        mode: "0644"
+      notify: restart nginx
+
+    - name: Enable Nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/wms-app
+        dest: /etc/nginx/sites-enabled/wms-app
+        state: link
+      notify: restart nginx
+
+    - name: Enable and start Nginx
+      ansible.builtin.systemd:
+        name: nginx
+        enabled: true
+        state: started
+
+    # ------------------------------------------------------------------
+    # Step 6: Firewall (UFW)
+    # ------------------------------------------------------------------
+    - name: Install UFW
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+
+    - name: Allow SSH through UFW
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Allow HTTP through UFW
+      community.general.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: Enable UFW
+      community.general.ufw:
+        state: enabled
+        default: deny
+        direction: incoming
+
+    - name: SRV-WMS-APP configuration complete
+      ansible.builtin.debug:
+        msg: |
+          === SRV-WMS-APP Configuration Complete ===
+          IP: 192.168.10.22
+          App: Flask WMS (gunicorn on port {{ wms_app_port }})
+          Web: Nginx reverse proxy on port 80
+          DB: MySQL on {{ wms_db_host }}
+          URL: http://192.168.10.22/
+
+  handlers:
+    - name: restart wms-app
+      ansible.builtin.systemd:
+        name: wms-app
+        state: restarted
+        daemon_reload: true
+
+    - name: restart nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: restarted

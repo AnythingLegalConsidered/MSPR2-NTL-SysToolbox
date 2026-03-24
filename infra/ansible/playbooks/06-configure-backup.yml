@@ -1,0 +1,120 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Post-install SRV-BACKUP (Ubuntu 22.04)
+# ==============================================================================
+# Prerequisites:
+#   - Ubuntu 22.04 installed (autoinstall)
+#   - SSH accessible with user sysadmin
+#   - WMS-DB (192.168.10.21) running with MySQL
+#
+# Usage:
+#   ansible-playbook playbooks/06-configure-backup.yml --ask-vault-pass
+# ==============================================================================
+
+- name: Configure SRV-BACKUP — Backup Server
+  hosts: SRV-BACKUP
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  tasks:
+    - name: Wait for SSH to be available
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    # ------------------------------------------------------------------
+    # Step 1: Install packages
+    # ------------------------------------------------------------------
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - mysql-client
+          - rsync
+          - cron
+          - net-tools
+          - curl
+        state: present
+
+    # ------------------------------------------------------------------
+    # Step 2: Create backup directory structure
+    # ------------------------------------------------------------------
+    - name: Create backup directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+      loop:
+        - /backup
+        - /backup/mysql
+        - /backup/mysql/daily
+        - /backup/mysql/weekly
+        - /backup/files
+        - /opt/backup
+
+    # ------------------------------------------------------------------
+    # Step 3: Deploy backup script
+    # ------------------------------------------------------------------
+    - name: Deploy MySQL backup script
+      ansible.builtin.copy:
+        src: ../files/backup/mysql-backup.sh
+        dest: /opt/backup/mysql-backup.sh
+        owner: root
+        group: root
+        mode: "0750"
+
+    # ------------------------------------------------------------------
+    # Step 4: Configure cron jobs
+    # ------------------------------------------------------------------
+    - name: Setup daily MySQL backup cron (02:00)
+      ansible.builtin.cron:
+        name: "NTL daily MySQL backup"
+        minute: "0"
+        hour: "2"
+        job: "/opt/backup/mysql-backup.sh >> /var/log/ntl-backup.log 2>&1"
+        user: root
+
+    - name: Setup weekly cleanup cron (Sunday 03:00)
+      ansible.builtin.cron:
+        name: "NTL weekly backup cleanup"
+        minute: "0"
+        hour: "3"
+        weekday: "0"
+        job: "find /backup/mysql/daily -name '*.sql.gz' -mtime +7 -delete && find /backup/mysql/weekly -name '*.sql.gz' -mtime +28 -delete >> /var/log/ntl-backup.log 2>&1"
+        user: root
+
+    # ------------------------------------------------------------------
+    # Step 5: Run initial backup test
+    # ------------------------------------------------------------------
+    - name: Run initial backup test
+      ansible.builtin.command:
+        cmd: /opt/backup/mysql-backup.sh
+      register: backup_test
+      changed_when: true
+      ignore_errors: true
+
+    - name: Show backup test result
+      ansible.builtin.debug:
+        msg: "{{ backup_test.stdout_lines | default(['Backup test skipped or failed']) }}"
+
+    - name: SRV-BACKUP configuration complete
+      ansible.builtin.debug:
+        msg: |
+          === SRV-BACKUP Configuration Complete ===
+          IP: 192.168.10.30
+          Backup dir: /backup/mysql/{daily,weekly}
+          Script: /opt/backup/mysql-backup.sh
+          Cron: Daily at 02:00, cleanup Sunday 03:00
+          Retention: 7 daily, 4 weekly

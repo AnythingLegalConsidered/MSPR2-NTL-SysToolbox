@@ -1,0 +1,215 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Post-install SRV-FILES (Windows Server 2022)
+# ==============================================================================
+# Prerequisites:
+#   - Windows Server 2022 installed (autoinstall or manual)
+#   - WinRM enabled (done by autounattend.xml)
+#   - DC01 already promoted and running
+#
+# Usage:
+#   ansible-playbook playbooks/04-configure-srvfiles.yml --ask-vault-pass
+# ==============================================================================
+
+- name: Configure SRV-FILES — File Server
+  hosts: SRV-FILES
+  gather_facts: false
+
+  vars_files:
+    - ../group_vars/all.yml
+    - ../group_vars/vault.yml
+
+  vars:
+    ansible_user: "Administrateur"
+    ansible_password: "{{ vault_windows_admin_password }}"
+
+  tasks:
+    - name: Wait for WinRM to be available
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    # ------------------------------------------------------------------
+    # Step 1: Set hostname
+    # ------------------------------------------------------------------
+    - name: Set hostname to SRV-FILES
+      ansible.windows.win_hostname:
+        name: SRV-FILES
+      register: hostname_result
+
+    - name: Reboot after hostname change
+      ansible.windows.win_reboot:
+      when: hostname_result.reboot_required | default(false)
+
+    # ------------------------------------------------------------------
+    # Step 2: Configure static IP
+    # ------------------------------------------------------------------
+    - name: Configure static IP 192.168.10.11
+      ansible.windows.win_powershell:
+        script: |
+          $adapter = Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
+          $existing = Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+          if ($existing.IPAddress -ne "192.168.10.11") {
+            Remove-NetIPAddress -InterfaceIndex $adapter.ifIndex -Confirm:$false -ErrorAction SilentlyContinue
+            Remove-NetRoute -InterfaceIndex $adapter.ifIndex -Confirm:$false -ErrorAction SilentlyContinue
+            New-NetIPAddress -InterfaceIndex $adapter.ifIndex -IPAddress "192.168.10.11" -PrefixLength 24 -DefaultGateway "192.168.10.1"
+            Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses "192.168.10.10"
+          }
+
+    # ------------------------------------------------------------------
+    # Step 3: Join domain ntl.local
+    # ------------------------------------------------------------------
+    - name: Check domain membership
+      ansible.windows.win_powershell:
+        script: |
+          $cs = Get-WmiObject Win32_ComputerSystem
+          $Ansible.Result = @{ domain = $cs.Domain; in_domain = $cs.PartOfDomain }
+      register: domain_check
+
+    - name: Join domain ntl.local
+      ansible.windows.win_powershell:
+        script: |
+          $pwd = ConvertTo-SecureString "{{ vault_windows_admin_password }}" -AsPlainText -Force
+          $cred = New-Object System.Management.Automation.PSCredential("NTL\Administrateur", $pwd)
+          Add-Computer -DomainName "{{ domain_name }}" -Credential $cred -OUPath "OU=NTL-Computers,DC=ntl,DC=local" -Force
+      when: not (domain_check.result.in_domain | default(false))
+      register: join_result
+
+    - name: Reboot after domain join
+      ansible.windows.win_reboot:
+        reboot_timeout: 300
+      when: join_result is changed
+
+    # ------------------------------------------------------------------
+    # Step 4: Install File Services role
+    # ------------------------------------------------------------------
+    - name: Install File Services role
+      ansible.windows.win_feature:
+        name:
+          - FS-FileServer
+        include_management_tools: true
+        state: present
+      register: fs_feature
+
+    - name: Reboot if needed after File Services install
+      ansible.windows.win_reboot:
+      when: fs_feature.reboot_required | default(false)
+
+    # ------------------------------------------------------------------
+    # Step 5: Create shared folders
+    # ------------------------------------------------------------------
+    - name: Create share directories
+      ansible.windows.win_powershell:
+        script: |
+          $shares = @(
+            "C:\Shares\Commun",
+            "C:\Shares\Siege",
+            "C:\Shares\Entrepot",
+            "C:\Shares\IT"
+          )
+          foreach ($path in $shares) {
+            if (-not (Test-Path $path)) {
+              New-Item -ItemType Directory -Path $path -Force | Out-Null
+            }
+          }
+
+    - name: Create SMB shares with permissions
+      ansible.windows.win_powershell:
+        script: |
+          # Remove existing shares to reconfigure
+          $shareConfigs = @(
+            @{
+              Name = "Commun"
+              Path = "C:\Shares\Commun"
+              FullAccess = @("NTL\Admins du domaine")
+              ChangeAccess = @("NTL\Utilisateurs du domaine")
+              ReadAccess = @("Tout le monde")
+            },
+            @{
+              Name = "Siege"
+              Path = "C:\Shares\Siege"
+              FullAccess = @("NTL\Admins du domaine")
+              ChangeAccess = @("NTL\GRP-WMS-Users")
+              ReadAccess = @()
+            },
+            @{
+              Name = "Entrepot"
+              Path = "C:\Shares\Entrepot"
+              FullAccess = @("NTL\Admins du domaine")
+              ChangeAccess = @("NTL\GRP-Entrepot")
+              ReadAccess = @()
+            },
+            @{
+              Name = "IT"
+              Path = "C:\Shares\IT"
+              FullAccess = @("NTL\GRP-IT-Admins")
+              ChangeAccess = @()
+              ReadAccess = @()
+            }
+          )
+
+          foreach ($cfg in $shareConfigs) {
+            $existing = Get-SmbShare -Name $cfg.Name -ErrorAction SilentlyContinue
+            if (-not $existing) {
+              $params = @{
+                Name = $cfg.Name
+                Path = $cfg.Path
+                FullAccess = $cfg.FullAccess
+              }
+              if ($cfg.ChangeAccess.Count -gt 0) { $params.ChangeAccess = $cfg.ChangeAccess }
+              if ($cfg.ReadAccess.Count -gt 0) { $params.ReadAccess = $cfg.ReadAccess }
+              New-SmbShare @params
+            }
+          }
+
+    # ------------------------------------------------------------------
+    # Step 6: Configure NTFS permissions
+    # ------------------------------------------------------------------
+    - name: Set NTFS permissions on shares
+      ansible.windows.win_powershell:
+        script: |
+          # Commun — Domain Users: Modify
+          $acl = Get-Acl "C:\Shares\Commun"
+          $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("NTL\Utilisateurs du domaine", "Modify", "ContainerInherit,ObjectInherit", "None", "Allow")
+          $acl.AddAccessRule($rule)
+          Set-Acl "C:\Shares\Commun" $acl
+
+          # Siege — GRP-WMS-Users: Modify
+          $acl = Get-Acl "C:\Shares\Siege"
+          $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("NTL\GRP-WMS-Users", "Modify", "ContainerInherit,ObjectInherit", "None", "Allow")
+          $acl.AddAccessRule($rule)
+          Set-Acl "C:\Shares\Siege" $acl
+
+          # Entrepot — GRP-Entrepot: Modify
+          $acl = Get-Acl "C:\Shares\Entrepot"
+          $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("NTL\GRP-Entrepot", "Modify", "ContainerInherit,ObjectInherit", "None", "Allow")
+          $acl.AddAccessRule($rule)
+          Set-Acl "C:\Shares\Entrepot" $acl
+
+          # IT — GRP-IT-Admins: FullControl
+          $acl = Get-Acl "C:\Shares\IT"
+          $rule = New-Object System.Security.AccessControl.FileSystemAccessRule("NTL\GRP-IT-Admins", "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+          $acl.AddAccessRule($rule)
+          Set-Acl "C:\Shares\IT" $acl
+
+    # ------------------------------------------------------------------
+    # Step 7: Firewall — SMB
+    # ------------------------------------------------------------------
+    - name: Open firewall for SMB (445/TCP)
+      ansible.windows.win_powershell:
+        script: |
+          $existing = Get-NetFirewallRule -DisplayName "NTL-SMB" -ErrorAction SilentlyContinue
+          if (-not $existing) {
+            New-NetFirewallRule -DisplayName "NTL-SMB" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 445
+          }
+
+    - name: SRV-FILES configuration complete
+      ansible.builtin.debug:
+        msg: |
+          === SRV-FILES Configuration Complete ===
+          IP: 192.168.10.11
+          Domain: {{ domain_name }}
+          Role: File Server
+          Shares: \\SRV-FILES\Commun, \Siege, \Entrepot, \IT

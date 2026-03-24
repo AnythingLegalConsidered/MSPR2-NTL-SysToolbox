@@ -1,0 +1,47 @@
+---
+# ==============================================================================
+# NTL-SysToolbox — Full orchestration (7 VMs)
+# ==============================================================================
+# Usage:
+#   ansible-playbook playbooks/site.yml --ask-vault-pass
+#
+# Or step by step:
+#   ansible-playbook playbooks/01-create-vms.yml --ask-vault-pass
+#   # ... wait for OS autoinstall on all VMs ...
+#   ansible-playbook playbooks/02-configure-dc01.yml --ask-vault-pass
+#   ansible-playbook playbooks/03-configure-wmsdb.yml --ask-vault-pass
+#   ansible-playbook playbooks/04-configure-srvfiles.yml --ask-vault-pass
+#   ansible-playbook playbooks/05-configure-wmsapp.yml --ask-vault-pass
+#   ansible-playbook playbooks/06-configure-backup.yml --ask-vault-pass
+#   ansible-playbook playbooks/07-join-domain-clients.yml --ask-vault-pass
+# ==============================================================================
+
+# Phase 1: Create all 7 VMs on Proxmox
+- name: "Phase 1: Create VMs on Proxmox"
+  ansible.builtin.import_playbook: 01-create-vms.yml
+
+# --- Pause: wait for OS autoinstall to complete on all VMs ---
+
+# Phase 2: Configure DC01 (AD/DNS + users/groups)
+- name: "Phase 2: Configure DC01 (AD/DNS)"
+  ansible.builtin.import_playbook: 02-configure-dc01.yml
+
+# Phase 3: Configure WMS-DB (MySQL)
+- name: "Phase 3: Configure WMS-DB (MySQL)"
+  ansible.builtin.import_playbook: 03-configure-wmsdb.yml
+
+# Phase 4: Configure SRV-FILES (File Server + shares)
+- name: "Phase 4: Configure SRV-FILES (File Server)"
+  ansible.builtin.import_playbook: 04-configure-srvfiles.yml
+
+# Phase 5: Configure SRV-WMS-APP (Flask + Nginx)
+- name: "Phase 5: Configure SRV-WMS-APP (Flask WMS)"
+  ansible.builtin.import_playbook: 05-configure-wmsapp.yml
+
+# Phase 6: Configure SRV-BACKUP (Backup cron + scripts)
+- name: "Phase 6: Configure SRV-BACKUP (Backups)"
+  ansible.builtin.import_playbook: 06-configure-backup.yml
+
+# Phase 7: Join Windows clients to domain
+- name: "Phase 7: Join domain (PC-SIEGE-01, PC-ENTREPOT-01)"
+  ansible.builtin.import_playbook: 07-join-domain-clients.yml
