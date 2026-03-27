@@ -54,6 +54,16 @@
 | 10 | [lab-infra.md](10-lab-infra.md) | Infrastructure lab Proxmox |
 | -- | [cheatsheet.md](cheatsheet.md) | Aide-memoire 1 page (format retour, Git, commandes) |
 
+## Livrables soutenance
+
+| Fichier | Contenu |
+|---------|---------|
+| [document_technique.md](document_technique.md) | Document technique et fonctionnel complet |
+| [manuel_utilisation.md](manuel_utilisation.md) | Manuel d'utilisation pas a pas |
+| [rapport_audit.md](rapport_audit.md) | Rapport d'audit d'obsolescence du parc NTL |
+| [rapport_soutenance.md](rapport_soutenance.md) | Rapport ecrit de soutenance |
+| [presentation_soutenance.md](presentation_soutenance.md) | Script et slides de la presentation orale |
+
 ## Archives projet
 
 | Fichier | Contenu |

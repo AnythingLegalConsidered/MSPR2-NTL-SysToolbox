@@ -16,23 +16,27 @@ NTL-SysToolbox industrialise les vérifications d'exploitation, sécurise la ges
 | **Backup** | Garantir l'intégrité et la traçabilité des exports WMS | Sauvegarde BDD au format SQL, export table au format CSV, vérification SHA256 |
 | **Audit** | Fournir un inventaire réseau et qualifier le statut EOL | Scan réseau nmap, détection OS, dates de fin de vie, rapport d'obsolescence |
 
-## Architecture (cible)
+## Architecture
 
 ```
 src/
-├── main.py              # Menu CLI interactif
-├── config_loader.py     # Chargement YAML + surcharge .env
-├── interfaces.py        # Contrat commun (exit codes, build_result)  ✔
+├── main.py                  # Menu CLI interactif
+├── config_loader.py         # Chargement YAML + surcharge .env
+├── interfaces.py            # Contrat commun (exit codes, build_result)
 ├── modules/
-│   ├── diagnostic.py    # Checks AD/DNS, MySQL, santé serveurs
-│   ├── backup.py        # Dump MySQL, export CSV
-│   └── audit.py         # Scan nmap, EOL, rapports
+│   ├── diagnostic/          # Checks AD/DNS, MySQL, Linux, HTTP
+│   │   ├── __init__.py      # Point d'entrée run() + dispatchers
+│   │   ├── checks.py        # Implémentations des vérifications
+│   │   └── constant.py      # Constantes et seuils
+│   ├── backup.py            # Dump MySQL, export CSV, SHA256
+│   └── audit/               # Scan nmap, EOL, rapports
+│       ├── __init__.py      # Point d'entrée run() + dispatchers
+│       └── scanner.py       # Scan réseau, audit EOL, rapports
 └── utils/
-    ├── output.py        # Logging, JSON, affichage rich  ✔
-    └── network.py       # Helpers réseau (ping, port check)
+    ├── output.py            # Logging JSON, affichage Rich
+    ├── network.py           # Helpers réseau (ping, port, HTTP, DNS)
+    └── validation.py        # Validation chemins, sanitisation entrées
 ```
-
-> Les fichiers marqués ✔ sont implémentés. Les autres seront créés au fur et à mesure du développement.
 
 Les sorties sont horodatées en JSON avec des codes de retour exploitables en supervision :
 
@@ -134,27 +138,14 @@ Scripts de déploiement dans [`infra/proxmox/`](infra/proxmox/).
 | Dev Backup | Ojvind LANTSIGBLE |
 | Dev Audit | Zaid ABOUYAALA |
 
-## Par où commencer
-
-Voir [PROJECT_MAP.md](PROJECT_MAP.md) pour une vue d'ensemble en 5 minutes.
-
-| Vous êtes... | Lisez |
-|---------------|-------|
-| **Nouveau, première fois** | [docs/01-getting-started.md](docs/01-getting-started.md) — installation + setup |
-| **Développeur, prêt à coder** | [docs/02-team-guide.md](docs/02-team-guide.md) — ton module, ton workflow |
-| Besoin de détails techniques | [_specs/PLAN_COMPLET.md](_specs/PLAN_COMPLET.md) — référence complète |
-| Aide-mémoire pendant le dev | [docs/cheatsheet.md](docs/cheatsheet.md) — 1 page, l'essentiel |
-
 ## Documentation
 
-Toute la doc est dans [docs/](docs/) avec un [index numéroté](docs/00-index.md).
-
-| Document | Emplacement |
+| Document | Description |
 |----------|-------------|
-| **Démarrage (lire en premier)** | [docs/01-getting-started.md](docs/01-getting-started.md) |
-| Guide équipe | [docs/02-team-guide.md](docs/02-team-guide.md) |
-| Logique des modules | [docs/03-module-logic.md](docs/03-module-logic.md) |
-| Plan projet complet | [_specs/PLAN_COMPLET.md](_specs/PLAN_COMPLET.md) |
-| Décisions d'équipe (archive) | [_specs/DECISIONS_PRISES.md](_specs/DECISIONS_PRISES.md) |
-| Guide CI | [docs/08-ci-guide.md](docs/08-ci-guide.md) |
-| Rapport technique CI | [docs/09-ci-report.md](docs/09-ci-report.md) |
+| [Document technique et fonctionnel](docs/document_technique.md) | Architecture, modules, interfaces, sécurité |
+| [Manuel d'utilisation](docs/manuel_utilisation.md) | Installation, configuration, utilisation pas à pas |
+| [Rapport d'audit](docs/rapport_audit.md) | Inventaire du parc NTL, analyse d'obsolescence, recommandations |
+| [Rapport CI/CD](docs/09-ci-report.md) | Pipeline GitHub Actions, outils qualité |
+| [Infrastructure de lab](docs/10-lab-infra.md) | Déploiement Proxmox, VMs, Ansible |
+
+Documentation complémentaire dans [docs/](docs/) avec un [index numéroté](docs/00-index.md).
