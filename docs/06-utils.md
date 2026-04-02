@@ -1,6 +1,6 @@
 # Utilitaires — Les fonctions partagées
 
-> Fichiers : `src/utils/network.py`, `src/utils/output.py`
+> Fichiers : `src/utils/network.py`, `src/utils/output.py`, `src/utils/validation.py`
 > Rôle : Fonctions réutilisables par tous les modules. Pas besoin de réinventer la roue.
 
 ## network.py — Outils réseau
@@ -125,6 +125,64 @@ path = save_result_json(result, output_dir="./output")
 
 ---
 
+---
+
+## validation.py — Validation et sanitisation
+
+### sanitize_filename_part(name)
+
+Nettoie une chaîne pour l'utiliser comme partie d'un nom de fichier. Remplace les caractères spéciaux par des underscores, tronque à 50 caractères.
+
+```python
+from src.utils.validation import sanitize_filename_part
+
+safe = sanitize_filename_part("check_ad/dns!")
+# → "check_ad_dns_"
+```
+
+### validate_network_range(target_range)
+
+Valide une plage réseau pour le scan nmap. Accepte : IPv4 simple, notation CIDR, plages nmap (192.168.1.1-50), listes séparées par des virgules.
+
+```python
+from src.utils.validation import validate_network_range
+
+err = validate_network_range("192.168.10.0/24")
+# → None (valide)
+
+err = validate_network_range("pas-une-ip")
+# → "Format de plage réseau invalide: 'pas-une-ip'"
+```
+
+Retourne `None` si valide, un message d'erreur (string) si invalide.
+
+### validate_port(port)
+
+Vérifie qu'un numéro de port est dans la plage TCP/UDP valide (1-65535).
+
+```python
+from src.utils.validation import validate_port
+
+validate_port(443)   # → True
+validate_port(99999) # → False
+```
+
+### validate_path_within(path, allowed_dirs)
+
+Empêche les attaques de path traversal en vérifiant qu'un chemin résolu se trouve sous un des répertoires autorisés.
+
+```python
+from src.utils.validation import validate_path_within
+
+safe_path = validate_path_within("output/backups/dump.sql", ["./output"])
+# → Path résolu
+
+validate_path_within("../../etc/passwd", ["./output"])
+# → raises ValueError
+```
+
+---
+
 ## Tableau récap — Quand utiliser quoi
 
 | Je veux... | Fonction | Fichier |
@@ -138,3 +196,7 @@ path = save_result_json(result, output_dir="./output")
 | Afficher un résultat | `print_result(result)` | `output.py` |
 | Sauvegarder en JSON | `save_result_json(result)` | `output.py` |
 | Configurer les logs | `setup_logging()` | `output.py` |
+| Nettoyer un nom de fichier | `sanitize_filename_part(name)` | `validation.py` |
+| Valider une plage réseau | `validate_network_range(range)` | `validation.py` |
+| Valider un numéro de port | `validate_port(port)` | `validation.py` |
+| Vérifier un chemin (anti-traversal) | `validate_path_within(path, dirs)` | `validation.py` |

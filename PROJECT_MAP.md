@@ -46,7 +46,8 @@ NTL-SysToolbox/
 │   │       └── scanner.py       # Fonctions de scan et audit
 │   └── utils/                   # Utilitaires partages
 │       ├── output.py            # Logging, JSON, affichage rich
-│       └── network.py           # Ping, DNS, check port
+│       ├── network.py           # Ping, DNS, check port, HTTP, MySQL
+│       └── validation.py        # Validation chemins, plages reseau, sanitisation
 │
 ├── tests/                       # Tests unitaires (pytest)
 ├── config/                      # Fichiers de configuration

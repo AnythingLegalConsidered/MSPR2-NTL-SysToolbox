@@ -51,45 +51,41 @@ def run(config: dict, target: str, **kwargs) -> dict:
 1. **Toujours** retourner `build_result()`
 2. **Toujours** attraper les exceptions (jamais de crash)
 
-**Exemple concret : check_ad_dns**
+**Exemple concret : check_mysql (version simplifiee)**
 
 ```python
-def check_ad_dns(config: dict, target: str) -> dict:
+def _check_mysql(config: dict, target: str) -> dict:
     try:
-        ldap_ok = check_port(target, 389, timeout=config.get("general", {}).get("timeout", 10))
-        dns_result = resolve_dns("ntl.local", dns_server=target)
-        dns_ok = dns_result is not None
+        port = config.get("mysql", {}).get("port", 3306)
+        result = check_mysql_port(target, port)
 
-        if ldap_ok and dns_ok:
+        if result["reachable"]:
             status, code = "OK", EXIT_OK
-            msg = "AD et DNS operationnels"
-        elif not ldap_ok:
-            status, code = "CRITICAL", EXIT_CRITICAL
-            msg = f"LDAP injoignable sur {target}:389"
+            msg = f"MySQL accessible sur {target}:{port}"
         else:
-            status, code = "WARNING", EXIT_WARNING
-            msg = f"DNS ne resout pas ntl.local"
+            status, code = "CRITICAL", EXIT_CRITICAL
+            msg = f"MySQL injoignable sur {target}:{port}"
 
         return build_result(
             module=MODULE_NAME,
-            function="check_ad_dns",
+            function="check_mysql",
             status=status,
             exit_code=code,
             target=target,
-            details={"ldap": ldap_ok, "dns": dns_ok, "dns_result": dns_result},
+            details=result,
             message=msg,
         )
 
-    except Exception as e:
-        logger.error("check_ad_dns failed: %s", e)
+    except Exception as exc:
+        logger.error("check_mysql failed: %s", exc)
         return build_result(
             module=MODULE_NAME,
-            function="check_ad_dns",
+            function="check_mysql",
             status="UNKNOWN",
             exit_code=EXIT_UNKNOWN,
             target=target,
-            details={"error": str(e)},
-            message=f"Impossible de verifier {target}: {e}",
+            details={"error": str(exc)},
+            message=f"Erreur lors du check MySQL sur {target}: {exc}",
         )
 ```
 
@@ -125,57 +121,68 @@ def check_ad_dns(config: dict, target: str) -> dict:
 **Logique :**
 
 ```
-1. Tester le port LDAP (389) sur DC01
-   → Le port est ouvert ? L'AD est accessible.
-   → Le port est ferme ? L'AD est down.
-
-2. Resoudre "ntl.local" via le DNS de DC01
+1. Resoudre le domaine AD (config: discovery.domain, defaut "ntl.local")
+   via le DNS de la cible (dnspython)
    → Ca resout ? Le DNS fonctionne.
-   → Ca ne resout pas ? Le DNS est casse.
+   → Ca ne resout pas ? DNS KO.
 
-3. Decider du status :
-   ┌─────────────────────────────┬──────────┐
-   │ LDAP OK + DNS OK            │ OK       │
-   │ LDAP OK + DNS KO            │ WARNING  │
-   │ LDAP KO (peu importe DNS)   │ CRITICAL │
-   │ DC01 injoignable            │ UNKNOWN  │
-   └─────────────────────────────┴──────────┘
+2. Tester les ports critiques et importants du DC :
+   → Critiques : 53 (DNS), 88 (Kerberos), 389 (LDAP)
+   → Importants : 445 (SMB), 3268 (LDAP-GC)
+   → Un port critique ferme = CRITICAL
+   → Un port important ferme = WARNING
+
+3. Tester la connectivite LDAP (via ldap3, connexion reelle)
+   → Bind OK ? LDAP fonctionnel.
+   → Bind KO ? LDAP down.
+
+4. (Optionnel) Verifier les services Windows via WinRM :
+   → Necessite config winrm.user + winrm.password
+   → Services verifies : NTDS, DNS, Netlogon
+   → Si WinRM non configure → SKIPPED (n'impacte pas le status)
+
+5. Decider du status global :
+   ┌────────────────────────────────────────┬──────────┐
+   │ DNS + ports + LDAP OK                  │ OK       │
+   │ Un check CRITICAL (DNS/port/LDAP)      │ CRITICAL │
+   │ Un check UNKNOWN (ex: WinRM erreur)    │ WARNING  │
+   │ Exception inattendue                   │ UNKNOWN  │
+   └────────────────────────────────────────┴──────────┘
 ```
 
-**Utilise :** `check_port()` (port 389), `resolve_dns()` (ntl.local via DC01)
-**Details retournes :** `ldap: true/false`, `dns: true/false`, `dns_result: "192.168.10.10" ou null`
+**Utilise :** `check_dns()`, `check_ports()`, `check_ldap()` (ldap3), `check_services()` (pywinrm, optionnel)
+**Details retournes :** `dns: {ok, info}`, `ports: {status, results}`, `ldap: {ok}`, `services: {status, results}`
 
 ---
 
 ### 1.2 check_mysql()
 
 **Cible :** WMS-DB (192.168.10.21)
-**Question :** "Est-ce que MySQL repond et la base WMS est accessible ?"
+**Question :** "Est-ce que MySQL repond ?"
 
 **Logique :**
 
 ```
-1. Se connecter a MySQL avec les credentials du config.yaml
-   → Connexion OK ? Continuer.
-   → Connexion KO ? Status CRITICAL.
+1. Tester le port MySQL (config: mysql.port, defaut 3306)
+   → Port ouvert ? Continuer.
+   → Port ferme ? Status CRITICAL.
 
-2. Executer SHOW DATABASES
-   → Verifier que "wms" est dans la liste
+2. Recuperer la version MySQL sans authentification :
+   → Parser le paquet de greeting du protocole MySQL
+   → Si le greeting ne contient pas de version → tenter grab_banner()
 
-3. Executer SHOW STATUS
-   → Recuperer : uptime, threads connectes, nombre de requetes
-
-4. Decider du status :
-   ┌──────────────────────────────┬──────────┐
-   │ Connexion OK + base visible  │ OK       │
-   │ Connexion OK + base absente  │ WARNING  │
-   │ Connexion refusee            │ CRITICAL │
-   │ Serveur injoignable          │ UNKNOWN  │
-   └──────────────────────────────┴──────────┘
+3. Decider du status :
+   ┌──────────────────────────────────────────┬──────────┐
+   │ Port ouvert (+ version detectee)         │ OK       │
+   │ Port ferme                               │ CRITICAL │
+   │ Exception inattendue                     │ UNKNOWN  │
+   └──────────────────────────────────────────┴──────────┘
 ```
 
-**Utilise :** `mysql-connector-python` (connexion + requetes)
-**Details retournes :** `connected: true/false`, `databases: [...]`, `uptime: "..."`, `threads: N`, `questions: N`
+**Note :** Ce check est non-authentifie — il verifie uniquement que le service MySQL ecoute et repond. Pas de SHOW DATABASES ni SHOW STATUS.
+
+**Utilise :** `check_mysql_port()` → `check_port()`, `grab_mysql_version()`, `grab_banner()`
+**Details retournes :** `reachable: true/false`, `port: N`, `version: "8.0.36" ou null`, `banner: "..." ou null`
 
 ---
 
@@ -187,24 +194,27 @@ def check_ad_dns(config: dict, target: str) -> dict:
 **Logique :**
 
 ```
-1. Scanner une liste de ports sur la cible
-   → Ports par defaut : 22 (SSH), 80 (HTTP), 443 (HTTPS),
-     3306 (MySQL), 5432 (PostgreSQL), 8006 (Proxmox), 8080 (HTTP proxy)
+1. Lire la liste de ports a scanner :
+   → Config : discovery.ports (liste personnalisable)
+   → Defaut (DISCOVERY_PORTS) : 22, 80, 443, 3306, 5432, 8006, 8080
+   → Timeout par port : discovery.timeout (defaut 2s)
 
-2. Pour chaque port ouvert :
-   → Identifier le service (via SERVICE_NAMES)
-   → Categoriser (remote_access, web, database, monitoring, etc.)
+2. Pour chaque port, tester avec check_port() :
+   → Port ouvert ? Identifier le service (via SERVICE_NAMES de constant.py)
+   → SERVICE_NAMES mappe : 22→SSH, 80→HTTP, 443→HTTPS, 3306→MySQL, etc.
 
-3. Decider du status :
+3. Collecter les categories de services trouves (set unique, trie)
+
+4. Decider du status :
    ┌──────────────────────────────────────┬──────────┐
-   │ Au moins un port ouvert              │ OK       │
-   │ Aucun port ouvert                    │ CRITICAL │
-   │ Serveur injoignable                  │ UNKNOWN  │
+   │ Au moins un service trouve           │ OK       │
+   │ Aucun service detecte                │ CRITICAL │
+   │ Exception inattendue                 │ UNKNOWN  │
    └──────────────────────────────────────┴──────────┘
 ```
 
-**Utilise :** `check_port()` de network.py, constantes de `constant.py` (DISCOVERY_PORTS, SERVICE_NAMES)
-**Details retournes :** `host: "..."`, `open_ports: [{port, service, category}]`, `categories: [...]`
+**Utilise :** `check_host_services()` → `check_port()` (network.py), `DISCOVERY_PORTS`/`SERVICE_NAMES` (constant.py)
+**Details retournes :** `host: "..."`, `open_ports: [{port, service, open}]`, `categories: ["SSH", "MySQL", ...]`
 
 ---
 
@@ -216,26 +226,31 @@ def check_ad_dns(config: dict, target: str) -> dict:
 **Logique :**
 
 ```
-1. Envoyer une requete HTTP(S) vers la cible
+1. Parser la cible :
+   → Si format "host:port" → extraire le port
+   → Sinon → port 80 par defaut
+
+2. Envoyer une requete HTTP(S) via http_check() :
    → Auto-detection HTTPS sur ports 443, 8443, 4443, 9443
    → Verification SSL desactivee (environnement lab)
+   → User-Agent : "NTL-SysToolbox/1.0"
 
-2. Recuperer les metriques :
+3. Recuperer les metriques :
    → Code HTTP (200, 301, 404...)
    → Header "Server"
    → Taille du contenu
    → Temps de reponse (ms)
 
-3. Decider du status :
+4. Decider du status :
    ┌────────────────────────────────────┬──────────┐
-   │ Reponse HTTP recue                 │ OK       │
-   │ Connexion refusee                  │ CRITICAL │
-   │ Timeout                            │ UNKNOWN  │
+   │ Reponse HTTP recue (ok=true)       │ OK       │
+   │ Erreur HTTP ou connexion refusee   │ CRITICAL │
+   │ Exception inattendue               │ UNKNOWN  │
    └────────────────────────────────────┴──────────┘
 ```
 
-**Utilise :** `http_check()` de network.py
-**Details retournes :** `ok: true/false`, `status_code: N`, `server: "..."`, `content_length: N`, `response_time_ms: N`
+**Utilise :** `check_http()` (checks.py) → `http_check()` (network.py)
+**Details retournes :** `ok: true/false`, `status_code: N`, `server: "..."`, `content_length: N`, `response_time_ms: N`, `error: "..." ou null`
 
 ---
 

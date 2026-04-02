@@ -1,6 +1,7 @@
 # Secrets
 .env
 config/config.yaml
+config/config.*.yaml
 
 # Python
 __pycache__/
@@ -9,11 +10,21 @@ __pycache__/
 venv/
 .venv/
 *.egg-info/
+.coverage
+.mypy_cache/
+.ruff_cache/
 
 # Output (generated artifacts)
 output/logs/
 output/backups/
 output/reports/
+output/exports/
+output/*.png
+output/*.svg
+output/*.pptx
+
+# Claude Code
+.claude/
 
 # IDE
 .vscode/
