@@ -65,9 +65,9 @@ def _check_ad_dns(config: dict, target: str) -> dict[str, Any]:
     try:
         details: dict[str, Any] = {}
 
-        # DNS
-        dns_server = config.get("targets", {}).get("dc01", {}).get("host")
-        dns_ok, dns_info = check_dns(target, dns_server)
+        # DNS — resolve AD domain name via the target as DNS server
+        ad_domain = config.get("discovery", {}).get("domain", "ntl.local")
+        dns_ok, dns_info = check_dns(ad_domain, target)
         details["dns"] = {"ok": dns_ok, "info": dns_info}
 
         # Ports
@@ -87,21 +87,22 @@ def _check_ad_dns(config: dict, target: str) -> dict[str, Any]:
             svc_status, svc_results = check_services(target, winrm_user, winrm_pass)
             details["services"] = {"status": svc_status, "results": svc_results}
         else:
-            svc_status = "UNKNOWN"
-            details["services"] = {"status": "UNKNOWN", "results": "Credentials WinRM non configurés"}
+            svc_status = "SKIPPED"
+            details["services"] = {"status": "SKIPPED", "results": "WinRM non configuré (optionnel)"}
 
-        # Status global
+        # Status global — WinRM SKIPPED is excluded from evaluation
         statuses = [
             "OK" if dns_ok else "CRITICAL",
             port_status,
             "OK" if ldap_ok else "CRITICAL",
-            svc_status,
         ]
+        if svc_status not in ("SKIPPED",):
+            statuses.append(svc_status)
 
         if "CRITICAL" in statuses:
             overall, code = "CRITICAL", EXIT_CRITICAL
         elif "UNKNOWN" in statuses:
-            overall, code = "WARNING", EXIT_WARNING  # Couverture partielle (WinRM non configure)
+            overall, code = "WARNING", EXIT_WARNING
         else:
             overall, code = "OK", EXIT_OK
 

@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from src.interfaces import EXIT_CRITICAL, EXIT_OK, EXIT_UNKNOWN, EXIT_WARNING
+from src.interfaces import EXIT_CRITICAL, EXIT_OK, EXIT_UNKNOWN
 from src.modules.diagnostic import run
 
 TARGET_DC = "192.168.10.10"
@@ -84,7 +84,8 @@ class TestCheckAdDns:
         assert result["status"] == "OK"
         assert result["exit_code"] == EXIT_OK
 
-    def test_warning_when_winrm_not_configured(self):
+    def test_ok_when_winrm_not_configured(self):
+        """WinRM non configuré = SKIPPED, ne pénalise pas le status global."""
         with (
             patch("src.modules.diagnostic.checks.check_dns", return_value=(True, "192.168.10.10")),
             patch("src.modules.diagnostic.checks.check_ports", return_value=("OK", {389: True, 53: True})),
@@ -92,8 +93,9 @@ class TestCheckAdDns:
         ):
             result = run(BASE_CONFIG, TARGET_DC, action="check_ad_dns")
 
-        assert result["status"] == "WARNING"
-        assert result["exit_code"] == EXIT_WARNING
+        assert result["status"] == "OK"
+        assert result["exit_code"] == EXIT_OK
+        assert result["details"]["services"]["status"] == "SKIPPED"
 
     def test_critical_when_dns_fails(self):
         with (

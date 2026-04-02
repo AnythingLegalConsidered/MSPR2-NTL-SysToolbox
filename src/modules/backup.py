@@ -95,7 +95,8 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
     port = str(mysql_cfg.get("port", 3306))
     user = mysql_cfg.get("user", "")
     password = mysql_cfg.get("password", "")
-    database = target or mysql_cfg.get("database", "wms")
+    # target may be an IP (from main menu) — use config database name in that case
+    database = mysql_cfg.get("database", "wms") if not target or "." in target else target
 
     backup_dir = Path(output_dir) / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
@@ -171,16 +172,8 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
         )
 
     except FileNotFoundError:
-        logger.error("mysqldump non disponible sur ce systeme")
-        return build_result(
-            module=MODULE_NAME,
-            function="backup_database",
-            status="CRITICAL",
-            exit_code=EXIT_CRITICAL,
-            target=database,
-            details={"error": "mysqldump non disponible"},
-            message="mysqldump non disponible — installez mysql-client",
-        )
+        logger.warning("mysqldump local absent, tentative via SSH...")
+        return _backup_database_ssh(config, database, dump_path)
     except subprocess.TimeoutExpired:
         return build_result(
             module=MODULE_NAME,
@@ -201,6 +194,105 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
             target=database,
             details={"error": str(e)},
             message=f"Erreur lors du backup: {e}",
+        )
+
+
+# ---------------------------------------------------------------------------
+# backup_database via SSH (fallback quand mysqldump local absent)
+# ---------------------------------------------------------------------------
+
+
+def _backup_database_ssh(config: dict, database: str, dump_path: Path) -> dict[str, Any]:
+    """Fallback: exécute mysqldump sur le serveur distant via SSH (paramiko)."""
+    import paramiko
+
+    ssh_cfg = config.get("ssh", {})
+    mysql_cfg = config.get("mysql", {})
+
+    ssh_host = ssh_cfg.get("host", mysql_cfg.get("host", ""))
+    ssh_port = ssh_cfg.get("port", 22)
+    ssh_user = ssh_cfg.get("user", "")
+    ssh_pass = ssh_cfg.get("password", "")
+
+    if not ssh_host or not ssh_user:
+        return build_result(
+            module=MODULE_NAME,
+            function="backup_database",
+            status="CRITICAL",
+            exit_code=EXIT_CRITICAL,
+            target=database,
+            details={"error": "mysqldump local absent et SSH non configuré"},
+            message="mysqldump indisponible localement et SSH non configuré",
+        )
+
+    mysql_user = mysql_cfg.get("user", "")
+    mysql_pass = mysql_cfg.get("password", "")
+    timeout = config.get("general", {}).get("timeout", 10)
+
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(
+            hostname=ssh_host,
+            port=ssh_port,
+            username=ssh_user,
+            password=ssh_pass,
+            timeout=timeout,
+        )
+
+        # Build remote mysqldump command
+        cmd = f"mysqldump --single-transaction --routines -u {mysql_user}"
+        if mysql_pass:
+            cmd = f"MYSQL_PWD='{mysql_pass}' {cmd}"
+        cmd += f" {database}"
+
+        _, stdout, stderr = client.exec_command(cmd, timeout=60)
+        exit_code = stdout.channel.recv_exit_status()
+        dump_data = stdout.read().decode("utf-8")
+        err_data = stderr.read().decode("utf-8").strip()
+        client.close()
+
+        if exit_code != 0:
+            logger.error("mysqldump SSH échoué: %s", err_data)
+            return build_result(
+                module=MODULE_NAME,
+                function="backup_database",
+                status="CRITICAL",
+                exit_code=EXIT_CRITICAL,
+                target=database,
+                details={"error": err_data, "method": "ssh"},
+                message=f"mysqldump via SSH échoué: {err_data}",
+            )
+
+        dump_path.parent.mkdir(parents=True, exist_ok=True)
+        dump_path.write_text(dump_data, encoding="utf-8")
+        size_bytes = dump_path.stat().st_size
+
+        return build_result(
+            module=MODULE_NAME,
+            function="backup_database",
+            status="OK",
+            exit_code=EXIT_OK,
+            target=database,
+            details={
+                "dump_path": str(dump_path),
+                "size_bytes": size_bytes,
+                "database": database,
+                "method": "ssh",
+            },
+            message=f"Backup {database} via SSH: {dump_path} ({size_bytes} octets)",
+        )
+
+    except Exception as e:
+        logger.error("backup_database SSH failed: %s", e)
+        return build_result(
+            module=MODULE_NAME,
+            function="backup_database",
+            status="CRITICAL",
+            exit_code=EXIT_CRITICAL,
+            target=database,
+            details={"error": str(e), "method": "ssh"},
+            message=f"Erreur backup SSH: {e}",
         )
 
 
