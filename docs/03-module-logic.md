@@ -113,7 +113,7 @@ def check_ad_dns(config: dict, target: str) -> dict:
 
 ## Module 1 — Diagnostic
 
-**Fichier :** `src/modules/diagnostic.py`
+**Dossier :** `src/modules/diagnostic/` (`__init__.py`, `checks.py`, `constant.py`)
 **Responsable :** Blaise
 **But :** Verifier que les services critiques de NTL fonctionnent.
 
@@ -179,65 +179,63 @@ def check_ad_dns(config: dict, target: str) -> dict:
 
 ---
 
-### 1.3 check_windows_server()
+### 1.3 check_linux()
 
-**Cible :** DC01 (192.168.10.10) ou autre serveur Windows
-**Question :** "Quelles sont les metriques du serveur Windows (CPU, RAM, disque) ?"
+**Cible :** Tout serveur Linux (ex: WMS-DB)
+**Question :** "Quels services tournent sur ce serveur ?"
 
 **Logique :**
 
 ```
-1. Executer des commandes wmic via subprocess
-   → CPU : wmic cpu get LoadPercentage
-   → RAM : wmic OS get FreePhysicalMemory,TotalVisibleMemorySize
-   → Disque : wmic logicaldisk get Size,FreeSpace
+1. Scanner une liste de ports sur la cible
+   → Ports par defaut : 22 (SSH), 80 (HTTP), 443 (HTTPS),
+     3306 (MySQL), 5432 (PostgreSQL), 8006 (Proxmox), 8080 (HTTP proxy)
 
-2. Calculer les pourcentages d'utilisation
+2. Pour chaque port ouvert :
+   → Identifier le service (via SERVICE_NAMES)
+   → Categoriser (remote_access, web, database, monitoring, etc.)
 
 3. Decider du status :
-   ┌────────────────────────────────────────┬──────────┐
-   │ CPU < 80% ET RAM < 80% ET Disk < 80%  │ OK       │
-   │ Un des trois > 80%                     │ WARNING  │
-   │ Commande echoue                        │ CRITICAL │
-   │ Serveur injoignable                    │ UNKNOWN  │
-   └────────────────────────────────────────┴──────────┘
+   ┌──────────────────────────────────────┬──────────┐
+   │ Au moins un port ouvert              │ OK       │
+   │ Aucun port ouvert                    │ CRITICAL │
+   │ Serveur injoignable                  │ UNKNOWN  │
+   └──────────────────────────────────────┴──────────┘
 ```
 
-**Utilise :** `subprocess` (wmic) ou `psutil` si execute localement
-**Details retournes :** `cpu_percent: N`, `ram_percent: N`, `disk_percent: N`, `ram_total_mb: N`, `disk_total_gb: N`
+**Utilise :** `check_port()` de network.py, constantes de `constant.py` (DISCOVERY_PORTS, SERVICE_NAMES)
+**Details retournes :** `host: "..."`, `open_ports: [{port, service, category}]`, `categories: [...]`
 
 ---
 
-### 1.4 check_ubuntu()
+### 1.4 check_http()
 
-**Cible :** WMS-DB (192.168.10.21) ou autre serveur Ubuntu
-**Question :** "Quel est l'etat du serveur Ubuntu ?"
+**Cible :** Tout serveur HTTP/HTTPS
+**Question :** "Est-ce que le service web repond correctement ?"
 
 **Logique :**
 
 ```
-1. Se connecter en SSH avec paramiko (credentials du config.yaml)
+1. Envoyer une requete HTTP(S) vers la cible
+   → Auto-detection HTTPS sur ports 443, 8443, 4443, 9443
+   → Verification SSL desactivee (environnement lab)
 
-2. Executer des commandes a distance :
-   → lsb_release -a     → Version de l'OS
-   → uptime              → Temps de fonctionnement
-   → free -m             → RAM utilisee / totale
-   → df -h               → Espace disque
-   → systemctl status mysql  → Etat du service MySQL
+2. Recuperer les metriques :
+   → Code HTTP (200, 301, 404...)
+   → Header "Server"
+   → Taille du contenu
+   → Temps de reponse (ms)
 
-3. Parser les resultats et calculer les pourcentages
-
-4. Decider du status :
+3. Decider du status :
    ┌────────────────────────────────────┬──────────┐
-   │ RAM < 80% ET Disk < 80%           │ OK       │
-   │ RAM > 80% OU Disk > 80%           │ WARNING  │
-   │ SSH echoue                        │ CRITICAL │
-   │ Serveur injoignable               │ UNKNOWN  │
+   │ Reponse HTTP recue                 │ OK       │
+   │ Connexion refusee                  │ CRITICAL │
+   │ Timeout                            │ UNKNOWN  │
    └────────────────────────────────────┴──────────┘
 ```
 
-**Utilise :** `paramiko` (SSH), parsing des sorties texte
-**Details retournes :** `os_version: "..."`, `uptime: "..."`, `ram_percent: N`, `disk_percent: N`, `mysql_status: "active/inactive"`
+**Utilise :** `http_check()` de network.py
+**Details retournes :** `ok: true/false`, `status_code: N`, `server: "..."`, `content_length: N`, `response_time_ms: N`
 
 ---
 
@@ -320,7 +318,7 @@ def check_ad_dns(config: dict, target: str) -> dict:
 
 ## Module 3 — Audit
 
-**Fichier :** `src/modules/audit.py`
+**Dossier :** `src/modules/audit/` (`__init__.py`, `scanner.py`)
 **Responsable :** Zaid
 **But :** Scanner le reseau, identifier les OS obsoletes, generer un rapport.
 
@@ -458,8 +456,8 @@ MODULE 1 — DIAGNOSTIC              MODULE 2 — BACKUP
 
 check_ad_dns ──► AD/DNS OK ?        backup_database ──► dump SQL + SHA256
 check_mysql  ──► MySQL OK ?         export_table_csv ──► CSV + SHA256
-check_windows──► CPU/RAM/Disk ?
-check_ubuntu ──► SSH + metriques ?
+check_linux  ──► Services actifs ?
+check_http   ──► HTTP/HTTPS OK ?
 
 
 MODULE 3 — AUDIT

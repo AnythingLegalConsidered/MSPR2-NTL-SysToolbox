@@ -17,7 +17,7 @@ from src.interfaces import ModuleConfigError
 
 logger = logging.getLogger(__name__)
 
-_ENV_VAR_PATTERN = re.compile(r"\$\{([^}]+)\}")
+_ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 _MAX_RESOLVE_DEPTH = 20
 
 
@@ -80,7 +80,13 @@ def load_config(config_path: str = "config/config.yaml", strict: bool = False) -
         ModuleConfigError: If the config file does not exist, is invalid,
             or has unresolved env vars in strict mode.
     """
-    load_dotenv()
+    # Load .env relative to the config file location (not CWD)
+    config_dir = Path(config_path).parent
+    env_file = config_dir / ".env"
+    if env_file.is_file():
+        load_dotenv(env_file)
+    else:
+        load_dotenv()
 
     path = Path(config_path)
     if not path.is_file():

@@ -43,15 +43,33 @@ mysql:                   # Connexion MySQL
   user: "${NTL_MYSQL_USER}"        # ← remplacé par la valeur dans .env
   password: "${NTL_MYSQL_PASSWORD}" # ← idem
 
-ssh:                     # Connexion SSH (pour check Ubuntu)
+ssh:                     # Connexion SSH (pour backup distant)
   host: 192.168.10.21
   port: 22
   user: "${NTL_SSH_USER}"
   password: "${NTL_SSH_PASSWORD}"
+  # key_file: ~/.ssh/id_rsa  # alternative au password
+
+discovery:               # Config du scan de services (check_linux)
+  network_range: "172.16.135.0/24"
+  timeout: 2
+  ports:
+    - 22    # SSH
+    - 80    # HTTP
+    - 443   # HTTPS
+    - 3306  # MySQL
+    - 5432  # PostgreSQL
+    - 8006  # Proxmox
+    - 8080  # HTTP proxy
+
+winrm:                   # Connexion WinRM (services Windows)
+  user: "${NTL_WINRM_USER}"
+  password: "${NTL_WINRM_PASSWORD}"
 
 audit:                   # Config du module audit
-  network_range: "192.168.10.0/24"
+  network_range: "172.16.135.0/24"
   eol_database: "./data/eol_database.json"
+  inventory_csv: "./data/sample_inventory.csv"
 ```
 
 ## Comment la substitution fonctionne

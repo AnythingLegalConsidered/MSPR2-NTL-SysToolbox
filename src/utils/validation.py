@@ -45,7 +45,18 @@ def validate_network_range(target_range: str) -> str | None:
     parts = target_range.replace(",", " ").split()
     for part in parts:
         # Strip nmap range suffix (e.g. "192.168.1.1-50" -> test "192.168.1.1")
-        base = part.split("-")[0]
+        segments = part.split("-", 1)
+        base = segments[0]
+
+        # Validate the range suffix if present (must be an integer 0-255)
+        if len(segments) == 2:
+            try:
+                range_end = int(segments[1])
+                if not 0 <= range_end <= 255:
+                    return f"Suffixe de plage hors limites (0-255): {part!r}"
+            except ValueError:
+                return f"Suffixe de plage invalide: {part!r}"
+
         try:
             ipaddress.ip_network(base, strict=False)
             continue

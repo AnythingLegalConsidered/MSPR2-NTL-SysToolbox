@@ -74,8 +74,11 @@ chore: maintenance (deps, CI...)   refactor: restructuration sans changement fon
 ```bash
 make setup          # Créer venv + installer deps (Windows)
 make setup-linux    # Idem Linux
+make setup-dev      # Installer outils dev (ruff, mypy, pytest-cov)
 make run            # Lancer le CLI
-make test           # Lancer pytest
+make test           # Lancer pytest avec couverture
+make lint           # Vérifier le code (ruff)
+make typecheck      # Vérifier les types (mypy)
 make clean          # Nettoyer les artefacts générés
 ```
 

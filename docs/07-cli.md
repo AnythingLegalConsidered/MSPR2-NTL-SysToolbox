@@ -40,9 +40,9 @@ Menu principal → choix "1" (Diagnostic)
 
 | Module | Actions disponibles |
 |--------|-------------------|
-| **Diagnostic** | 1. Vérifier AD/DNS — 2. Tester MySQL — 3. État serveur Windows — 4. État serveur Ubuntu |
-| **Backup** | 1. Sauvegarder BDD — 2. Exporter table CSV |
-| **Audit** | 1. Scanner réseau — 2. Inventaire matériel — 3. Vérifier OS EOL — 4. Générer rapport |
+| **Diagnostic** | 1. Vérifier AD/DNS (DC01) — 2. Vérifier MySQL (port + version) — 3. Vérifier services Linux (multi-ports) — 4. Vérifier HTTP/HTTPS |
+| **Backup** | 1. Backup base de données (dump SQL) — 2. Export table en CSV |
+| **Audit** | 1. Scanner le réseau — 2. Lister les dates EOL — 3. Auditer depuis un CSV — 4. Générer le rapport complet |
 
 ## Comment un module est appelé
 
@@ -74,7 +74,13 @@ Quand l'utilisateur appuie Entrée sans rien taper, `main.py` utilise les valeur
 
 | Action | Cible par défaut |
 |--------|-----------------|
-| `check_ad_dns` | IP de DC01 (`192.168.10.10`) |
-| `check_mysql` | IP de WMS-DB (`192.168.10.21`) |
+| `check_ad_dns` | IP de DC01 (depuis `config.targets.dc01.host`) |
+| `check_mysql` | IP de WMS-DB (depuis `config.mysql.host`) |
+| `check_linux` | IP du premier target Linux |
+| `check_http` | IP du serveur (port 80 par défaut) |
 | `backup_database` | Nom de la BDD (`wms`) |
-| `scan_network` | Plage réseau (`192.168.10.0/24`) |
+| `export_table_csv` | Table `shipments` |
+| `scan_network` | Plage réseau (depuis `config.audit.network_range`) |
+| `list_os_eol` | Toutes les entrées EOL |
+| `audit_from_csv` | Fichier CSV (depuis `config.audit.inventory_csv`) |
+| `generate_report` | Rapport complet |

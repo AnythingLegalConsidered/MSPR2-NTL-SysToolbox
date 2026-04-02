@@ -49,6 +49,45 @@ ip = resolve_dns("ntl.local", dns_server="192.168.10.10")
 
 Retourne l'IP (string) ou `None` si échec.
 
+### grab_banner(host, port, timeout=3)
+
+Lit la bannière d'un service réseau (SSH, MySQL, etc.). Utile pour identifier un service sans authentification.
+
+```python
+from src.utils.network import grab_banner
+
+banner = grab_banner("192.168.10.21", 22)
+# → "SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.6"
+```
+
+Retourne la bannière (string) ou `None` si timeout/échec.
+
+### grab_mysql_version(host, port=3306, timeout=3)
+
+Récupère la version MySQL en parsant le paquet de greeting du protocole MySQL. Pas besoin d'authentification.
+
+```python
+from src.utils.network import grab_mysql_version
+
+version = grab_mysql_version("192.168.10.21")
+# → "8.0.36"
+```
+
+Retourne la version (string) ou `None` si pas de MySQL.
+
+### http_check(host, port=80, path="/", timeout=5, verify_ssl=False, scheme=None)
+
+Teste un endpoint HTTP/HTTPS et retourne les métriques de réponse. Auto-détecte HTTPS sur les ports 443, 8443, 4443, 9443.
+
+```python
+from src.utils.network import http_check
+
+result = http_check("192.168.10.21", 8006)
+# → {"ok": True, "status_code": 200, "server": "pveproxy", "content_length": 1234, "response_time_ms": 45.2, "error": None}
+```
+
+Retourne un dict avec : `ok`, `status_code`, `server`, `content_length`, `response_time_ms`, `error`.
+
 ---
 
 ## output.py — Affichage et logs
@@ -92,7 +131,10 @@ path = save_result_json(result, output_dir="./output")
 |------------|----------|---------|
 | Vérifier si un port est ouvert | `check_port(host, port)` | `network.py` |
 | Pinger une machine | `ping_host(host)` | `network.py` |
-| Résoudre un nom DNS | `resolve_dns(hostname)` | `network.py` |
+| Résoudre un nom DNS | `resolve_dns(hostname, dns_server)` | `network.py` |
+| Lire la bannière d'un service | `grab_banner(host, port)` | `network.py` |
+| Version MySQL sans auth | `grab_mysql_version(host)` | `network.py` |
+| Tester un endpoint HTTP(S) | `http_check(host, port, path)` | `network.py` |
 | Afficher un résultat | `print_result(result)` | `output.py` |
 | Sauvegarder en JSON | `save_result_json(result)` | `output.py` |
 | Configurer les logs | `setup_logging()` | `output.py` |

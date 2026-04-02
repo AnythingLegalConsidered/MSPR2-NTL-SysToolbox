@@ -36,9 +36,14 @@ NTL-SysToolbox/
 │   ├── interfaces.py            # Contrat commun (exit codes, build_result)
 │   ├── modules/                 # Les 3 modules metier
 │   │   ├── _template.py         # Template a copier pour un nouveau module
-│   │   ├── diagnostic.py        # Module 1 : sante des serveurs
+│   │   ├── diagnostic/          # Module 1 : sante des serveurs
+│   │   │   ├── __init__.py      # Point d'entree (run dispatcher)
+│   │   │   ├── checks.py        # Fonctions de verification
+│   │   │   └── constant.py      # Ports, services, constantes
 │   │   ├── backup.py            # Module 2 : sauvegarde BDD
-│   │   └── audit.py             # Module 3 : obsolescence reseau
+│   │   └── audit/               # Module 3 : obsolescence reseau
+│   │       ├── __init__.py      # Point d'entree (run dispatcher)
+│   │       └── scanner.py       # Fonctions de scan et audit
 │   └── utils/                   # Utilitaires partages
 │       ├── output.py            # Logging, JSON, affichage rich
 │       └── network.py           # Ping, DNS, check port
@@ -72,9 +77,9 @@ NTL-SysToolbox/
 | Developpeur | Role | Module | Fichier | Branche |
 |-------------|------|--------|---------|---------|
 | **Ianis** (Lead) | CLI, config, utils, integration | Core | `src/main.py` | `feature/cli-menu` |
-| **Blaise** | Verification sante serveurs | Diagnostic | `src/modules/diagnostic.py` | `feature/module-diagnostic` |
+| **Blaise** | Verification sante serveurs | Diagnostic | `src/modules/diagnostic/` | `feature/module-diagnostic` |
 | **Ojvind** | Sauvegarde BDD | Backup | `src/modules/backup.py` | `feature/module-backup` |
-| **Zaid** | Audit obsolescence | Audit | `src/modules/audit.py` | `feature/module-audit` |
+| **Zaid** | Audit obsolescence | Audit | `src/modules/audit/` | `feature/module-audit` |
 
 ---
 
@@ -98,8 +103,8 @@ NTL-SysToolbox/
    │ diagnostic  │    │   backup    │    │    audit    │
    │ check_ad_dns│    │ backup_db   │    │ scan_network│
    │ check_mysql │    │ export_csv  │    │ list_os_eol │
-   │ check_win   │    └──────┬──────┘    │ audit_csv   │
-   │ check_ubuntu│           │           │ gen_report  │
+   │ check_linux │    └──────┬──────┘    │ audit_csv   │
+   │ check_http  │           │           │ gen_report  │
    └──────┬──────┘           │           └──────┬──────┘
           │                  │                  │
           └──────────────────┼──────────────────┘

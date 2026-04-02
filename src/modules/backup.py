@@ -8,6 +8,7 @@ import csv
 import logging
 import os
 import re
+import shlex
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -97,6 +98,10 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
     password = mysql_cfg.get("password", "")
     # target may be an IP (from main menu) — use config database name in that case
     database = mysql_cfg.get("database", "wms") if not target or "." in target else target
+
+    # Validate database name to prevent injection in mysqldump CLI args
+    if not _VALID_TABLE_RE.match(database):
+        raise ModuleConfigError(f"Nom de base invalide: {database!r}")
 
     backup_dir = Path(output_dir) / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
@@ -243,7 +248,7 @@ def _backup_database_ssh(config: dict, database: str, dump_path: Path) -> dict[s
         # Build remote mysqldump command
         cmd = f"mysqldump --single-transaction --routines -u {mysql_user}"
         if mysql_pass:
-            cmd = f"MYSQL_PWD='{mysql_pass}' {cmd}"
+            cmd = f"MYSQL_PWD={shlex.quote(mysql_pass)} {cmd}"
         cmd += f" {database}"
 
         _, stdout, stderr = client.exec_command(cmd, timeout=60)
@@ -351,8 +356,9 @@ def export_table_csv(config: dict, target: str) -> dict[str, Any]:
         )
         try:
             cursor = conn.cursor()
-            # Safety assertion: _VALID_TABLE_RE validated at function entry
-            assert _VALID_TABLE_RE.match(target), f"Table name validation bypass: {target!r}"
+            # Safety check: _VALID_TABLE_RE validated at function entry
+            if not _VALID_TABLE_RE.match(target):
+                raise ModuleConfigError(f"Table name validation bypass: {target!r}")
             cursor.execute(f"SELECT * FROM `{target}`")  # noqa: S608
             columns = [desc[0] for desc in cursor.description]  # type: ignore[union-attr]
             rows = cursor.fetchall()

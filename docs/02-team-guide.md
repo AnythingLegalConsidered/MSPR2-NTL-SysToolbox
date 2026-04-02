@@ -40,9 +40,9 @@ Utilisateur                    Ton code                    Resultat
 | Qui | Branche | Fichier | Role |
 |-----|---------|---------|------|
 | **Ianis** (Lead) | `feature/cli-menu` | `main.py`, config, utils | Le menu + assemblage |
-| **Blaise** | `feature/module-diagnostic` | `src/modules/diagnostic.py` | Verifier que les serveurs marchent |
+| **Blaise** | `feature/module-diagnostic` | `src/modules/diagnostic/` | Verifier que les serveurs marchent |
 | **Ojvind** | `feature/module-backup` | `src/modules/backup.py` | Sauvegarder la base de donnees |
-| **Zaid** | `feature/module-audit` | `src/modules/audit.py` | Detecter les OS obsoletes |
+| **Zaid** | `feature/module-audit` | `src/modules/audit/` | Detecter les OS obsoletes |
 
 **Regle d'or :** tu ne touches QUE ton fichier sur ta branche. Rien d'autre.
 
@@ -106,18 +106,18 @@ def ma_fonction(config: dict, target: str) -> dict[str, Any]:
 
 ## Section Blaise — Module Diagnostic
 
-**Ton fichier :** `src/modules/diagnostic.py`
+**Ton dossier :** `src/modules/diagnostic/` (package avec `__init__.py`, `checks.py`, `constant.py`)
 **Ta branche :** `feature/module-diagnostic`
 
 ### Ce que tu dois coder
 
 | Fonction | Ce qu'elle fait en une phrase |
 |----------|------------------------------|
-| `check_ad_dns()` | Verifie que le serveur Active Directory (DC01) repond en testant le port 389 et la resolution DNS |
-| `check_mysql()` | Verifie que MySQL tourne sur WMS-DB en se connectant et en executant une requete simple |
-| `check_windows_server()` | Recupere les metriques du serveur Windows (CPU, RAM, disque) |
-| `check_ubuntu()` | Recupere les metriques du serveur Linux via SSH (CPU, RAM, disque) |
-| `run()` | Recoit l'action choisie par l'utilisateur et appelle la bonne fonction (deja dans le template) |
+| `check_ad_dns()` | Verifie que le serveur Active Directory (DC01) repond en testant les ports critiques (53, 88, 389), le LDAP et la resolution DNS |
+| `check_mysql()` | Verifie que MySQL tourne en testant le port et recuperant la version via le protocole MySQL |
+| `check_linux()` | Verifie les services d'un serveur Linux en scannant plusieurs ports et categorisant les services |
+| `check_http()` | Verifie qu'un serveur HTTP/HTTPS repond (status code, server header, temps de reponse) |
+| `run()` | Recoit l'action choisie par l'utilisateur et appelle la bonne fonction |
 
 ### Par ou commencer
 
@@ -156,7 +156,7 @@ def ma_fonction(config: dict, target: str) -> dict[str, Any]:
 
 ## Section Zaid — Module Audit
 
-**Ton fichier :** `src/modules/audit.py`
+**Ton dossier :** `src/modules/audit/` (package avec `__init__.py`, `scanner.py`)
 **Ta branche :** `feature/module-audit`
 
 ### Ce que tu dois coder
@@ -186,9 +186,12 @@ Ianis a deja code des utilitaires dans `src/utils/`. Utilise-les au lieu de reco
 
 | Fonction | Fichier | Ce qu'elle fait |
 |----------|---------|-----------------|
-| `check_port(host, port)` | `src/utils/network.py` | Teste si un port est ouvert sur une machine |
-| `ping_host(host)` | `src/utils/network.py` | Fait un ping |
-| `resolve_dns(hostname)` | `src/utils/network.py` | Resout un nom de domaine en IP |
+| `check_port(host, port)` | `src/utils/network.py` | Teste si un port TCP est ouvert sur une machine |
+| `ping_host(host)` | `src/utils/network.py` | Fait un ping ICMP (cross-platform) |
+| `resolve_dns(hostname, dns_server)` | `src/utils/network.py` | Resout un nom de domaine en IP (optionnel: via un DNS specifique) |
+| `grab_banner(host, port)` | `src/utils/network.py` | Lit la banniere d'un service (SSH, MySQL, etc.) |
+| `grab_mysql_version(host, port)` | `src/utils/network.py` | Recupere la version MySQL sans authentification |
+| `http_check(host, port, path)` | `src/utils/network.py` | Teste un endpoint HTTP/HTTPS (status, server, temps de reponse) |
 | `build_result(...)` | `src/interfaces.py` | Construit le dict de resultat standardise |
 | `print_result(result)` | `src/utils/output.py` | Affiche un resultat joliment |
 | `save_result_json(result, dir)` | `src/utils/output.py` | Sauvegarde un resultat en JSON |

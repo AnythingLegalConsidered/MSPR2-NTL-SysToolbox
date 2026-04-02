@@ -112,7 +112,7 @@ AUDIT_ACTIONS: dict[str, tuple[str, str]] = {
 }
 
 
-_SAFE_TARGET_RE = re.compile(r"^[a-zA-Z0-9._:/%\-]+$")
+_SAFE_TARGET_RE = re.compile(r"^[a-zA-Z0-9._:/\-]+$")
 _MAX_TARGET_LEN = 255
 
 
