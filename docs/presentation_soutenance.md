@@ -8,7 +8,7 @@
 ---
 
 > Ce document sert de script et de base pour les slides de la soutenance.
-> Chaque section `##` correspond à un slide. Le temps indicatif est entre parenthèses.
+> Chaque section `##` correspond à un slide (v6 — 16 slides). Le temps indicatif est entre parenthèses.
 
 ---
 
@@ -16,7 +16,7 @@
 
 # NTL-SysToolbox
 
-**Outil CLI d'administration système pour NordTransit Logistics**
+**CLI administration système pour NordTransit Logistics**
 
 MSPR TPRE511 — Bloc E6.1
 
@@ -29,53 +29,72 @@ MSPR TPRE511 — Bloc E6.1
 
 ---
 
-## Slide 2 — Contexte et problématique (1min30)
+## Slide 2 — Contexte NTL (1min)
 
 ### Le client : NordTransit Logistics
 
 - **PME logistique** — Hauts-de-France (siège Lille, entrepôts Lens, Valenciennes, Arras)
-- **Parc informatique** : 19 machines (serveurs Windows/Linux, postes de travail)
-- **Application métier** : WMS (Warehouse Management System) sur MySQL
-
-### Problématiques identifiées
-
-1. **Pas de vérification systématique** de l'état des services critiques (AD, DNS, MySQL)
-2. **Sauvegardes manuelles** de la base WMS — risque de perte de données
-3. **Aucune visibilité** sur l'obsolescence du parc (OS en fin de vie)
-
-### Notre mission
-
-> Développer un outil CLI qui industrialise ces 3 opérations avec des sorties exploitables en supervision.
+- **~240 employés**, équipe IT de 4 personnes
+- **Application métier** : WMS (Warehouse Management System) — cœur de métier, plage critique 5h30-18h30
+- **Maintenance** effectuée en créneau nocturne
 
 ---
 
-## Slide 3 — Solution proposée (1min)
+## Slide 3 — Problématique (1min)
 
-### NTL-SysToolbox — 3 modules
+### 3 axes identifiés
 
-| Module | Fonction | Valeur métier |
-|--------|----------|---------------|
-| **Diagnostic** | Vérifie AD/DNS, MySQL, santé serveurs | Détection proactive des pannes |
-| **Backup** | Dump SQL + export CSV + SHA256 | Sauvegardes traçables et vérifiables |
-| **Audit** | Scan réseau + analyse EOL | Plan de migration priorisé |
+| Problème actuel | Module réponse |
+|-----------------|----------------|
+| **Supervision** — Pas de vérification systématique des services critiques (AD, DNS, MySQL) | → **Diagnostic** |
+| **Sauvegardes** — Exports manuels de la base WMS, risque de perte de données | → **Backup** |
+| **Obsolescence** — Aucune visibilité sur les OS en fin de vie dans le parc | → **Audit** |
 
-### Caractéristiques clés
+> Mission : développer un outil CLI qui industrialise ces 3 opérations avec des sorties exploitables en supervision.
 
+---
+
+## Slide 4 — Notre solution (1min)
+
+### NTL-SysToolbox
+
+- **CLI Python interactif** avec menu Rich
+- **3 modules** : Diagnostic, Backup, Audit
+- **Sorties JSON horodatées** (ISO 8601 UTC)
+- **Codes retour standardisés** : 0=OK, 1=WARNING, 2=CRITICAL, 3=UNKNOWN — compatibles Nagios/Zabbix
+- **Configuration** : YAML + `.env` (secrets séparés)
 - **Cross-platform** : Windows + Linux
-- **Sorties JSON** horodatées (ISO 8601 UTC)
-- **Codes retour standardisés** : 0=OK, 1=WARNING, 2=CRITICAL, 3=UNKNOWN
-- **Menu interactif** avec affichage Rich
 
 ---
 
-## Slide 4 — Architecture technique (2min)
+## Slide 5 — Organisation équipe (1min30)
 
-### Stack technologique
+### Répartition des rôles
 
-- **Langage** : Python 3.10+
-- **Librairies** : rich, paramiko, dnspython, python-nmap, mysql-connector, ldap3, psutil
-- **CI/CD** : GitHub Actions (lint, types, tests sur 3 versions Python)
-- **Infra** : Proxmox VE, Ansible, cloud-init
+| Membre | Rôle | Périmètre |
+|--------|------|-----------|
+| Ianis PUICHAUD | Lead / Architecte | CLI, interfaces, config, CI, intégration |
+| Blaise WANDA NKONG | Dev Diagnostic | 4 checks (AD/DNS, MySQL, Linux, HTTP) |
+| Ojvind LANTSIGBLE | Dev Backup | Dump SQL, export CSV, sécurité |
+| Zaid ABOUYAALA | Dev Audit + Docs | Scan réseau, EOL, rapports, documentation |
+
+### Méthode de travail
+
+- **Contrat JSON** commun (`build_result()`) défini en amont
+- **Branches** `feature/*` par développeur
+- **Pull Requests** avec CI obligatoire avant merge
+- **Review** par le Lead, merge squash
+
+### Workflow Git (4 étapes)
+
+1. Créer branche `feature/module-xxx`
+2. Développer + commiter (commits conventionnels)
+3. Ouvrir PR → CI automatique (lint + types + tests)
+4. Review Lead → merge squash dans `master`
+
+---
+
+## Slide 6 — Architecture (2min)
 
 ### Structure du projet
 
@@ -83,26 +102,32 @@ MSPR TPRE511 — Bloc E6.1
 src/
 ├── main.py              # Menu CLI interactif
 ├── config_loader.py     # YAML + .env
-├── interfaces.py        # Contrat commun
+├── interfaces.py        # Contrat commun build_result()
 ├── modules/
-│   ├── diagnostic/      # 4 checks (AD/DNS, MySQL, Linux, HTTP)
+│   ├── diagnostic/      # 4 checks
 │   ├── backup.py        # Dump SQL + CSV
 │   └── audit/           # Scan nmap + EOL + rapports
 └── utils/               # output, network, validation
 ```
 
-### Contrat d'interface unique
+### Contrat JSON — `build_result()` (8 champs)
 
-Chaque fonction retourne un JSON standardisé via `build_result()` — même format pour les 3 modules.
+Chaque fonction retourne un JSON standardisé :
+`status`, `code`, `module`, `function`, `timestamp`, `host`, `data`, `message`
+
+### Règles
+
+- **Seuils** : CPU/RAM/Disque > 80% → WARNING
+- **Timeout** : 10s par défaut sur chaque opération réseau
 
 ---
 
-## Slide 5 — Module Diagnostic (2min) — Blaise
+## Slide 7 — Module Diagnostic (2min) — Blaise
 
-### Objectif
-Confirmer la disponibilité des services critiques de NTL.
+### Question clé
+> « Les services critiques du siège sont-ils opérationnels ? »
 
-### 4 vérifications
+### 4 fonctions
 
 | Fonction | Cible | Vérifications |
 |----------|-------|---------------|
@@ -117,15 +142,12 @@ Confirmer la disponibilité des services critiques de NTL.
 - Service down → CRITICAL
 - Timeout → UNKNOWN
 
-### Démo
-> Lancer un diagnostic sur DC01 et WMS-DB depuis le menu interactif.
-
 ---
 
-## Slide 6 — Module Backup (2min) — Ojvind
+## Slide 8 — Module Backup (2min) — Ojvind
 
-### Objectif
-Garantir l'intégrité et la traçabilité des exports de la base WMS.
+### Question clé
+> « Sauvegarder la base WMS de manière fiable et traçable »
 
 ### 2 fonctions
 
@@ -134,30 +156,28 @@ Garantir l'intégrité et la traçabilité des exports de la base WMS.
 | `backup_database()` | mysqldump de la base WMS | `wms_YYYYMMDD_HHMMSS.sql` + hash SHA256 |
 | `export_table_csv()` | SELECT * → CSV par table | `shipments.csv`, `inventory.csv` |
 
-### Sécurité
+### 4 mesures de sécurité
 
-- Mot de passe MySQL via variable d'environnement (jamais en clair)
-- Prévention injection SQL sur les noms de tables
-- Validation des chemins de sortie (anti path traversal)
-
-### Démo
-> Lancer un backup complet et montrer le fichier .sql + vérification SHA256.
+1. Mot de passe MySQL via variable d'environnement (jamais en clair)
+2. Prévention injection SQL sur les noms de tables
+3. Validation des chemins de sortie (anti path traversal)
+4. Hash SHA256 pour vérification d'intégrité
 
 ---
 
-## Slide 7 — Module Audit (2min) — Zaid
+## Slide 9 — Module Audit (2min) — Zaid
 
-### Objectif
-Fournir un inventaire réseau qualifié et un rapport d'obsolescence.
+### Question clé
+> « Quels équipements du parc sont obsolètes ? »
 
-### 4 fonctions
+### Pipeline en 4 étapes
 
-| Fonction | Description |
-|----------|-------------|
-| `scan_network()` | Scan nmap avec détection OS |
-| `list_os_eol()` | Lecture base EOL (20 OS référencés) |
-| `audit_from_csv()` | Croisement inventaire CSV + dates EOL |
-| `generate_report()` | Rapport complet trié par criticité |
+| Étape | Fonction | Description |
+|-------|----------|-------------|
+| 1. Scan | `scan_network()` | Scan nmap avec détection OS |
+| 2. EOL | `list_os_eol()` | Lecture base EOL locale |
+| 3. Croisement | `audit_from_csv()` | Croisement inventaire CSV + dates EOL |
+| 4. Rapport | `generate_report()` | Rapport complet trié par criticité |
 
 ### Résultats clés du parc NTL (19 machines)
 
@@ -167,123 +187,139 @@ Fournir un inventaire réseau qualifié et un rapport d'obsolescence.
 | **WARNING** | 7 | PC-SIEGE (Win 10), WMS-DB (Ubuntu 20.04) |
 | **OK** | 6 | DC01 (Win Server 2022), DC02 (Win Server 2019) |
 
-### Démo
-> Lancer un audit depuis le CSV et montrer le rapport coloré.
+---
+
+## Slide 10 — Environnement de test (1min)
+
+### Lab Proxmox — 5 VMs
+
+| VM | OS | Rôle | IP |
+|----|----|------|----|
+| DC01 | Windows Server 2022 | AD/DNS | 192.168.10.10 |
+| WMS-DB | Ubuntu 20.04 | MySQL | 192.168.10.21 |
+| WMS-APP | — | Application WMS | 192.168.10.x |
+| SRV-OLD | Windows Server 2012 R2 | EOL test | 192.168.10.12 |
+| SRV-LEGACY | Ubuntu 18.04 | EOL test | 192.168.10.18 |
+
+**Réseau** : 192.168.10.0/24
 
 ---
 
-## Slide 8 — Infrastructure de test (1min30)
-
-### Lab Proxmox
-
-```
-Réseau lab : 192.168.10.0/24
-
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│    DC01       │  │   WMS-DB     │  │  SRV-OLD     │
-│ Win Srv 2022  │  │ Ubuntu 20.04 │  │ Win 2012 R2  │
-│ .10.10        │  │ .10.21       │  │ .10.12       │
-│ AD/DNS        │  │ MySQL        │  │ Legacy       │
-└──────────────┘  └──────────────┘  └──────────────┘
-```
-
-### Automatisation
-
-- **7 playbooks Ansible** pour le provisionnement complet
-- **Cloud-init** (Linux) + **autounattend.xml** (Windows)
-- **Scripts Proxmox** : setup, orchestration, vérification, teardown
-
----
-
-## Slide 9 — CI/CD et qualité (1min30)
+## Slide 11 — Intégration continue (1min)
 
 ### Pipeline GitHub Actions
 
-```
-Push/PR → [Lint (ruff)] → [Type check (mypy)] → [Tests (pytest × 3 versions)]
-```
+- **2 jobs parallèles** : qualité (lint + types) et tests (pytest)
+- **3 versions Python** testées : 3.10, 3.11, 3.12
+- **Durée** : < 2 minutes
 
-### Métriques
+### Outils de qualité
 
-| Indicateur | Valeur |
-|------------|--------|
-| Test cases | 52+ |
-| Fichiers de test | 8 |
-| Versions Python testées | 3.10, 3.11, 3.12 |
-| Couverture minimum | 50% |
-| Linter | Ruff (règles E, F, W, I) |
-| Type checker | Mypy (check_untyped_defs) |
-
-### Workflow Git
-
-- Branches `feature/*` par développeur
-- PR avec CI obligatoire avant merge
-- Review par le Lead
+| Outil | Rôle |
+|-------|------|
+| **Ruff** | Linter (règles E, F, W, I) |
+| **Mypy** | Type checker (`check_untyped_defs`) |
+| **Pytest** | Tests unitaires + couverture |
 
 ---
 
-## Slide 10 — Organisation d'équipe (1min)
+## Slide 12 — Démo live (3min)
 
-### Répartition
+### 5 étapes
 
-| Phase | Durée | Activité |
-|-------|-------|----------|
-| Setup | 3h | Lab Proxmox + squelette Python |
-| Dev parallèle | 10h | Chacun sur son module en branche |
-| Intégration | 3h | Merge, tests E2E, corrections |
-| Docs + soutenance | 3h | Documentation, slides, répétition |
-
-### Outils de collaboration
-
-- **GitHub** : code, issues, PRs, CI
-- **Discord** : communication temps réel
-- **Conventions** : commits conventionnels (`feat:`, `fix:`, `docs:`)
-
----
-
-## Slide 11 — Démo live (3min)
-
-> Script de démo à suivre dans l'ordre :
-
-1. **Lancer l'outil** : `make run`
-2. **Diagnostic** → AD/DNS sur DC01 → montrer le JSON
-3. **Diagnostic** → MySQL sur WMS-DB → montrer le JSON
-4. **Backup** → Dump SQL → montrer le fichier + SHA256
-5. **Backup** → Export CSV → montrer les fichiers
-6. **Audit** → Audit depuis CSV → montrer le rapport coloré
-7. **Montrer les logs** dans `output/logs/`
+| Étape | Qui | Action |
+|-------|-----|--------|
+| 1 | Ianis | Menu principal — `make run` |
+| 2 | Blaise | Module Diagnostic — AD/DNS + MySQL |
+| 3 | Ojvind | Module Backup — Dump SQL + CSV |
+| 4 | Zaid | Module Audit — Scan + rapport |
+| 5 | Ianis | Montrer les sorties JSON horodatées |
 
 ### Plan B (si lab down)
-> Avoir des screenshots prêts de chaque étape de la démo.
+> Screenshots prêts de chaque étape de la démo.
 
 ---
 
-## Slide 12 — Bilan et perspectives (1min30)
+## Slide 13 — Documentation (1min)
 
-### Ce qui a été réalisé
+### 6 livrables ✓
 
-- 3 modules fonctionnels avec interface standardisée
-- Pipeline CI/CD automatisée avec 52+ tests
-- Infrastructure as Code (Ansible + Proxmox)
-- Documentation complète (technique, utilisation, audit)
+- Documentation technique complète
+- Guide d'utilisation
+- Documentation des interfaces (contrat JSON)
+- Guide de configuration
+- Rapport CI
+- Documentation infrastructure lab
 
-### Difficultés rencontrées
+### Arborescence `docs/`
 
-- Hétérogénéité Windows/Linux (WinRM vs SSH)
-- Gestion des timeouts réseau en environnement instable
-- Coordination à 4 sur un planning serré (19h)
+```
+docs/
+├── 00-index.md
+├── 01-getting-started.md
+├── 02-team-guide.md
+├── 03-module-logic.md
+├── 04-interfaces.md
+├── 05-config.md
+├── 06-utils.md
+├── 07-cli.md
+├── 08-ci-guide.md
+├── 09-ci-report.md
+├── 10-lab-infra.md
+└── cheatsheet.md
+```
 
-### Améliorations possibles
+---
 
-- Mode CLI non-interactif (arguments en ligne de commande) pour l'automatisation
+## Slide 14 — Difficultés et compromis (1min)
+
+| Difficulté | Compromis adopté |
+|------------|------------------|
+| **Portabilité** Windows/Linux | Abstraction dans les utilitaires réseau (ping -c/-n, chemins) |
+| **WinRM** complexe à configurer | Rendu optionnel, fallback sur vérifications réseau |
+| **Base EOL** — pas d'API temps réel | Base locale JSON (20 OS référencés), maintenue manuellement |
+| **Coordination** à 4 sur 19h | Contrat JSON défini en amont, branches isolées, CI automatique |
+| **Sécurité** des credentials | `.env` séparé (jamais commité), placeholders `${VAR}` dans YAML |
+
+---
+
+## Slide 15 — Bilan et perspectives (1min30)
+
+### 7 objectifs atteints ✓
+
+1. CLI interactif fonctionnel
+2. 3 modules avec interface standardisée
+3. Sorties JSON exploitables en supervision
+4. Pipeline CI/CD automatisée
+5. Infrastructure de test reproductible
+6. Documentation complète
+7. Cross-platform Windows/Linux
+
+### Perspectives
+
+- Mode CLI non-interactif (arguments en ligne de commande) pour cron/scheduling
 - Banner grabbing automatique dans le scanner
-- Intégration avec un outil de supervision (Zabbix, Grafana)
+- Intégration supervision (Zabbix, Grafana)
 - Interface web pour les rapports d'audit
 - Notifications (email, Slack) sur résultats critiques
 
+### Métriques projet
+
+| Indicateur | Valeur |
+|------------|--------|
+| Commits | 62 |
+| Tests unitaires | 110 |
+| Lignes de code | ~2 500 |
+| Documents techniques | 10 |
+| VMs de test | 5 |
+
 ---
 
-## Slide 13 — Questions (30min)
+## Slide 16 — Questions (30min)
+
+**Merci pour votre attention — Prêts pour vos questions !**
+
+---
 
 ### Questions anticipées et réponses
 
@@ -303,8 +339,17 @@ Push/PR → [Lint (ruff)] → [Type check (mypy)] → [Tests (pytest × 3 versio
 > Cross-platform, écosystème riche (nmap, paramiko, mysql-connector), maintenabilité et testabilité (pytest). Un script Bash ne serait pas portable sur Windows.
 
 **Q : Comment garantissez-vous la qualité du code ?**
-> Triple vérification automatique en CI : linter (Ruff), type checker (Mypy), tests unitaires (Pytest). Plus de 52 tests, couverture > 50%.
+> Triple vérification automatique en CI : linter (Ruff), type checker (Mypy), tests unitaires (Pytest). 110 tests, couverture > 50%.
+
+**Q : Pourquoi une base EOL locale plutôt qu'une API ?**
+> Fiabilité : pas de dépendance réseau externe lors de l'audit. La base JSON couvre les 20 OS du parc NTL. En perspective, on pourrait ajouter un mécanisme de mise à jour automatique.
+
+**Q : Comment avez-vous géré la coordination à 4 ?**
+> Contrat JSON défini dès le départ comme interface commune. Chacun développe sur sa branche feature/*, la CI valide automatiquement, et le Lead review avant merge squash. Discord pour la communication temps réel.
+
+**Q : Pourquoi des codes retour compatibles Nagios/Zabbix ?**
+> Pour que les sorties soient directement exploitables par un outil de supervision existant, sans adaptation. C'est un standard de fait dans le monitoring système.
 
 ---
 
-*Fin de la présentation — Merci pour votre attention*
+*Fin de la présentation — 16 slides, v6*

@@ -1,111 +1,136 @@
-# Plan de Soutenance — NTL-SysToolbox
+# Plan de Soutenance — NTL-SysToolbox (v6, 16 slides)
 
-> **Duree** : 20 min de presentation + 30 min de questions
-> **Public** : 2 jurys pros qui jouent le role de la DSI de NTL
-> **Ton** : professionnel, on parle a un client, pas a un prof
-> **Demo** : obligatoire (integree ou pendant les questions)
+> **Durée** : 20 min de présentation + 30 min de questions
+> **Public** : 2 jurys pros qui jouent le rôle de la DSI de NTL
+> **Ton** : professionnel, on parle à un client, pas à un prof
+> **Démo** : obligatoire (intégrée ou pendant les questions)
+> **Métriques** : 110 tests, ~2500 lignes de code, 62 commits, 5 VMs
 
 ---
 
-## Repartition equipe
+## Répartition équipe
 
-| Slide(s) | Qui | Duree |
-|----------|-----|-------|
-| 1-3 (Contexte + Problematique) | Ianis | ~3 min |
-| 4-5 (Solution + Architecture) | Ianis | ~2 min 30 |
-| 6 (Module Diagnostic) | Blaise | ~1 min 30 |
-| 7 (Module Backup) | Ojvind | ~1 min 30 |
-| 8 (Module Audit) | Zaid | ~1 min 30 |
-| 9 (Lab + CI/CD) | Ianis | ~1 min |
-| 10 (Demo live) | Tous (Ianis pilote) | ~4 min |
-| 11-13 (Docs + Difficultes + Bilan) | Ianis + equipe | ~3 min 30 |
-| 14 (Questions) | -- | -- |
+| Slide(s) | Titre | Qui | Durée |
+|----------|-------|-----|-------|
+| 1 | Titre | Ianis | 30s |
+| 2 | Contexte — NordTransit Logistics | Ianis | 1min30 |
+| 3 | Problématique | Ianis | 1min30 |
+| 4 | Notre solution | Ianis | 1min |
+| 5 | Organisation de l'équipe | Ianis | 1min |
+| 6 | Architecture | Ianis | 1min30 |
+| 7 | Module Diagnostic | Blaise | 1min30 |
+| 8 | Module Backup | Ojvind | 1min30 |
+| 9 | Module Audit | Zaid | 1min30 |
+| 10 | Environnement de test | Ianis | 45s |
+| 11 | Intégration continue | Ianis | 45s |
+| 12 | Démo live | Tous (Ianis pilote) | 4min |
+| 13 | Documentation | Ianis | 1min |
+| 14 | Difficultés & compromis | Ianis + équipe | 1min30 |
+| 15 | Bilan & perspectives | Ianis | 1min30 |
+| 16 | Questions | Tous | 30min |
 
-**Total** : ~19 min (1 min de marge)
+**Total présentation** : ~19 min (1 min de marge)
 
 ---
 
 ## Slide 1 — Titre
 
-**Visuel** : Logo NTL + nom outil + noms equipe
+**Visuel** : Logo NTL + nom outil + noms équipe
 
 ```
 NTL-SysToolbox
-Outil CLI d'administration systeme pour NordTransit Logistics
+Outil CLI d'administration système pour NordTransit Logistics
 
 Ianis (Lead) — Blaise — Ojvind — Zaid
 MSPR TPRE511 — EPSI — 2026
 ```
 
-> **Notes speaker** : Pas de blabla. "Bonjour, nous sommes l'equipe X, nous allons
-> vous presenter NTL-SysToolbox, un outil que nous avons developpe pour repondre
+> **Notes speaker** : Pas de blabla. "Bonjour, nous sommes l'équipe X, nous allons
+> vous présenter NTL-SysToolbox, un outil que nous avons développé pour répondre
 > aux besoins de la DSI de NordTransit Logistics."
 
 ---
 
 ## Slide 2 — Contexte NTL
 
-**Visuel** : Carte Hauts-de-France avec les 4 sites + chiffres cles
+**Visuel** : Carte Hauts-de-France avec les 4 sites + chiffres clés
 
 **Contenu** :
-- PME logistique, siege Lille + 3 entrepots (Lens, Valenciennes, Arras)
-- ~240 employes, jusqu'a 300 en haute saison
-- WMS (systeme d'entrepot) = coeur de metier, arret = arret des operations
-- Equipe IT de 4 personnes (responsable, admin, technicien, alternant)
-- Fenetres de maintenance courtes (nuit uniquement)
+- PME logistique, siège Lille + 3 entrepôts (Lens, Valenciennes, Arras)
+- ~240 employés, jusqu'à 300 en haute saison
+- WMS (système d'entrepôt) = coeur de métier, arrêt = arrêt des opérations
+- Équipe IT de 4 personnes (responsable, admin, technicien, alternant)
+- Fenêtres de maintenance courtes (nuit uniquement)
 
-> **Notes speaker** : Planter le decor rapidement. Le jury doit comprendre que NTL
-> est une PME avec une infra critique mais une equipe IT reduite.
-> "NTL est une entreprise de logistique dans les Hauts-de-France. Le systeme
-> d'entrepot tourne 13h par jour, son arret bloque les 4 sites immediatement.
-> L'equipe IT ne compte que 4 personnes pour gerer tout ca."
+> **Notes speaker** : Planter le décor rapidement. Le jury doit comprendre que NTL
+> est une PME avec une infra critique mais une équipe IT réduite.
+> "NTL est une entreprise de logistique dans les Hauts-de-France. Le système
+> d'entrepôt tourne 13h par jour, son arrêt bloque les 4 sites immédiatement.
+> L'équipe IT ne compte que 4 personnes pour gérer tout ça."
 
 ---
 
-## Slide 3 — Problematique
+## Slide 3 — Problématique
 
-**Visuel** : 3 colonnes avec icone + probleme
+**Visuel** : 3 colonnes avec icône + problème → mapping vers les modules
 
 | Supervision | Sauvegardes | Obsolescence |
 |-------------|-------------|--------------|
-| Surtout technique (ping, disque) | Scripts + NAS, jamais testees | Aucun inventaire EOL |
-| Pas orientee "service" | Pas d'objectif RPO/RTO | OS en fin de vie non identifies |
-| AD, DNS, MySQL non surveilles | Pas de verification d'integrite | Risque de faille non maitrise |
+| Surtout technique (ping, disque) | Scripts + NAS, jamais testées | Aucun inventaire EOL |
+| Pas orientée "service" | Pas d'objectif RPO/RTO | OS en fin de vie non identifiés |
+| AD, DNS, MySQL non surveillés | Pas de vérification d'intégrité | Risque de faille non maîtrisé |
+| → **Module Diagnostic** | → **Module Backup** | → **Module Audit** |
 
-> **Notes speaker** : "La DSI nous a mande pour repondre a 3 problemes concrets :
-> la supervision ne couvre pas les services metier, les sauvegardes ne sont pas
-> verifiees, et personne ne sait quels OS sont en fin de vie sur le parc."
+> **Notes speaker** : "La DSI nous a mandé pour répondre à 3 problèmes concrets :
+> la supervision ne couvre pas les services métier, les sauvegardes ne sont pas
+> vérifiées, et personne ne sait quels OS sont en fin de vie sur le parc."
 >
-> **Competence ciblee** : Poser le besoin metier pour justifier chaque module.
+> **Compétence ciblée** : Poser le besoin métier pour justifier chaque module.
 
 ---
 
 ## Slide 4 — Notre solution
 
-**Visuel** : Schema simple — 1 outil, 3 modules, sorties exploitables
+**Visuel** : Schéma simple — 1 outil CLI Python, 3 modules, sorties exploitables
 
 **Contenu** :
 - **NTL-SysToolbox** : CLI Python, menu interactif
-- 3 modules independants : Diagnostic, Backup, Audit
-- Sorties JSON horodatees + codes retour standard (0-3)
-- Compatible Windows et Linux
+- 3 modules indépendants : Diagnostic, Backup, Audit
+- Sorties JSON horodatées + codes retour standard (0-3)
 - Configuration YAML + secrets via variables d'environnement
+- Compatible Windows et Linux (cross-platform)
 
-**Points cles a faire passer** :
-- "On a choisi Python pour la portabilite et l'ecosysteme de libs sys/reseau"
-- "Les codes retour permettent une integration future avec Zabbix ou tout outil de supervision"
-- "La config est separee du code — la DSI peut adapter sans toucher au code"
+**Points clés à faire passer** :
+- "On a choisi Python pour la portabilité et l'écosystème de libs sys/réseau"
+- "Les codes retour permettent une intégration future avec Zabbix ou tout outil de supervision"
+- "La config est séparée du code — la DSI peut adapter sans toucher au code"
 
-> **Notes speaker** : C'est LA slide de synthese. Le jury doit retenir : 1 outil,
+> **Notes speaker** : C'est LA slide de synthèse. Le jury doit retenir : 1 outil,
 > 3 modules, JSON + codes retour = exploitable en supervision.
 >
-> **Competences** : BC01.9 (rationnaliser via scripts), BC03.9 (alertes/codes retour)
+> **Compétences** : BC01.9 (rationnaliser via scripts), BC03.9 (alertes/codes retour)
 
 ---
 
-## Slide 5 — Architecture
+## Slide 5 — Organisation de l'équipe
 
-**Visuel** : Diagramme de flux (reprendre celui de PROJECT_MAP.md, simplifie)
+**Visuel** : Tableau des membres + méthode + workflow Git en 4 étapes
+
+**Contenu** :
+- Tableau des rôles : Ianis (Lead/Archi), Blaise (Diagnostic), Ojvind (Backup), Zaid (Audit)
+- Méthode : contrat JSON commun défini en amont → développement parallèle
+- Workflow Git : branch feature → PR → review Lead → squash merge master
+- 62 commits, branches isolées par module
+
+> **Notes speaker** : "On a défini le contrat JSON commun dès le départ, ce qui
+> nous a permis de travailler en parallèle sur nos modules respectifs. Chaque merge
+> passe par une review du Lead pour garantir la cohérence."
+
+---
+
+## Slide 6 — Architecture
+
+**Visuel** : Schéma main.py → modules → build_result() + tableau des 8 champs JSON
 
 ```
 Utilisateur (terminal)
@@ -126,33 +151,45 @@ Terminal  output/logs/
 (rich)    fichiers JSON
 ```
 
-**Points cles** :
-- Contrat JSON uniforme : module, function, timestamp, status, exit_code, target, details, message
+**Tableau des 8 champs JSON** :
+
+| Champ | Description |
+|-------|-------------|
+| module | Nom du module (diagnostic, backup, audit) |
+| function | Nom de la fonction appelée |
+| timestamp | Horodatage ISO 8601 |
+| status | OK, WARNING, CRITICAL, UNKNOWN |
+| exit_code | 0, 1, 2, 3 |
+| target | Cible vérifiée (IP, base, etc.) |
+| details | Données techniques détaillées |
+| message | Message lisible par un humain |
+
+**Points clés** :
 - Exit codes : 0=OK, 1=WARNING, 2=CRITICAL, 3=UNKNOWN
-- Seuils WARNING a 80% (CPU, RAM, disque) — norme industrie
-- Chaque module est independant, meme signature `run(config, target, action=...)`
+- Seuils WARNING à 80% (CPU, RAM, disque) — norme industrie
+- Chaque module est indépendant, même signature `run(config, target, action=...)`
 
 > **Notes speaker** : "L'architecture est volontairement simple. Chaque module est
-> independant mais respecte le meme contrat de sortie. Ca veut dire que la DSI peut
-> integrer n'importe quel resultat dans sa supervision existante, parce que le
-> format est toujours le meme."
+> indépendant mais respecte le même contrat de sortie. Ça veut dire que la DSI peut
+> intégrer n'importe quel résultat dans sa supervision existante, parce que le
+> format est toujours le même."
 >
-> **Competences** : BC03.9 (alertes exploitables), BC01.9 (automatisation)
+> **Compétences** : BC03.9 (alertes exploitables), BC01.9 (automatisation)
 
 ---
 
-## Slide 6 — Module Diagnostic (Blaise)
+## Slide 7 — Module Diagnostic (Blaise)
 
-**Visuel** : Tableau des 4 fonctions + schema de decision pour check_ad_dns
+**Visuel** : Tableau des 4 fonctions + schéma de décision pour check_ad_dns
 
-| Fonction | Cible | Ce qu'elle verifie |
+| Fonction | Cible | Ce qu'elle vérifie |
 |----------|-------|--------------------|
-| `check_ad_dns` | DC01 | Ports LDAP/DNS/Kerberos + resolution DNS + connectivite LDAP |
+| `check_ad_dns` | DC01 | Ports LDAP/DNS/Kerberos + résolution DNS + connectivité LDAP |
 | `check_mysql` | WMS-DB | Port 3306 + version MySQL (sans auth) |
-| `check_linux` | Tout serveur | Scan multi-ports, categorisation des services actifs |
-| `check_http` | Tout serveur web | Status HTTP, header Server, temps de reponse |
+| `check_linux` | Tout serveur | Scan multi-ports, catégorisation des services actifs |
+| `check_http` | Tout serveur web | Status HTTP, header Server, temps de réponse |
 
-**Exemple de decision** :
+**Exemple de décision** :
 ```
 LDAP OK + DNS OK         → OK (0)
 LDAP OK + DNS KO         → WARNING (1)
@@ -160,233 +197,253 @@ LDAP KO                  → CRITICAL (2)
 DC01 injoignable         → UNKNOWN (3)
 ```
 
-**Libs utilisees** : dnspython, ldap3, socket
+**Libs utilisées** : dnspython, ldap3, socket
 
-> **Notes speaker (Blaise)** : "Mon module repond a la question : est-ce que les
-> services critiques du siege fonctionnent ? Pour chaque verification, j'ai une
-> logique de decision claire qui produit un status et un code retour exploitable."
+> **Notes speaker (Blaise)** : "Mon module répond à la question : est-ce que les
+> services critiques du siège fonctionnent ? Pour chaque vérification, j'ai une
+> logique de décision claire qui produit un status et un code retour exploitable."
 >
 > Montrer qu'on comprend POURQUOI on teste ces services (AD = auth de tout le monde,
-> DNS = resolution de noms, MySQL = WMS).
+> DNS = résolution de noms, MySQL = WMS).
 >
-> **Competences** : BC02.7 (supervision), BC03.9 (evaluation perturbations)
+> **Compétences** : BC02.7 (supervision), BC03.9 (évaluation perturbations)
 
 ---
 
-## Slide 7 — Module Backup (Ojvind)
+## Slide 8 — Module Backup (Ojvind)
 
-**Visuel** : Schema du flux backup_database + tableau des 2 fonctions
+**Visuel** : Schéma du flux backup_database + tableau des 2 fonctions + 4 mesures sécurité
 
 | Fonction | Ce qu'elle fait | Sortie |
 |----------|-----------------|--------|
 | `backup_database` | mysqldump local ou via SSH (fallback) | `output/backups/wms_YYYYMMDD_HHMMSS.sql` |
 | `export_table_csv` | SELECT * → fichier CSV | `output/exports/table_YYYYMMDD_HHMMSS.csv` |
 
-**Points securite** :
-- Mot de passe MySQL passe via variable d'env (`MYSQL_PWD`), jamais en argument CLI
-- Validation du nom de table (regex) → protection injection SQL
-- Protection path traversal (pas de `..` dans les chemins)
-- Fallback SSH si mysqldump pas disponible localement
+**4 mesures de sécurité** :
+1. Mot de passe MySQL passé via variable d'env (`MYSQL_PWD`), jamais en argument CLI
+2. Validation du nom de table (regex) → protection injection SQL
+3. Protection path traversal (pas de `..` dans les chemins)
+4. Fallback SSH si mysqldump pas disponible localement
 
-> **Notes speaker (Ojvind)** : "Mon module permet a la DSI de lancer une sauvegarde
-> de la base WMS a tout moment. Le dump est fait via mysqldump, avec un fallback SSH
-> si l'outil n'est pas installe localement. J'ai porte une attention particuliere a
-> la securite : les mots de passe ne transitent jamais en argument de commande."
+> **Notes speaker (Ojvind)** : "Mon module permet à la DSI de lancer une sauvegarde
+> de la base WMS à tout moment. Le dump est fait via mysqldump, avec un fallback SSH
+> si l'outil n'est pas installé localement. J'ai porté une attention particulière à
+> la sécurité : les mots de passe ne transitent jamais en argument de commande."
 >
-> Si le jury demande pourquoi pas de compression : "C'est un choix d'equipe, on a
-> privilegie la simplicite et la lisibilite du dump pour une premiere version."
+> Si le jury demande pourquoi pas de compression : "C'est un choix d'équipe, on a
+> privilégié la simplicité et la lisibilité du dump pour une première version."
 >
-> **Competences** : BC01.11 (automatisation sauvegarde)
+> **Compétences** : BC01.11 (automatisation sauvegarde)
 
 ---
 
-## Slide 8 — Module Audit (Zaid)
+## Slide 9 — Module Audit (Zaid)
 
-**Visuel** : Pipeline audit en 4 etapes + exemple de rapport
+**Visuel** : Pipeline 4 étapes + tableau entrée/sortie
 
 ```
 scan_network → list_os_eol → audit_from_csv → generate_report
-(nmap)         (JSON local)   (croisement)     (rapport trie)
+(nmap)         (JSON local)   (croisement)     (rapport trié)
 ```
 
-| Fonction | Entree | Sortie |
+| Fonction | Entrée | Sortie |
 |----------|--------|--------|
-| `scan_network` | Plage IP (ex: 192.168.10.0/24) | Machines detectees + ports + OS |
+| `scan_network` | Plage IP (ex: 192.168.10.0/24) | Machines détectées + ports + OS |
 | `list_os_eol` | Base EOL locale (JSON) | Liste des dates de fin de support |
 | `audit_from_csv` | Inventaire CSV (hostname, OS, version) | Croisement avec dates EOL |
-| `generate_report` | Resultats combines | Rapport JSON + tableau colore terminal |
+| `generate_report` | Résultats combinés | Rapport JSON + tableau coloré terminal |
 
 **Exemple de sortie rapport** :
 ```
-EXPIRE   | SRV-PRINT  | Win Server 2008 R2 | EOL: jan 2020 | -2285 jours
-EXPIRE   | PC-QUAI    | Windows 7          | EOL: jan 2020 | -2285 jours
-BIENTOT  | SRV-FILE   | Win Server 2012 R2 | EOL: oct 2026 | +183 jours
+EXPIRÉ   | SRV-PRINT  | Win Server 2008 R2 | EOL: jan 2020 | -2285 jours
+EXPIRÉ   | PC-QUAI    | Windows 7          | EOL: jan 2020 | -2285 jours
+BIENTÔT  | SRV-FILE   | Win Server 2012 R2 | EOL: oct 2026 | +183 jours
 OK       | DC01       | Win Server 2022    | EOL: oct 2031 | +2024 jours
 ```
 
-> **Notes speaker (Zaid)** : "Mon module repond a la question : quels equipements
-> du parc sont obsoletes et representent un risque ? Le scan reseau detecte les
+> **Notes speaker (Zaid)** : "Mon module répond à la question : quels équipements
+> du parc sont obsolètes et représentent un risque ? Le scan réseau détecte les
 > machines, puis on croise avec notre base de dates de fin de vie pour produire
-> un rapport classe par urgence."
+> un rapport classé par urgence."
 >
 > Si le jury demande la source des dates EOL : "On utilise une base JSON locale
-> maintenue manuellement, basee sur les dates officielles Microsoft et Ubuntu.
-> C'est un compromis : pas de dependance reseau, mais necessite une mise a jour
-> periodique."
+> maintenue manuellement, basée sur les dates officielles Microsoft et Ubuntu.
+> C'est un compromis : pas de dépendance réseau, mais nécessite une mise à jour
+> périodique."
 >
-> **Competences** : BC01.4 (identifier systemes a corriger), BC02.8 (recenser ressources)
+> **Compétences** : BC01.4 (identifier systèmes à corriger), BC02.8 (recenser ressources)
 
 ---
 
-## Slide 9 — Lab de test & CI/CD
+## Slide 10 — Environnement de test
 
-**Visuel** : Schema du lab Proxmox + pipeline CI
+**Visuel** : Schéma du lab Proxmox avec les 5 VMs
 
-**Lab** :
-- Proxmox VE avec VMs reproduisant l'infra NTL
-- DC01 (Windows Server, AD/DNS), WMS-DB (Ubuntu, MySQL)
-- Permet de tester en conditions reelles sans toucher a la prod
+| VM | OS | Rôle | IP |
+|----|------|------|-----|
+| DC01 | Windows Server 2022 | AD/DNS | 192.168.10.10 |
+| WMS-DB | Ubuntu 20.04 | MySQL | .21 |
+| WMS-APP | Ubuntu 22.04 | Applicatif | .22 |
+| SRV-OLD | Windows Server 2012 R2 | EOL test | .12 |
+| SRV-LEGACY | Ubuntu 18.04 | EOL test | .18 |
+
+- Proxmox VE avec 5 VMs reproduisant l'infra NTL
+- Permet de tester en conditions réelles sans toucher à la prod
+
+> **Notes speaker (Ianis)** : "Pour valider notre outil, on a monté un lab Proxmox
+> qui reproduit l'infra NTL avec 5 VMs couvrant Windows Server, Ubuntu, et des
+> machines volontairement obsolètes pour tester le module Audit."
+
+---
+
+## Slide 11 — Intégration continue
+
+**Visuel** : Pipeline GitHub Actions — 2 jobs parallèles + métriques
 
 **CI/CD (GitHub Actions)** :
-- Declenchement : push sur master/feature/*, PR sur master
-- Job 1 : Lint (ruff) + Types (mypy)
-- Job 2 : Tests (pytest) sur Python 3.10, 3.11, 3.12
-- Couverture minimum : 50%
+- Déclenchement : push sur master/feature/*, PR sur master
+- **Job 1** : Lint (ruff) + Types (mypy) — en parallèle
+- **Job 2** : Tests (pytest) sur Python 3.10, 3.11, 3.12 — en parallèle
+- **Métriques** : 110 tests, couverture minimum 50%
 
-> **Notes speaker (Ianis)** : "Pour valider notre outil, on a monte un lab Proxmox
-> qui reproduit l'infra NTL. Chaque push declenche notre pipeline CI qui verifie
-> la qualite du code et lance les tests sur 3 versions de Python."
+> **Notes speaker (Ianis)** : "Chaque push déclenche notre pipeline CI qui vérifie
+> la qualité du code et lance 110 tests sur 3 versions de Python en parallèle."
 >
-> **Competences** : BC02.7 (supervision/qualite)
+> **Compétences** : BC02.7 (supervision/qualité)
 
 ---
 
-## Slide 10 — Demo live
+## Slide 12 — Démo live
 
-**Scenario** (4 minutes, Ianis pilote, chacun commente son module) :
+**Scénario** (4 minutes, Ianis pilote, chacun commente son module) :
 
-### Etape 1 — Lancement (Ianis, 30s)
+### Étape 1 — Lancement du menu (Ianis, 30s)
 ```bash
 python src/main.py
 # Menu principal s'affiche
 ```
 "Voici le menu interactif. La DSI peut naviguer sans documentation."
 
-### Etape 2 — Diagnostic AD/DNS (Blaise, 1 min)
+### Étape 2 — Diagnostic AD/DNS (Blaise, 1 min)
 ```
 Choix 1 → Diagnostic
-Choix 1 → Verifier AD/DNS
-IP : [Entree pour defaut]
-→ Resultat JSON : status OK/CRITICAL
+Choix 1 → Vérifier AD/DNS
+IP : [Entrée pour défaut]
+→ Résultat JSON : status OK/CRITICAL
 ```
-"On verifie que l'AD et le DNS du DC01 sont operationnels."
+"On vérifie que l'AD et le DNS du DC01 sont opérationnels."
 
-### Etape 3 — Backup BDD (Ojvind, 1 min)
+### Étape 3 — Backup BDD (Ojvind, 1 min)
 ```
 Choix 2 → Backup
-Choix 1 → Backup base de donnees
-Base : [Entree pour defaut = wms]
-→ Resultat : fichier SQL cree, taille, chemin
+Choix 1 → Backup base de données
+Base : [Entrée pour défaut = wms]
+→ Résultat : fichier SQL créé, taille, chemin
 ```
-"On sauvegarde la base WMS. Le fichier est horodate et pret a etre archive."
+"On sauvegarde la base WMS. Le fichier est horodaté et prêt à être archivé."
 
-### Etape 4 — Audit EOL (Zaid, 1 min)
+### Étape 4 — Audit EOL (Zaid, 1 min)
 ```
 Choix 3 → Audit
 Choix 2 → Lister dates EOL
-→ Resultat : tableau des OS avec jours restants
+→ Résultat : tableau des OS avec jours restants
 ```
-"On identifie immediatement les OS en fin de vie."
+"On identifie immédiatement les OS en fin de vie."
 
-### Etape 5 — Quitter (Ianis, 30s)
+### Étape 5 — Résultats (Ianis, 30s)
 ```
 Choix 0 → Quitter
-Montrer le fichier JSON genere dans output/logs/
+Montrer le fichier JSON généré dans output/logs/
 ```
-"Tous les resultats sont sauvegardes en JSON horodate, exploitables par la supervision."
+"Tous les résultats sont sauvegardés en JSON horodaté, exploitables par la supervision."
 
-> **IMPORTANT** : Preparer un plan B si le lab n'est pas accessible :
-> - Screenshots/video de la demo enregistree
-> - Fichiers JSON de sortie pre-generes a montrer
+> **IMPORTANT** : Préparer un plan B si le lab n'est pas accessible :
+> - Screenshots/vidéo de la démo enregistrée
+> - Fichiers JSON de sortie pré-générés à montrer
 
 ---
 
-## Slide 11 — Documentation
+## Slide 13 — Documentation
 
-**Visuel** : Liste des livrables + capture d'ecran de la doc
+**Visuel** : 6 livrables avec checkmarks + arborescence docs/ (12 fichiers)
 
 **Livrables produits** :
-- **Dossier technique** : architecture, choix technologiques, gestion des secrets
-- **Guide d'installation** : setup en 5 commandes (clone, venv, deps, config, run)
-- **10 docs numerotees** : de getting-started a lab-infra
-- **Cheatsheet** : aide-memoire 1 page pour l'equipe
-- **Rapport CI** : pipeline, couverture, resultats
+- [x] **Dossier technique** : architecture, choix technologiques, gestion des secrets
+- [x] **Guide d'installation** : setup en 5 commandes (clone, venv, deps, config, run)
+- [x] **10 docs numérotées** : de getting-started à lab-infra
+- [x] **Cheatsheet** : aide-mémoire 1 page pour l'équipe
+- [x] **Rapport CI** : pipeline, couverture, résultats
+- [x] **Arborescence docs/** : 12 fichiers organisés et indexés
 
 **Points forts** :
-- La DSI peut deployer et utiliser l'outil sans assistance (comme demande)
-- Documentation versionee avec le code (dans le repo Git)
+- La DSI peut déployer et utiliser l'outil sans assistance (comme demandé)
+- Documentation versionnée avec le code (dans le repo Git)
+- ~2500 lignes de code documenté
 
 > **Notes speaker** : "Notre documentation couvre l'installation, l'utilisation et
-> l'architecture. Un administrateur qui recupere le repo peut deployer l'outil en
+> l'architecture. Un administrateur qui récupère le repo peut déployer l'outil en
 > moins de 5 minutes en suivant le guide."
 >
-> **Competence** : BC04.2 (documentation technique)
+> **Compétence** : BC04.2 (documentation technique)
 
 ---
 
-## Slide 12 — Difficultes & compromis
+## Slide 14 — Difficultés & compromis
 
-**Visuel** : Tableau probleme → solution
+**Visuel** : Tableau 5 difficultés/approches
 
-| Difficulte | Notre approche |
+| Difficulté | Notre approche |
 |------------|----------------|
-| Portabilite Windows/Linux | Python + libs cross-platform, tests CI sur Ubuntu |
-| Acces WinRM optionnel | Fallback gracieux — fonctionne sans, mais signale le manque |
-| Base EOL locale vs API externe | JSON local = pas de dependance reseau, mais maintenance manuelle |
-| 4 devs, 19h, modules interdependants | Contrat JSON commun defini en amont → developpement parallele |
-| Securite des credentials | Variables d'env + .env, jamais de secret dans le code ou les logs |
+| Portabilité Windows/Linux | Python + libs cross-platform, tests CI sur Ubuntu |
+| Accès WinRM optionnel | Fallback gracieux — fonctionne sans, mais signale le manque |
+| Base EOL locale vs API externe | JSON local = pas de dépendance réseau, mais maintenance manuelle |
+| 4 devs, 19h, modules interdépendants | Contrat JSON commun défini en amont → développement parallèle |
+| Sécurité des credentials | Variables d'env + .env, jamais de secret dans le code ou les logs |
 
 > **Notes speaker** : "On assume nos compromis. Par exemple, la base EOL est locale
-> plutot qu'une API en ligne. C'est moins dynamique, mais ca evite une dependance
-> reseau pour un outil qui doit fonctionner meme en cas de panne."
+> plutôt qu'une API en ligne. C'est moins dynamique, mais ça évite une dépendance
+> réseau pour un outil qui doit fonctionner même en cas de panne."
 >
-> Le jury apprecie les compromis ASSUMES. Ne pas dire "on n'a pas eu le temps",
+> Le jury apprécie les compromis ASSUMÉS. Ne pas dire "on n'a pas eu le temps",
 > dire "on a choisi X parce que Y".
 
 ---
 
-## Slide 13 — Bilan & perspectives
+## Slide 15 — Bilan & perspectives
 
-**Visuel** : Check-list des objectifs + roadmap v2
+**Visuel** : 7 objectifs avec checkmarks + 5 perspectives + métriques
 
 **Objectifs atteints** :
-- [x] 3 modules fonctionnels et independants
+- [x] 3 modules fonctionnels et indépendants
 - [x] Menu CLI interactif
-- [x] Sorties JSON horodatees + codes retour supervision
+- [x] Sorties JSON horodatées + codes retour supervision
 - [x] Configuration YAML + gestion secrets
-- [x] CI/CD avec lint, types, tests
-- [x] Documentation complete
+- [x] CI/CD avec lint, types, 110 tests
+- [x] Documentation complète (12 fichiers)
+- [x] Lab Proxmox 5 VMs opérationnel
+
+**Métriques finales** : 110 tests, ~2500 lignes, 62 commits, 5 VMs
 
 **Perspectives (si NTL veut aller plus loin)** :
-- Integration Zabbix/supervision (les codes retour sont deja compatibles)
+- Intégration Zabbix/supervision (les codes retour sont déjà compatibles)
 - Planification automatique des backups (cron/Task Scheduler)
-- Mise a jour automatique de la base EOL via API
+- Mise à jour automatique de la base EOL via API
 - Extension aux sites distants (WH1, WH2, WH3)
-- Dashboard web pour visualiser les resultats
+- Dashboard web pour visualiser les résultats
 
-> **Notes speaker** : "On a livre un outil fonctionnel qui repond au cahier des charges.
-> Les perspectives montrent que l'architecture est pensee pour evoluer — les codes
-> retour standard permettent deja une integration supervision sans modification."
+> **Notes speaker** : "On a livré un outil fonctionnel qui répond au cahier des charges.
+> Les perspectives montrent que l'architecture est pensée pour évoluer — les codes
+> retour standard permettent déjà une intégration supervision sans modification."
 
 ---
 
-## Slide 14 — Questions
+## Slide 16 — Questions
 
 **Visuel** : Sobre, titre + contacts
 
 ```
 Merci pour votre attention.
-Nous sommes prets pour vos questions.
+Nous sommes prêts pour vos questions.
 ```
 
 ---
@@ -394,26 +451,26 @@ Nous sommes prets pour vos questions.
 ## Aide — Questions probables du jury
 
 ### Sur l'architecture
-- **"Pourquoi Python et pas Bash/PowerShell ?"** → Portabilite Win+Linux, ecosysteme de libs (paramiko, nmap, ldap3), maintenabilite par l'equipe IT
+- **"Pourquoi Python et pas Bash/PowerShell ?"** → Portabilité Win+Linux, écosystème de libs (paramiko, nmap, ldap3), maintenabilité par l'équipe IT
 - **"Pourquoi des codes retour 0-3 ?"** → Convention Nagios/Zabbix, standard industrie pour les checks de supervision
-- **"Comment la config gere les secrets ?"** → Variables d'env via .env, substitution ${VAR}, jamais de secret en dur
+- **"Comment la config gère les secrets ?"** → Variables d'env via .env, substitution ${VAR}, jamais de secret en dur
 
 ### Sur les modules
-- **"Que se passe-t-il si MySQL ne repond pas ?"** → Status CRITICAL (code 2), erreur dans details, message lisible
-- **"Votre scan reseau necessite-t-il les droits root ?"** → Detection auto, scan degrade sans root avec WARNING
-- **"Comment vous gerez un backup qui echoue ?"** → Status CRITICAL, pas de fichier corrompu laisse en place
-- **"La base EOL, elle vient d'ou ?"** → Donnees Microsoft/Ubuntu officielles, fichier JSON versionne avec le code
+- **"Que se passe-t-il si MySQL ne répond pas ?"** → Status CRITICAL (code 2), erreur dans details, message lisible
+- **"Votre scan réseau nécessite-t-il les droits root ?"** → Détection auto, scan dégradé sans root avec WARNING
+- **"Comment vous gérez un backup qui échoue ?"** → Status CRITICAL, pas de fichier corrompu laissé en place
+- **"La base EOL, elle vient d'où ?"** → Données Microsoft/Ubuntu officielles, fichier JSON versionné avec le code
 
-### Sur l'equipe
-- **"Comment vous vous etes repartis le travail ?"** → Contrat JSON commun defini ensemble, puis branches isolees par module, merge par le lead
-- **"Quelle a ete la plus grosse difficulte ?"** → Chacun repond selon son module (preparer individuellement)
+### Sur l'équipe
+- **"Comment vous vous êtes répartis le travail ?"** → Contrat JSON commun défini ensemble, puis branches isolées par module, merge par le lead
+- **"Quelle a été la plus grosse difficulté ?"** → Chacun répond selon son module (préparer individuellement)
 
 ### Sur la CI
-- **"Pourquoi 3 versions de Python ?"** → La DSI peut avoir differentes versions installees, on garantit la compatibilite
-- **"Quel est le taux de couverture ?"** → Seuil minimum 50%, focus sur les chemins critiques
+- **"Pourquoi 3 versions de Python ?"** → La DSI peut avoir différentes versions installées, on garantit la compatibilité
+- **"Quel est le taux de couverture ?"** → Seuil minimum 50%, focus sur les chemins critiques, 110 tests
 
-### Pieges a eviter
-- Ne PAS dire "on n'a pas eu le temps" → dire "on a priorise X"
-- Ne PAS dire "c'est un projet scolaire" → on parle a la DSI de NTL
-- Ne PAS lire les slides — les connaitre
+### Pièges à éviter
+- Ne PAS dire "on n'a pas eu le temps" → dire "on a priorisé X"
+- Ne PAS dire "c'est un projet scolaire" → on parle à la DSI de NTL
+- Ne PAS lire les slides — les connaître
 - Chacun doit pouvoir expliquer son module ET le contrat commun

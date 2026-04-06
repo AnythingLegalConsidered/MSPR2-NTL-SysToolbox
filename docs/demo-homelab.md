@@ -1,14 +1,14 @@
-# Demo NTL-SysToolbox — Homelab (pve02)
+# Démo NTL-SysToolbox — Homelab (pve02)
 
-Guide pour lancer la toolbox sur le lab homelab en fallback de l'ecole.
+Guide pour lancer la toolbox sur le lab homelab en fallback de l'école.
 
-## Pre-requis
+## Pré-requis
 
-- PC fixe connecte au reseau local (192.168.2.0/24)
-- pve02 allume (les VMs demarrent automatiquement avec)
+- PC fixe connecté au réseau local (192.168.2.0/24)
+- pve02 allumé (les VMs démarrent automatiquement avec)
 - Route Windows active : `route add 172.16.132.0 mask 255.255.255.0 192.168.2.4 if 15 -p`
-- MySQL client installe (`winget install Oracle.MySQL`)
-- nmap installe
+- MySQL client installé (`winget install Oracle.MySQL`)
+- nmap installé
 - PATH inclut : `C:\Program Files\MySQL\MySQL Server 8.4\bin`
 
 ## Lab : 2 VMs sur pve02
@@ -21,15 +21,15 @@ Guide pour lancer la toolbox sur le lab homelab en fallback de l'ecole.
 AD users : `wms-service`, `admin-ntl`, `j.dupont`, `m.martin`
 MySQL : 8 shipments, 6 inventory
 
-## Avant la demo
+## Avant la démo
 
 ```bash
-# Verifier que tout est up
+# Vérifier que tout est up
 bash start-demo.sh
 ```
 
-Tous les checks doivent etre `[OK]`. Si un check echoue :
-- VMs eteintes → Proxmox Web UI `https://192.168.2.4:8006` > demarrer VM 110 + 120
+Tous les checks doivent être `[OK]`. Si un check échoue :
+- VMs éteintes → Proxmox Web UI `https://192.168.2.4:8006` > démarrer VM 110 + 120
 - Route perdue → relancer `route add 172.16.132.0 mask 255.255.255.0 192.168.2.4 if 15` en admin
 - Snapshot clean → Proxmox > VM > Snapshots > `clean-state` > Rollback
 
@@ -40,80 +40,80 @@ cd C:\Users\Dharma\Documents\Pro\Ecole\Rendu\MSPR\MSPR2
 python -m src.main
 ```
 
-## Scenario de demo (5 min)
+## Scénario de démo (5 min)
 
-### 1. Diagnostic — Verifier AD/DNS (Choix 1 > 1)
-
-```
-Menu principal > 1 (Diagnostic) > 1 (Verifier AD/DNS)
-IP du DC : [Entree pour defaut = 172.16.132.10]
-```
-
-**Ce que ca fait :** Resout `ntl.local` via le DNS du DC, scanne les ports AD (53, 88, 389, 445, 3268), teste le bind LDAP.
-**Resultat attendu :** WARNING (DNS OK, Ports OK, LDAP OK, WinRM non configure = normal).
-
-### 2. Diagnostic — Verifier MySQL (Choix 1 > 2)
+### 1. Diagnostic — Vérifier AD/DNS (Choix 1 > 1)
 
 ```
-Menu principal > 1 (Diagnostic) > 2 (Verifier MySQL)
-IP du serveur : [Entree pour defaut = 172.16.132.20]
+Menu principal > 1 (Diagnostic) > 1 (Vérifier AD/DNS)
+IP du DC : [Entrée pour défaut = 172.16.132.10]
 ```
 
-**Ce que ca fait :** Connexion TCP sur le port 3306, recupere la version MySQL via le banner.
-**Resultat attendu :** OK — MySQL 8.0.45 detecte.
+**Ce que ça fait :** Résout `ntl.local` via le DNS du DC, scanne les ports AD (53, 88, 389, 445, 3268), teste le bind LDAP.
+**Résultat attendu :** WARNING (DNS OK, Ports OK, LDAP OK, WinRM non configuré = normal).
+
+### 2. Diagnostic — Vérifier MySQL (Choix 1 > 2)
+
+```
+Menu principal > 1 (Diagnostic) > 2 (Vérifier MySQL)
+IP du serveur : [Entrée pour défaut = 172.16.132.20]
+```
+
+**Ce que ça fait :** Connexion TCP sur le port 3306, récupère la version MySQL via le banner.
+**Résultat attendu :** OK — MySQL 8.0.45 détecté.
 
 ### 3. Diagnostic — Services Linux (Choix 1 > 3)
 
 ```
-Menu principal > 1 (Diagnostic) > 3 (Verifier services Linux)
+Menu principal > 1 (Diagnostic) > 3 (Vérifier services Linux)
 IP du serveur : 172.16.132.10
 ```
 
-**Ce que ca fait :** Scanne les ports configures (22, 53, 88, 389, 3306) et identifie les services ouverts.
-**Resultat attendu :** OK — 4 services (SSH, DNS, Kerberos, LDAP) sur DC01.
+**Ce que ça fait :** Scanne les ports configurés (22, 53, 88, 389, 3306) et identifie les services ouverts.
+**Résultat attendu :** OK — 4 services (SSH, DNS, Kerberos, LDAP) sur DC01.
 
 ### 4. Backup — Dump SQL (Choix 2 > 1)
 
 ```
-Menu principal > 2 (Backup) > 1 (Backup base de donnees)
-Base a sauvegarder : [Entree pour defaut = wms]
+Menu principal > 2 (Backup) > 1 (Backup base de données)
+Base à sauvegarder : [Entrée pour défaut = wms]
 ```
 
-**Ce que ca fait :** Execute `mysqldump` sur la base `wms` de WMS-DB (172.16.132.20), sauvegarde le .sql dans `output/backups/`.
-**Resultat attendu :** OK — fichier `wms_YYYYMMDD_HHMMSS.sql` cree (~4 KB).
+**Ce que ça fait :** Exécute `mysqldump` sur la base `wms` de WMS-DB (172.16.132.20), sauvegarde le .sql dans `output/backups/`.
+**Résultat attendu :** OK — fichier `wms_YYYYMMDD_HHMMSS.sql` créé (~4 KB).
 
-### 5. Audit — Scanner reseau (Choix 3 > 1)
+### 5. Audit — Scanner réseau (Choix 3 > 1)
 
 ```
-Menu principal > 3 (Audit) > 1 (Scanner le reseau)
-Plage reseau : [Entree pour defaut = 172.16.132.0/24]
+Menu principal > 3 (Audit) > 1 (Scanner le réseau)
+Plage réseau : [Entrée pour défaut = 172.16.132.0/24]
 ```
 
-**Ce que ca fait :** Lance un scan nmap sur le subnet, detecte les hosts up et leurs ports ouverts.
-**Resultat attendu :** OK — 2 hosts trouves (DC01 + WMS-DB) avec leurs services.
+**Ce que ça fait :** Lance un scan nmap sur le subnet, détecte les hosts up et leurs ports ouverts.
+**Résultat attendu :** OK — 2 hosts trouvés (DC01 + WMS-DB) avec leurs services.
 
 ### 6. Quitter (Choix 0)
 
-## Depannage rapide
+## Dépannage rapide
 
-| Probleme | Solution |
+| Problème | Solution |
 |----------|----------|
-| `ping 172.16.132.10` timeout | Verifier route : `route print \| findstr 172.16.132` |
-| VM eteinte | SSH pve02 : `qm start 110` / `qm start 120` |
+| `ping 172.16.132.10` timeout | Vérifier route : `route print \| findstr 172.16.132` |
+| VM éteinte | SSH pve02 : `qm start 110` / `qm start 120` |
 | MySQL refuse connexion | SSH WMS-DB : `sudo systemctl restart mysql` |
 | Samba plante | SSH DC01 : `sudo systemctl restart samba-ad-dc` |
-| Tout casse | Rollback snapshot : `qm rollback 110 clean-state && qm rollback 120 clean-state && qm start 110 && qm start 120` |
+| Tout cassé | Rollback snapshot : `qm rollback 110 clean-state && qm rollback 120 clean-state && qm start 110 && qm start 120` |
 
 ## Architecture
 
 ```mermaid
 graph TD
-    subgraph "Reseau local 192.168.2.0/24"
+    subgraph "Réseau local 192.168.2.0/24"
         PC["PC Fixe<br/>192.168.2.2"]
         PVE["pve02<br/>192.168.2.4<br/>(vmbr0)"]
     end
 
-    subgraph "Reseau NTL virtuel 172.16.132.0/24"
+    subgraph "Réseau NTL virtuel 172.16.132.0/24"
         GW["pve02 - vmbr1<br/>172.16.132.254<br/>(gateway)"]
         DC01["DC01<br/>172.16.132.10<br/>Samba AD/DNS/LDAP"]
         WMS["WMS-DB<br/>172.16.132.20<br/>MySQL 8.0"]
