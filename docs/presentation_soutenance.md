@@ -113,7 +113,7 @@ src/
 ### Contrat JSON — `build_result()` (8 champs)
 
 Chaque fonction retourne un JSON standardisé :
-`status`, `code`, `module`, `function`, `timestamp`, `host`, `data`, `message`
+`module`, `function`, `timestamp`, `status`, `exit_code`, `target`, `details`, `message`
 
 ### Règles
 
