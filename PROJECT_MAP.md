@@ -20,8 +20,10 @@ CLI Python pour l'administration systeme de **NordTransit Logistics** (PME logis
 | Aide-memoire rapide pendant le dev  | [docs/cheatsheet.md](docs/cheatsheet.md)                 |
 | Comprendre la CI/CD                 | [docs/08-ci-guide.md](docs/08-ci-guide.md)               |
 | Monter le lab Proxmox               | [docs/10-lab-infra.md](docs/10-lab-infra.md)             |
+| Préparer la soutenance              | [docs/guide-oral-soutenance.md](docs/guide-oral-soutenance.md) |
+| Voir le plan de soutenance          | [docs/soutenance-plan.md](docs/soutenance-plan.md)       |
 | Lire le plan complet du projet      | [_specs/PLAN_COMPLET.md](_specs/PLAN_COMPLET.md)         |
-| Voir les decisions de l'equipe      | [_specs/DECISIONS_PRISES.md](_specs/DECISIONS_PRISES.md) |
+| Voir les décisions de l'équipe      | [_specs/DECISIONS_PRISES.md](_specs/DECISIONS_PRISES.md) |
 
 ---
 
