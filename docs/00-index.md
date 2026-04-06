@@ -33,10 +33,8 @@
 
 ### Préparer la soutenance
 
-1. [soutenance-plan.md](soutenance-plan.md) — Plan de soutenance (répartition, timing, notes speaker)
-2. [guide-oral-soutenance.md](guide-oral-soutenance.md) — Guide oral : quoi dire diapo par diapo + questions jury
-3. [slides-corrections-v5.md](slides-corrections-v5.md) — Corrections à appliquer aux slides (v4 → v5)
-4. [demo-homelab.md](demo-homelab.md) — Scénario de démo sur le homelab
+> Les documents de préparation interne (guide oral, questions jury, scénario démo)
+> sont dans le dossier `docs/_prep/` (non versionné, gitignored).
 
 ### CI/CD
 
@@ -69,16 +67,6 @@
 | [manuel_utilisation.md](manuel_utilisation.md) | Manuel d'utilisation pas à pas |
 | [rapport_audit.md](rapport_audit.md) | Rapport d'audit d'obsolescence du parc NTL |
 | [rapport_soutenance.md](rapport_soutenance.md) | Rapport écrit de soutenance |
-| [presentation_soutenance.md](presentation_soutenance.md) | Script et slides de la présentation orale |
-
-## Préparation soutenance
-
-| Fichier | Contenu |
-|---------|---------|
-| [soutenance-plan.md](soutenance-plan.md) | Plan de soutenance : répartition, timing, notes speaker |
-| [guide-oral-soutenance.md](guide-oral-soutenance.md) | Guide oral : quoi dire diapo par diapo + questions jury |
-| [slides-corrections-v5.md](slides-corrections-v5.md) | Corrections à appliquer aux slides (v4 → v5) |
-| [demo-homelab.md](demo-homelab.md) | Scénario de démo sur le homelab |
 
 ## Archives projet
 

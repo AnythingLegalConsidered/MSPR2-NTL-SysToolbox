@@ -3,14 +3,14 @@
 **Version :** 1.0
 **Date :** Mars 2026
 **Projet :** MSPR TPRE511 -- NordTransit Logistics
-**Public cible :** Techniciens IT, administrateurs systeme
+**Public cible :** Techniciens IT, administrateurs système
 
 ---
 
-## Table des matieres
+## Table des matières
 
-1. [Presentation generale](#1-presentation-generale)
-2. [Prerequis](#2-prerequis)
+1. [Présentation générale](#1-presentation-generale)
+2. [Prérequis](#2-prerequis)
 3. [Installation](#3-installation)
    - 3.1 [Windows](#31-installation-sous-windows)
    - 3.2 [Linux](#32-installation-sous-linux)
@@ -19,58 +19,58 @@
    - 4.2 [Variables d'environnement (.env)](#42-variables-denvironnement-env)
 5. [Lancement de l'application](#5-lancement-de-lapplication)
 6. [Module Diagnostic](#6-module-diagnostic)
-   - 6.1 [Verification AD/DNS](#61-verification-addns)
-   - 6.2 [Verification MySQL](#62-verification-mysql)
-   - 6.3 [Verification services Linux](#63-verification-services-linux)
-   - 6.4 [Verification HTTP/HTTPS](#64-verification-httphttps)
+   - 6.1 [Vérification AD/DNS](#61-verification-addns)
+   - 6.2 [Vérification MySQL](#62-verification-mysql)
+   - 6.3 [Vérification services Linux](#63-verification-services-linux)
+   - 6.4 [Vérification HTTP/HTTPS](#64-verification-httphttps)
 7. [Module Backup](#7-module-backup)
-   - 7.1 [Sauvegarde base de donnees (dump SQL)](#71-sauvegarde-base-de-donnees-dump-sql)
+   - 7.1 [Sauvegarde base de données (dump SQL)](#71-sauvegarde-base-de-donnees-dump-sql)
    - 7.2 [Export table en CSV](#72-export-table-en-csv)
 8. [Module Audit](#8-module-audit)
-   - 8.1 [Scan reseau](#81-scan-reseau)
+   - 8.1 [Scan réseau](#81-scan-reseau)
    - 8.2 [Liste des dates EOL](#82-liste-des-dates-eol)
    - 8.3 [Audit depuis un CSV](#83-audit-depuis-un-csv)
    - 8.4 [Rapport complet](#84-rapport-complet)
 9. [Format de sortie JSON](#9-format-de-sortie-json)
 10. [Codes de sortie](#10-codes-de-sortie)
-11. [Arborescence des fichiers generes](#11-arborescence-des-fichiers-generes)
-12. [Resolution de problemes](#12-resolution-de-problemes)
-13. [Commandes de developpement](#13-commandes-de-developpement)
+11. [Arborescence des fichiers générés](#11-arborescence-des-fichiers-generes)
+12. [Résolution de problèmes](#12-resolution-de-problemes)
+13. [Commandes de développement](#13-commandes-de-developpement)
 14. [Annexes](#14-annexes)
 
 ---
 
-## 1. Presentation generale
+## 1. Présentation générale
 
-**NTL-SysToolbox** est un outil en ligne de commande (CLI) interactif developpe en Python pour **NordTransit Logistics**. Il permet aux techniciens IT de realiser trois types d'operations depuis une interface unifiee :
+**NTL-SysToolbox** est un outil en ligne de commande (CLI) interactif développé en Python pour **NordTransit Logistics**. Il permet aux techniciens IT de réaliser trois types d'opérations depuis une interface unifiée :
 
 | Module        | Fonction                                                      |
 |---------------|---------------------------------------------------------------|
-| **Diagnostic** | Verification de l'etat des services reseau (AD/DNS, MySQL, Linux, HTTP) |
+| **Diagnostic** | Vérification de l'état des services réseau (AD/DNS, MySQL, Linux, HTTP) |
 | **Backup**     | Sauvegarde de bases MySQL (dump SQL) et export de tables en CSV          |
-| **Audit**      | Scan reseau, detection de systemes en fin de vie (EOL), rapports         |
+| **Audit**      | Scan réseau, détection de systèmes en fin de vie (EOL), rapports         |
 
-L'outil est concu pour etre **cross-platform** (Windows et Linux) et produit des resultats au format JSON standardise, exploitables par d'autres outils ou pour du reporting.
+L'outil est conçu pour être **cross-platform** (Windows et Linux) et produit des résultats au format JSON standardisé, exploitables par d'autres outils ou pour du reporting.
 
 ---
 
-## 2. Prerequis
+## 2. Prérequis
 
 ### Logiciels requis
 
 | Logiciel       | Version minimale | Obligatoire | Remarque                              |
 |----------------|------------------|-------------|---------------------------------------|
-| Python         | 3.10+            | Oui         | 3.12 recommande                       |
-| Git            | 2.x              | Oui         | Pour cloner le depot                  |
-| Make           | -                | Oui         | Presente par defaut sous Linux        |
+| Python         | 3.10+            | Oui         | 3.12 recommandé                       |
+| Git            | 2.x              | Oui         | Pour cloner le dépôt                  |
+| Make           | -                | Oui         | Présent par défaut sous Linux         |
 | nmap           | 7.x              | Non*        | Requis pour le module Audit (scan)    |
 | mysqldump      | 8.x              | Non*        | Requis pour le module Backup (dump)   |
 
-> \* Ces outils ne sont necessaires que si vous utilisez les fonctions correspondantes.
+> \* Ces outils ne sont nécessaires que si vous utilisez les fonctions correspondantes.
 
-### Acces reseau
+### Accès réseau
 
-- Acces au reseau de l'infrastructure NordTransit Logistics
+- Accès au réseau de l'infrastructure NordTransit Logistics
 - Credentials MySQL (utilisateur + mot de passe)
 - Credentials SSH pour les serveurs Linux
 - Credentials WinRM pour le Domain Controller (optionnel)
@@ -81,20 +81,20 @@ L'outil est concu pour etre **cross-platform** (Windows et Linux) et produit des
 
 ### 3.1 Installation sous Windows
 
-**Etape 1 -- Installer Python 3.12**
+**Étape 1 -- Installer Python 3.12**
 
 ```powershell
 winget install Python.Python.3.12
 ```
 
-Verifier l'installation :
+Vérifier l'installation :
 
 ```bash
 python --version
 # Attendu : Python 3.12.x
 ```
 
-**Etape 2 -- Installer Git et Make**
+**Étape 2 -- Installer Git et Make**
 
 ```powershell
 winget install Git.Git
@@ -102,7 +102,7 @@ winget install Git.Git
 
 > Make est disponible via Git Bash ou en installant `make` via Chocolatey : `choco install make`
 
-**Etape 3 -- Cloner le depot et configurer l'environnement**
+**Étape 3 -- Cloner le dépôt et configurer l'environnement**
 
 ```bash
 git clone https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox.git
@@ -110,9 +110,9 @@ cd MSPR2-NTL-SysToolbox
 make setup
 ```
 
-<!-- [Capture d'ecran : terminal apres make setup reussi] -->
+<!-- [Capture d'écran : terminal après make setup réussi] -->
 
-**Etape 4 -- Activer l'environnement virtuel**
+**Étape 4 -- Activer l'environnement virtuel**
 
 ```bash
 # Git Bash
@@ -134,7 +134,7 @@ make setup-linux
 source venv/bin/activate
 ```
 
-### 3.3 Installation des outils de developpement (optionnel)
+### 3.3 Installation des outils de développement (optionnel)
 
 Pour les contributeurs au projet :
 
@@ -148,26 +148,26 @@ Cela installe `ruff`, `mypy`, `pytest` et `pytest-cov`.
 
 ## 4. Configuration
 
-Deux fichiers doivent etre configures avant la premiere utilisation.
+Deux fichiers doivent être configurés avant la première utilisation.
 
 ### 4.1 Fichier config.yaml
 
-Copier le modele fourni :
+Copier le modèle fourni :
 
 ```bash
 cp config/config.example.yaml config/config.yaml
 ```
 
-Ouvrir `config/config.yaml` et adapter les valeurs a votre infrastructure.
+Ouvrir `config/config.yaml` et adapter les valeurs à votre infrastructure.
 
 #### Structure du fichier
 
 ```yaml
-# --- Parametres generaux ---
+# --- Paramètres généraux ---
 general:
   log_level: INFO          # Niveaux : DEBUG, INFO, WARNING
-  output_dir: ./output     # Repertoire de sortie des fichiers generes
-  timeout: 10              # Timeout par defaut en secondes
+  output_dir: ./output     # Répertoire de sortie des fichiers générés
+  timeout: 10              # Timeout par défaut en secondes
 
 # --- Machines cibles ---
 targets:
@@ -184,8 +184,8 @@ targets:
 mysql:
   host: 192.168.10.21
   port: 3306
-  user: "${NTL_MYSQL_USER}"       # Resolu depuis .env
-  password: "${NTL_MYSQL_PASSWORD}" # Resolu depuis .env
+  user: "${NTL_MYSQL_USER}"       # Résolu depuis .env
+  password: "${NTL_MYSQL_PASSWORD}" # Résolu depuis .env
   database: wms
 
 # --- Connexion SSH ---
@@ -196,7 +196,7 @@ ssh:
   password: "${NTL_SSH_PASSWORD}"
   # key_file: ~/.ssh/id_rsa       # Alternative au mot de passe
 
-# --- Decouverte reseau ---
+# --- Découverte réseau ---
 discovery:
   network_range: "172.16.135.0/24"
   timeout: 2
@@ -221,17 +221,17 @@ audit:
   inventory_csv: "./data/sample_inventory.csv"
 ```
 
-> **Important :** Les valeurs entre `${...}` sont resolues automatiquement depuis les variables d'environnement definies dans le fichier `.env`. Ne remplacez pas ces marqueurs directement.
+> **Important :** Les valeurs entre `${...}` sont résolues automatiquement depuis les variables d'environnement définies dans le fichier `.env`. Ne remplacez pas ces marqueurs directement.
 
 ### 4.2 Variables d'environnement (.env)
 
-Copier le modele fourni :
+Copier le modèle fourni :
 
 ```bash
 cp .env.example .env
 ```
 
-Editer `.env` avec vos identifiants reels :
+Éditer `.env` avec vos identifiants réels :
 
 ```ini
 # MySQL
@@ -246,13 +246,13 @@ NTL_SSH_PASSWORD=VotreMotDePasseSSH
 NTL_GENERAL_LOG_LEVEL=INFO
 ```
 
-> **Securite :** Le fichier `.env` contient des identifiants sensibles. Il est exclu du depot Git via `.gitignore`. Ne le commitez jamais.
+> **Sécurité :** Le fichier `.env` contient des identifiants sensibles. Il est exclu du dépôt Git via `.gitignore`. Ne le commitez jamais.
 
 ---
 
 ## 5. Lancement de l'application
 
-### Demarrage
+### Démarrage
 
 ```bash
 make run
@@ -284,88 +284,88 @@ Au lancement, le menu principal s'affiche :
   Choix :
 ```
 
-<!-- [Capture d'ecran : menu principal NTL-SysToolbox] -->
+<!-- [Capture d'écran : menu principal NTL-SysToolbox] -->
 
-Saisissez le numero du module souhaite et appuyez sur **Entree**.
+Saisissez le numéro du module souhaité et appuyez sur **Entrée**.
 
 ### Navigation
 
-- Chaque module ouvre un **sous-menu** avec ses fonctions specifiques.
-- Saisissez `0` pour **revenir au menu precedent**.
+- Chaque module ouvre un **sous-menu** avec ses fonctions spécifiques.
+- Saisissez `0` pour **revenir au menu précédent**.
 - Saisissez `0` depuis le menu principal pour **quitter** l'application.
-- `Ctrl+C` permet de quitter a tout moment.
+- `Ctrl+C` permet de quitter à tout moment.
 
 ---
 
 ## 6. Module Diagnostic
 
-Le module Diagnostic permet de verifier l'etat des services de l'infrastructure.
+Le module Diagnostic permet de vérifier l'état des services de l'infrastructure.
 
 ### Sous-menu Diagnostic
 
 ```
 ── Diagnostic ──
-  1. Verifier AD/DNS (DC01)
-  2. Verifier MySQL (port + version)
-  3. Verifier services Linux (multi-ports)
-  4. Verifier HTTP/HTTPS
+  1. Vérifier AD/DNS (DC01)
+  2. Vérifier MySQL (port + version)
+  3. Vérifier services Linux (multi-ports)
+  4. Vérifier HTTP/HTTPS
   0. Retour
 
   Choix :
 ```
 
-<!-- [Capture d'ecran : sous-menu Diagnostic] -->
+<!-- [Capture d'écran : sous-menu Diagnostic] -->
 
 ---
 
-### 6.1 Verification AD/DNS
+### 6.1 Vérification AD/DNS
 
-**Objectif :** Verifier que le Domain Controller repond correctement aux requetes DNS, que les ports Active Directory sont ouverts, que le service LDAP est accessible, et (optionnellement) que les services Windows tournent via WinRM.
+**Objectif :** Vérifier que le Domain Controller répond correctement aux requêtes DNS, que les ports Active Directory sont ouverts, que le service LDAP est accessible, et (optionnellement) que les services Windows tournent via WinRM.
 
 **Utilisation :**
 
 1. Choisir `1` dans le sous-menu Diagnostic.
-2. Saisir l'adresse IP du Domain Controller (ou appuyer sur Entree pour utiliser la valeur par defaut `dc01` dans `config.yaml`).
+2. Saisir l'adresse IP du Domain Controller (ou appuyer sur Entrée pour utiliser la valeur par défaut `dc01` dans `config.yaml`).
 
 ```
   Choix : 1
-  IP du DC (defaut: dc01) : 192.168.10.10
+  IP du DC (défaut: dc01) : 192.168.10.10
 ```
 
-**Verifications effectuees :**
+**Vérifications effectuées :**
 
 | Test     | Description                                    |
 |----------|------------------------------------------------|
-| DNS      | Resolution de nom via le serveur DNS cible     |
-| Ports    | Verification des ports AD (389, 636, 88, etc.) |
+| DNS      | Résolution de nom via le serveur DNS cible     |
+| Ports    | Vérification des ports AD (389, 636, 88, etc.) |
 | LDAP     | Connexion LDAP au serveur                      |
-| Services | Etat des services Windows via WinRM (optionnel)|
+| Services | État des services Windows via WinRM (optionnel)|
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
   [OK] AD/DNS check OK sur 192.168.10.10
 ```
 
-<!-- [Capture d'ecran : resultat check AD/DNS] -->
+<!-- [Capture d'écran : résultat check AD/DNS] -->
 
 ---
 
-### 6.2 Verification MySQL
+### 6.2 Vérification MySQL
 
-**Objectif :** Verifier que le serveur MySQL est accessible sur le port configure et recuperer sa version.
+**Objectif :** Vérifier que le serveur MySQL est accessible sur le port configuré et récupérer sa version.
 
 **Utilisation :**
 
 1. Choisir `2` dans le sous-menu Diagnostic.
-2. Saisir l'adresse IP du serveur MySQL (ou Entree pour la valeur par defaut).
+2. Saisir l'adresse IP du serveur MySQL (ou Entrée pour la valeur par défaut).
 
 ```
   Choix : 2
   IP du serveur MySQL : 192.168.10.21
 ```
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
   [OK] MySQL accessible sur 192.168.10.21:3306 (version 8.0.35)
@@ -373,9 +373,9 @@ Le module Diagnostic permet de verifier l'etat des services de l'infrastructure.
 
 ---
 
-### 6.3 Verification services Linux
+### 6.3 Vérification services Linux
 
-**Objectif :** Scanner les ports ouverts sur un serveur Linux pour detecter les services actifs.
+**Objectif :** Scanner les ports ouverts sur un serveur Linux pour détecter les services actifs.
 
 **Utilisation :**
 
@@ -387,33 +387,33 @@ Le module Diagnostic permet de verifier l'etat des services de l'infrastructure.
   IP du serveur Linux : 192.168.10.21
 ```
 
-Les ports scannes sont ceux definis dans la section `discovery.ports` de `config.yaml`.
+Les ports scannés sont ceux définis dans la section `discovery.ports` de `config.yaml`.
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
-  [OK] 3 service(s) trouve(s) sur 192.168.10.21: SSH, HTTP, MySQL
+  [OK] 3 service(s) trouvé(s) sur 192.168.10.21: SSH, HTTP, MySQL
 ```
 
 ---
 
-### 6.4 Verification HTTP/HTTPS
+### 6.4 Vérification HTTP/HTTPS
 
-**Objectif :** Verifier qu'un service web repond correctement sur un port donne.
+**Objectif :** Vérifier qu'un service web répond correctement sur un port donné.
 
 **Utilisation :**
 
 1. Choisir `4` dans le sous-menu Diagnostic.
-2. Saisir l'adresse IP et eventuellement le port (format `IP:port`).
+2. Saisir l'adresse IP et éventuellement le port (format `IP:port`).
 
 ```
   Choix : 4
-  IP[:port] du serveur HTTP (defaut: port 80) : 192.168.10.21:8080
+  IP[:port] du serveur HTTP (défaut: port 80) : 192.168.10.21:8080
 ```
 
-> Si aucun port n'est specifie, le port **80** est utilise par defaut.
+> Si aucun port n'est spécifié, le port **80** est utilisé par défaut.
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
   [OK] HTTP 200 sur 192.168.10.21:8080 — 45ms (Server: nginx/1.24)
@@ -423,43 +423,43 @@ Les ports scannes sont ceux definis dans la section `discovery.ports` de `config
 
 ## 7. Module Backup
 
-Le module Backup permet de sauvegarder les donnees MySQL.
+Le module Backup permet de sauvegarder les données MySQL.
 
 ### Sous-menu Backup
 
 ```
 ── Backup ──
-  1. Backup base de donnees (dump SQL)
+  1. Backup base de données (dump SQL)
   2. Export table en CSV
   0. Retour
 
   Choix :
 ```
 
-<!-- [Capture d'ecran : sous-menu Backup] -->
+<!-- [Capture d'écran : sous-menu Backup] -->
 
-### Prerequis du module
+### Prérequis du module
 
-- L'utilitaire `mysqldump` doit etre installe et accessible dans le PATH (pour le dump SQL).
-- Les identifiants MySQL doivent etre configures dans `.env`.
+- L'utilitaire `mysqldump` doit être installé et accessible dans le PATH (pour le dump SQL).
+- Les identifiants MySQL doivent être configurés dans `.env`.
 
 ---
 
-### 7.1 Sauvegarde base de donnees (dump SQL)
+### 7.1 Sauvegarde base de données (dump SQL)
 
-**Objectif :** Creer un dump complet d'une base de donnees MySQL au format SQL.
+**Objectif :** Créer un dump complet d'une base de données MySQL au format SQL.
 
 **Utilisation :**
 
 1. Choisir `1` dans le sous-menu Backup.
-2. Saisir le nom de la base de donnees (ou Entree pour `wms` par defaut).
+2. Saisir le nom de la base de données (ou Entrée pour `wms` par défaut).
 
 ```
   Choix : 1
-  Base a sauvegarder (defaut: wms) : wms
+  Base à sauvegarder (défaut: wms) : wms
 ```
 
-**Fichier genere :**
+**Fichier généré :**
 
 ```
 output/backups/wms_20260327_143022.sql
@@ -467,18 +467,18 @@ output/backups/wms_20260327_143022.sql
 
 Le nom du fichier suit le format : `{base}_{date}_{heure}.sql`
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
-  [OK] Backup wms sauvegarde: output/backups/wms_20260327_143022.sql (245780 octets)
+  [OK] Backup wms sauvegardé: output/backups/wms_20260327_143022.sql (245780 octets)
 ```
 
 **Options du dump :**
 
-- `--single-transaction` : sauvegarde coherente sans verrouiller les tables.
-- `--routines` : inclut les procedures stockees et fonctions.
+- `--single-transaction` : sauvegarde cohérente sans verrouiller les tables.
+- `--routines` : inclut les procédures stockées et fonctions.
 
-<!-- [Capture d'ecran : resultat backup SQL] -->
+<!-- [Capture d'écran : résultat backup SQL] -->
 
 ---
 
@@ -489,92 +489,92 @@ Le nom du fichier suit le format : `{base}_{date}_{heure}.sql`
 **Utilisation :**
 
 1. Choisir `2` dans le sous-menu Backup.
-2. Saisir le nom exact de la table a exporter.
+2. Saisir le nom exact de la table à exporter.
 
 ```
   Choix : 2
-  Table a exporter (ex: shipments) : shipments
+  Table à exporter (ex: shipments) : shipments
 ```
 
-**Fichier genere :**
+**Fichier généré :**
 
 ```
 output/exports/shipments_20260327_143215.csv
 ```
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
   [OK] Export shipments: 1523 lignes -> output/exports/shipments_20260327_143215.csv
 ```
 
-> **Note :** Le nom de table doit respecter les conventions SQL (lettres, chiffres, underscores, 64 caracteres maximum).
+> **Note :** Le nom de table doit respecter les conventions SQL (lettres, chiffres, underscores, 64 caractères maximum).
 
 ---
 
 ## 8. Module Audit
 
-Le module Audit permet de cartographier le reseau, d'identifier les systemes obsoletes et de generer des rapports d'audit.
+Le module Audit permet de cartographier le réseau, d'identifier les systèmes obsolètes et de générer des rapports d'audit.
 
 ### Sous-menu Audit
 
 ```
 ── Audit ──
-  1. Scanner le reseau
+  1. Scanner le réseau
   2. Lister les dates EOL
   3. Auditer depuis un CSV
-  4. Generer le rapport complet
+  4. Générer le rapport complet
   0. Retour
 
   Choix :
 ```
 
-<!-- [Capture d'ecran : sous-menu Audit] -->
+<!-- [Capture d'écran : sous-menu Audit] -->
 
-### Prerequis du module
+### Prérequis du module
 
-- L'utilitaire `nmap` doit etre installe et accessible dans le PATH (pour le scan reseau).
-- Le fichier `data/eol_database.json` doit etre present (pour les dates EOL).
+- L'utilitaire `nmap` doit être installé et accessible dans le PATH (pour le scan réseau).
+- Le fichier `data/eol_database.json` doit être présent (pour les dates EOL).
 
 ---
 
-### 8.1 Scan reseau
+### 8.1 Scan réseau
 
-**Objectif :** Scanner une plage d'adresses IP pour detecter les hotes actifs et les categoriser.
+**Objectif :** Scanner une plage d'adresses IP pour détecter les hôtes actifs et les catégoriser.
 
 **Utilisation :**
 
 1. Choisir `1` dans le sous-menu Audit.
-2. Saisir la plage reseau au format CIDR (ou Entree pour la valeur par defaut dans `config.yaml`).
+2. Saisir la plage réseau au format CIDR (ou Entrée pour la valeur par défaut dans `config.yaml`).
 
 ```
   Choix : 1
-  Plage reseau (defaut: config) : 172.16.135.0/24
+  Plage réseau (défaut: config) : 172.16.135.0/24
 ```
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
-  [OK] Scan termine: 12 host(s) trouve(s) sur 172.16.135.0/24
+  [OK] Scan terminé: 12 host(s) trouvé(s) sur 172.16.135.0/24
 ```
 
 ---
 
 ### 8.2 Liste des dates EOL
 
-**Objectif :** Afficher les systemes d'exploitation recenses dans la base EOL et identifier ceux en fin de vie.
+**Objectif :** Afficher les systèmes d'exploitation recensés dans la base EOL et identifier ceux en fin de vie.
 
 **Utilisation :**
 
 1. Choisir `2` dans le sous-menu Audit.
-2. Appuyer sur Entree pour lancer.
+2. Appuyer sur Entrée pour lancer.
 
 ```
   Choix : 2
-  Appuyez sur Entree pour continuer :
+  Appuyez sur Entrée pour continuer :
 ```
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
   [WARNING] 3/15 OS en fin de vie
@@ -584,19 +584,19 @@ Le module Audit permet de cartographier le reseau, d'identifier les systemes obs
 
 ### 8.3 Audit depuis un CSV
 
-**Objectif :** Realiser un audit a partir d'un fichier d'inventaire CSV contenant la liste des machines.
+**Objectif :** Réaliser un audit à partir d'un fichier d'inventaire CSV contenant la liste des machines.
 
 **Utilisation :**
 
 1. Choisir `3` dans le sous-menu Audit.
-2. Saisir le chemin du fichier CSV (ou Entree pour utiliser le chemin par defaut dans `config.yaml`).
+2. Saisir le chemin du fichier CSV (ou Entrée pour utiliser le chemin par défaut dans `config.yaml`).
 
 ```
   Choix : 3
-  Chemin du CSV (defaut: config) : ./data/sample_inventory.csv
+  Chemin du CSV (défaut: config) : ./data/sample_inventory.csv
 ```
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
   [OK] Inventaire: 25 hosts, 22 joignables, 4 EOL
@@ -606,33 +606,33 @@ Le module Audit permet de cartographier le reseau, d'identifier les systemes obs
 
 ### 8.4 Rapport complet
 
-**Objectif :** Generer un rapport d'audit complet combinant scan reseau, verification EOL et inventaire.
+**Objectif :** Générer un rapport d'audit complet combinant scan réseau, vérification EOL et inventaire.
 
 **Utilisation :**
 
 1. Choisir `4` dans le sous-menu Audit.
-2. Appuyer sur Entree pour lancer la generation.
+2. Appuyer sur Entrée pour lancer la génération.
 
 ```
   Choix : 4
-  Appuyez sur Entree pour continuer :
+  Appuyez sur Entrée pour continuer :
 ```
 
-**Fichier genere :**
+**Fichier généré :**
 
-Le rapport est sauvegarde dans le repertoire `output/reports/`.
+Le rapport est sauvegardé dans le répertoire `output/reports/`.
 
-**Exemple de resultat :**
+**Exemple de résultat :**
 
 ```
-  [OK] Rapport genere: output/reports/audit_20260327_144500.json
+  [OK] Rapport généré: output/reports/audit_20260327_144500.json
 ```
 
 ---
 
 ## 9. Format de sortie JSON
 
-Chaque operation produit un resultat au **format JSON standardise**. Ce format est identique quel que soit le module utilise.
+Chaque opération produit un résultat au **format JSON standardisé**. Ce format est identique quel que soit le module utilisé.
 
 ### Structure
 
@@ -658,42 +658,42 @@ Chaque operation produit un resultat au **format JSON standardise**. Ce format e
 | Champ       | Type   | Description                                          |
 |-------------|--------|------------------------------------------------------|
 | `module`    | string | Nom du module : `diagnostic`, `backup` ou `audit`    |
-| `function`  | string | Nom de la fonction executee                          |
+| `function`  | string | Nom de la fonction exécutée                          |
 | `timestamp` | string | Horodatage UTC au format ISO-8601                    |
-| `status`    | string | Etat du resultat (voir section suivante)             |
-| `exit_code` | int    | Code de sortie numerique (voir section suivante)     |
-| `target`    | string | Cible de l'operation (IP, base, plage reseau...)     |
-| `details`   | object | Donnees specifiques au module et a la fonction       |
-| `message`   | string | Description lisible du resultat                      |
+| `status`    | string | État du résultat (voir section suivante)             |
+| `exit_code` | int    | Code de sortie numérique (voir section suivante)     |
+| `target`    | string | Cible de l'opération (IP, base, plage réseau...)     |
+| `details`   | object | Données spécifiques au module et à la fonction       |
+| `message`   | string | Description lisible du résultat                      |
 
-Les resultats sont automatiquement sauvegardes dans `output/logs/` au format JSON.
+Les résultats sont automatiquement sauvegardés dans `output/logs/` au format JSON.
 
 ---
 
 ## 10. Codes de sortie
 
-Chaque resultat est associe a un **status** et un **code de sortie** normalises :
+Chaque résultat est associé à un **status** et un **code de sortie** normalisés :
 
 | Code | Status     | Signification                                          | Exemple                          |
 |------|------------|--------------------------------------------------------|----------------------------------|
-| 0    | `OK`       | L'operation a reussi, le service fonctionne            | MySQL accessible, backup termine |
-| 1    | `WARNING`  | Degradation detectee, fonctionnement partiel           | Couverture WinRM incomplete      |
-| 2    | `CRITICAL` | Service inaccessible, echec de l'operation             | MySQL injoignable, dump echoue   |
-| 3    | `UNKNOWN`  | Impossible de determiner l'etat (timeout, erreur)      | Cible injoignable, timeout       |
+| 0    | `OK`       | L'opération a réussi, le service fonctionne            | MySQL accessible, backup terminé |
+| 1    | `WARNING`  | Dégradation détectée, fonctionnement partiel           | Couverture WinRM incomplète      |
+| 2    | `CRITICAL` | Service inaccessible, échec de l'opération             | MySQL injoignable, dump échoué   |
+| 3    | `UNKNOWN`  | Impossible de déterminer l'état (timeout, erreur)      | Cible injoignable, timeout       |
 
 ---
 
-## 11. Arborescence des fichiers generes
+## 11. Arborescence des fichiers générés
 
-L'ensemble des fichiers produits par NTL-SysToolbox est organise dans le repertoire `output/` :
+L'ensemble des fichiers produits par NTL-SysToolbox est organisé dans le répertoire `output/` :
 
 ```
 output/
-  logs/                          # Logs JSON de chaque operation
+  logs/                          # Logs JSON de chaque opération
     diagnostic_check_mysql_20260327_143022.json
     backup_backup_database_20260327_143055.json
     ...
-  backups/                       # Dumps SQL des bases de donnees
+  backups/                       # Dumps SQL des bases de données
     wms_20260327_143022.sql
     ...
   exports/                       # Exports CSV des tables
@@ -704,30 +704,30 @@ output/
     ...
 ```
 
-> Le repertoire `output/` est cree automatiquement au premier lancement si necessaire.
+> Le répertoire `output/` est créé automatiquement au premier lancement si nécessaire.
 
 ---
 
-## 12. Resolution de problemes
+## 12. Résolution de problèmes
 
-### Problemes frequents
+### Problèmes fréquents
 
-| Symptome                                         | Cause probable                              | Solution                                                    |
+| Symptôme                                         | Cause probable                              | Solution                                                    |
 |--------------------------------------------------|---------------------------------------------|-------------------------------------------------------------|
-| `python: command not found`                      | Python non installe ou absent du PATH       | Installer Python 3.10+ et verifier le PATH                  |
+| `python: command not found`                      | Python non installé ou absent du PATH       | Installer Python 3.10+ et vérifier le PATH                  |
 | Erreur au lancement : config manquant            | `config.yaml` absent                        | Copier `config.example.yaml` vers `config.yaml`             |
-| Erreur : variables non resolues (`${...}`)       | Fichier `.env` absent ou incomplet          | Copier `.env.example` vers `.env` et remplir les valeurs    |
-| `MySQL connection refused`                       | Serveur MySQL eteint ou IP incorrecte       | Verifier que WMS-DB est demarre et que l'IP est correcte    |
-| `Access denied` sur MySQL                        | Mauvais identifiants                        | Verifier `NTL_MYSQL_USER` et `NTL_MYSQL_PASSWORD` dans `.env` |
-| `nmap: command not found`                        | nmap non installe                           | Installer nmap (`apt install nmap` ou telechargement Windows) |
-| `mysqldump: command not found`                   | mysql-client non installe                   | Installer mysql-client (`apt install mysql-client`)          |
-| `Permission denied`                              | Droits insuffisants                         | Executer avec les privileges adaptes (sudo sous Linux)       |
-| `Module Xxx non disponible`                      | Dependance Python manquante                 | Relancer `make setup` ou `pip install -r requirements.txt`   |
-| Timeout sur une operation                        | Cible lente ou injoignable                  | Augmenter `general.timeout` dans `config.yaml`               |
+| Erreur : variables non résolues (`${...}`)       | Fichier `.env` absent ou incomplet          | Copier `.env.example` vers `.env` et remplir les valeurs    |
+| `MySQL connection refused`                       | Serveur MySQL éteint ou IP incorrecte       | Vérifier que WMS-DB est démarré et que l'IP est correcte    |
+| `Access denied` sur MySQL                        | Mauvais identifiants                        | Vérifier `NTL_MYSQL_USER` et `NTL_MYSQL_PASSWORD` dans `.env` |
+| `nmap: command not found`                        | nmap non installé                           | Installer nmap (`apt install nmap` ou téléchargement Windows) |
+| `mysqldump: command not found`                   | mysql-client non installé                   | Installer mysql-client (`apt install mysql-client`)          |
+| `Permission denied`                              | Droits insuffisants                         | Exécuter avec les privilèges adaptés (sudo sous Linux)       |
+| `Module Xxx non disponible`                      | Dépendance Python manquante                 | Relancer `make setup` ou `pip install -r requirements.txt`   |
+| Timeout sur une opération                        | Cible lente ou injoignable                  | Augmenter `general.timeout` dans `config.yaml`               |
 
 ### Activer le mode debug
 
-Pour obtenir des logs detailles, modifier le niveau de log :
+Pour obtenir des logs détaillés, modifier le niveau de log :
 
 **Option 1 -- Via le fichier `.env` :**
 
@@ -742,76 +742,76 @@ general:
   log_level: DEBUG
 ```
 
-Les logs detailles permettent d'identifier la source exacte d'une erreur.
+Les logs détaillés permettent d'identifier la source exacte d'une erreur.
 
 ---
 
-## 13. Commandes de developpement
+## 13. Commandes de développement
 
-Ces commandes sont destinees aux contributeurs du projet.
+Ces commandes sont destinées aux contributeurs du projet.
 
 | Commande            | Description                                        |
 |---------------------|----------------------------------------------------|
-| `make setup`        | Creer le venv et installer les dependances (Windows)|
-| `make setup-linux`  | Creer le venv et installer les dependances (Linux)  |
-| `make setup-dev`    | Installer les outils de developpement               |
+| `make setup`        | Créer le venv et installer les dépendances (Windows)|
+| `make setup-linux`  | Créer le venv et installer les dépendances (Linux)  |
+| `make setup-dev`    | Installer les outils de développement               |
 | `make run`          | Lancer le CLI                                        |
 | `make test`         | Lancer les tests unitaires avec couverture           |
-| `make lint`         | Verifier le code avec ruff                           |
-| `make typecheck`    | Verifier les types avec mypy                         |
-| `make clean`        | Supprimer les fichiers generes et le cache           |
+| `make lint`         | Vérifier le code avec ruff                           |
+| `make typecheck`    | Vérifier les types avec mypy                         |
+| `make clean`        | Supprimer les fichiers générés et le cache           |
 | `make help`         | Afficher la liste des commandes disponibles          |
 
 ---
 
 ## 14. Annexes
 
-### A. Dependances Python
+### A. Dépendances Python
 
-Le projet utilise les bibliotheques suivantes (installees automatiquement via `make setup`) :
+Le projet utilise les bibliothèques suivantes (installées automatiquement via `make setup`) :
 
-| Bibliotheque             | Usage                                      |
+| Bibliothèque             | Usage                                      |
 |--------------------------|--------------------------------------------|
-| `rich`                   | Affichage ameliore du CLI (tableaux, couleurs) |
+| `rich`                   | Affichage amélioré du CLI (tableaux, couleurs) |
 | `mysql-connector-python` | Connexion MySQL pour le module Backup      |
-| `paramiko`               | Connexion SSH pour les verifications Linux |
-| `dnspython`              | Resolution DNS pour le module Diagnostic   |
+| `paramiko`               | Connexion SSH pour les vérifications Linux |
+| `dnspython`              | Résolution DNS pour le module Diagnostic   |
 | `python-nmap`            | Interface Python pour nmap (module Audit)  |
 | `pyyaml`                 | Lecture du fichier de configuration YAML   |
-| `psutil`                 | Informations systeme                       |
-| `ldap3`                  | Verification LDAP/Active Directory         |
+| `psutil`                 | Informations système                       |
+| `ldap3`                  | Vérification LDAP/Active Directory         |
 | `python-dotenv`          | Chargement des variables `.env`            |
 
-### B. Schema de navigation du CLI
+### B. Schéma de navigation du CLI
 
 ```
 Menu principal
   |
   |-- [1] Diagnostic
-  |     |-- [1] Verifier AD/DNS (DC01)
-  |     |-- [2] Verifier MySQL (port + version)
-  |     |-- [3] Verifier services Linux (multi-ports)
-  |     |-- [4] Verifier HTTP/HTTPS
+  |     |-- [1] Vérifier AD/DNS (DC01)
+  |     |-- [2] Vérifier MySQL (port + version)
+  |     |-- [3] Vérifier services Linux (multi-ports)
+  |     |-- [4] Vérifier HTTP/HTTPS
   |     |-- [0] Retour
   |
   |-- [2] Backup
-  |     |-- [1] Backup base de donnees (dump SQL)
+  |     |-- [1] Backup base de données (dump SQL)
   |     |-- [2] Export table en CSV
   |     |-- [0] Retour
   |
   |-- [3] Audit
-  |     |-- [1] Scanner le reseau
+  |     |-- [1] Scanner le réseau
   |     |-- [2] Lister les dates EOL
   |     |-- [3] Auditer depuis un CSV
-  |     |-- [4] Generer le rapport complet
+  |     |-- [4] Générer le rapport complet
   |     |-- [0] Retour
   |
   |-- [0] Quitter
 ```
 
-### C. Fichiers de configuration de reference
+### C. Fichiers de configuration de référence
 
-- `config/config.example.yaml` -- Modele de configuration
-- `.env.example` -- Modele de variables d'environnement
-- `data/eol_database.json` -- Base de donnees des dates de fin de vie
+- `config/config.example.yaml` -- Modèle de configuration
+- `.env.example` -- Modèle de variables d'environnement
+- `data/eol_database.json` -- Base de données des dates de fin de vie
 - `data/sample_inventory.csv` -- Exemple d'inventaire pour l'audit CSV
