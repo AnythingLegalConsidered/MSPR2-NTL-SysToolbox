@@ -1,12 +1,15 @@
-# Guide Oral Soutenance — NTL-SysToolbox
+# Guide Oral Soutenance — NTL-SysToolbox (v6)
 
 > **Ce document = ce que vous devez DIRE devant le jury, diapo par diapo.**
 > Le jury joue le rôle de la DSI de NordTransit Logistics. Parlez-leur comme à un client, pas à un prof.
 > Durée cible : 20 min de présentation + 30 min de questions.
+> Basé sur le PowerPoint **NTL-SysToolbox_Soutenance_v6.pptx** (16 slides).
 
 ---
 
 ## SLIDE 1 — Titre (Ianis, 30s)
+
+**Contenu slide :** NTL-SysToolbox / Outil CLI d'administration système pour NordTransit Logistics / Noms équipe / MSPR TPRE511
 
 ### Ce qu'il faut dire :
 
@@ -28,13 +31,15 @@
 
 ## SLIDE 2 — Contexte NTL (Ianis, 1min30)
 
+**Contenu slide :** PME logistique Hauts-de-France / ~240 employés / WMS cœur de métier / Équipe IT 4 personnes / Maintenance nocturne
+
 ### Ce qu'il faut dire :
 
-> "NordTransit Logistics est une PME de logistique basée à Lille, avec 3 entrepôts dans les Hauts-de-France : Lens, Valenciennes et Arras. L'entreprise emploie environ 240 personnes, jusqu'à 300 en haute saison."
+> "NordTransit Logistics est une PME de logistique basée à Lille, avec 3 entrepôts dans les Hauts-de-France : Lens, Valenciennes et Arras. L'entreprise emploie environ 240 personnes, jusqu'à 300 en haute saison avec l'intérim."
 >
-> "Le cœur de leur activité repose sur un système de gestion d'entrepôt — le WMS — qui tourne 13 heures par jour. Si ce système s'arrête, c'est l'ensemble des 4 sites qui est bloqué."
+> "Le cœur de leur activité repose sur un système de gestion d'entrepôt — le WMS — qui tourne de 5h30 à 18h30. Si ce système s'arrête, c'est l'ensemble des 4 sites qui est bloqué."
 >
-> "L'équipe IT ne compte que 4 personnes : un responsable, un admin, un technicien et un alternant. Les fenêtres de maintenance sont limitées à la nuit uniquement."
+> "L'équipe IT ne compte que 4 personnes : un responsable, un admin sys/réseau, un technicien et un alternant. Les fenêtres de maintenance sont limitées à la nuit — zéro coupure autorisée en journée."
 
 ### Ce que le jury attend :
 
@@ -50,21 +55,21 @@
 
 ## SLIDE 3 — Problématique (Ianis, 1min30)
 
+**Contenu slide :** 3 colonnes — Supervision / Sauvegardes / Obsolescence → chacune mène à un module
+
 ### Ce qu'il faut dire :
 
 > "On a identifié 3 angles morts dans le SI de NTL."
 >
-> "**Premier problème : la supervision.** Aujourd'hui, la DSI surveille surtout des indicateurs techniques — le ping, l'espace disque. Mais les services métier comme l'Active Directory, le DNS ou MySQL ne sont pas surveillés. Si l'AD tombe, personne ne peut se connecter, et personne n'est alerté."
+> "**Premier problème : la supervision.** Aujourd'hui, la DSI surveille surtout des indicateurs techniques — le ping, l'espace disque. Mais les services métier comme l'Active Directory, le DNS ou MySQL ne sont pas surveillés. Si l'AD tombe, personne ne peut se connecter, et personne n'est alerté. C'est ce qui a motivé le **module Diagnostic**."
 >
-> "**Deuxième problème : les sauvegardes.** Il y a bien des scripts de backup sur un NAS, mais ces sauvegardes n'ont jamais été testées. Il n'y a pas d'objectif RPO ou RTO défini, et aucune vérification d'intégrité."
+> "**Deuxième problème : les sauvegardes.** Il y a bien des scripts de backup sur un NAS, mais ces sauvegardes n'ont jamais été testées. Il n'y a pas d'objectif RPO ou RTO défini, et aucune vérification d'intégrité. D'où le **module Backup**."
 >
-> "**Troisième problème : l'obsolescence.** Personne ne sait exactement quels OS du parc sont en fin de vie. Il n'y a pas d'inventaire EOL. Ça veut dire qu'il y a potentiellement des machines avec des failles non corrigées qui tournent sans que personne le sache."
->
-> "Chacun de ces problèmes a donné naissance à un module de notre outil."
+> "**Troisième problème : l'obsolescence.** Personne ne sait exactement quels OS du parc sont en fin de vie. Il n'y a pas d'inventaire EOL. Ça veut dire qu'il y a potentiellement des machines avec des failles non corrigées qui tournent sans que personne le sache. C'est le **module Audit**."
 
 ### Ce que le jury attend :
 
-- **3 problèmes concrets, pas techniques pour le plaisir** — liés au risque métier.
+- **3 problèmes concrets, liés au risque métier** — pas techniques pour le plaisir.
 - Que chaque problème mène logiquement à un module. C'est le fil rouge de la présentation.
 - Que vous utilisiez le vocabulaire métier : RPO, RTO, EOL, Active Directory.
 
@@ -78,14 +83,17 @@
 
 ## SLIDE 4 — Notre solution (Ianis, 1min)
 
+**Contenu slide :** CLI Python interactif / 3 modules / JSON horodaté / Codes retour 0-3 / Config YAML + .env / Cross-platform
+
 ### Ce qu'il faut dire :
 
 > "Notre réponse, c'est NTL-SysToolbox : un outil CLI Python avec un menu interactif. Il couvre les 3 besoins en 3 modules indépendants : Diagnostic, Backup et Audit."
 >
 > "On a fait des choix techniques précis :"
 > - "**Python** pour la portabilité Windows/Linux et l'écosystème de librairies système et réseau."
-> - "**Des sorties JSON horodatées** avec des codes retour standard 0 à 3. Ce format est directement compatible avec des outils de supervision comme Zabbix ou Nagios."
-> - "**Une configuration YAML séparée du code**, avec les secrets gérés par variables d'environnement. La DSI peut adapter la config sans toucher au code source."
+> - "**Des sorties JSON horodatées** avec des codes retour standard 0 à 3. Ce format est directement compatible avec des outils de supervision comme Zabbix ou Nagios — OK, WARNING, CRITICAL, UNKNOWN."
+> - "**Une configuration YAML séparée du code**, avec les secrets gérés par variables d'environnement dans un fichier `.env`. Zéro secret en dur dans le code."
+> - "Et l'outil est **cross-platform** — il fonctionne sur Windows et Linux."
 
 ### Ce que le jury attend :
 
@@ -99,64 +107,70 @@
 
 ---
 
-## SLIDE 5 — Architecture (Ianis, 1min30)
+## SLIDE 5 — Organisation de l'équipe (Ianis, 1min)
+
+**Contenu slide :** Tableau membres/rôles/périmètre + Méthode de travail (contrat JSON, branches, PRs, CI) + Workflow Git en 4 étapes
+
+### Ce qu'il faut dire :
+
+> "On est 4 développeurs pour 19 heures de projet. On s'est organisés autour du contrat JSON commun qu'on a défini ensemble en amont dans le fichier `interfaces.py`."
+>
+> "Ianis en lead sur le framework, le CLI, la CI/CD et l'intégration. Blaise sur le module Diagnostic, Ojvind sur le Backup, Zaid sur l'Audit."
+>
+> "Notre workflow Git est structuré en 4 étapes : chaque dev code sur sa branche `feature/*`, chaque push déclenche la CI automatiquement, ensuite une pull request avec review par le lead, et enfin un merge squash sur master pour garder un historique propre."
+
+### Ce que le jury attend :
+
+- **Qui a fait quoi** — concrètement.
+- Que la méthode de travail soit **structurée** (branches, PRs, reviews, CI).
+- Que le contrat commun ait permis le **travail en parallèle**.
+- Le workflow Git en 4 étapes montre une **vraie organisation d'équipe**.
+
+---
+
+## SLIDE 6 — Architecture (Ianis, 1min30)
+
+**Contenu slide :** Schéma main.py → 3 modules → build_result() → Terminal + output/ + Tableau contrat JSON (8 champs) + Seuils et timeout
 
 ### Ce qu'il faut dire :
 
 > "L'architecture est volontairement simple. En haut, le point d'entrée : `main.py`, qui affiche le menu interactif. En dessous, les 3 modules — Diagnostic, Backup, Audit — qui sont complètement indépendants. Chacun peut tourner seul."
 >
-> "Le point commun, c'est le contrat de sortie. Tous les modules passent par la fonction `build_result()` qui génère un JSON avec toujours la même structure : module, fonction, timestamp, status, code retour, cible, détails, message."
+> "Le point commun, c'est le contrat de sortie. Tous les modules passent par la fonction `build_result()` qui génère un JSON avec toujours la même structure."
 >
-> *(pointer l'exemple JSON)* "Voici un exemple concret. Le status peut être OK, WARNING, CRITICAL ou UNKNOWN. Le code retour va de 0 à 3, c'est la convention standard de l'industrie — compatible Nagios et Zabbix."
+> *(pointer le tableau)* "8 champs : le module, la fonction appelée, un timestamp ISO 8601, le status — OK, WARNING, CRITICAL ou UNKNOWN —, le code retour de 0 à 3, la cible, les détails spécifiques au check, et un message lisible par un humain."
 >
 > "Les seuils WARNING sont à 80% pour CPU, RAM et disque. Le timeout par défaut est de 10 secondes."
 
 ### Ce que le jury attend :
 
 - Que vous expliquiez **pourquoi cette architecture** (simplicité, indépendance, intégrabilité).
-- Que le **contrat JSON** soit clair et concret — c'est LA décision technique du projet.
-- Que les **codes retour** soient expliqués avec leur signification.
-- Que vous mentionniez que c'est un **standard industrie**, pas un choix arbitraire.
+- Que le **contrat JSON** soit clair — les 8 champs du tableau sont LA décision technique du projet.
+- Que les **codes retour** soient un **standard industrie** (Nagios/Zabbix), pas un choix arbitraire.
 
 ### Conseils :
 
 - Ne pas se perdre dans les détails du code
-- Pointer visuellement le schéma et l'exemple JSON
+- Pointer visuellement le schéma et le tableau des champs
 - Le jury doit comprendre en 10 secondes : "format unique partout = facile à intégrer"
 
 ---
 
-## SLIDE Organisation équipe (Ianis, 1min) — si présente
+## SLIDE 7 — Module Diagnostic (Blaise, 1min30)
+
+**Contenu slide :** "Les services critiques du siège sont-ils opérationnels ?" / Tableau 4 fonctions (check_ad_dns, check_mysql, check_linux, check_http)
 
 ### Ce qu'il faut dire :
 
-> "On est 4 développeurs pour 19 heures de projet. On s'est organisés autour du contrat JSON commun : on l'a défini ensemble en amont, puis chacun a développé son module de façon indépendante."
->
-> "Ianis en lead sur le framework, le CLI et la CI/CD. Blaise sur le diagnostic, Ojvind sur le backup, Zaid sur l'audit."
->
-> "On a travaillé en branches isolées — une par module — avec des pull requests et une review systématique par le lead avant le merge."
-
-### Ce que le jury attend :
-
-- **Qui a fait quoi** — concrètement.
-- Que la méthode de travail soit **structurée** (branches, PRs, reviews).
-- Que le contrat commun ait permis le **travail en parallèle**.
-
----
-
-## SLIDE 6 — Module Diagnostic (Blaise, 1min30)
-
-### Ce qu'il faut dire :
-
-> "Mon module répond à la question : est-ce que les services critiques de NTL fonctionnent en ce moment ?"
+> "Mon module répond à la question affichée : est-ce que les services critiques du siège sont opérationnels ?"
 >
 > "J'ai 4 fonctions de vérification :"
 > - "`check_ad_dns` vérifie l'Active Directory et le DNS sur le DC01 — les ports LDAP, DNS et Kerberos, plus une résolution DNS pour confirmer que le service répond vraiment."
-> - "`check_mysql` teste la connexion au serveur MySQL qui héberge le WMS — port 3306 et version du serveur."
-> - "`check_linux` fait un scan multi-ports sur n'importe quel serveur Linux pour identifier les services actifs."
+> - "`check_mysql` teste la connexion au serveur MySQL qui héberge le WMS — port 3306 et version du serveur, sans avoir besoin de s'authentifier."
+> - "`check_linux` fait un scan multi-ports sur n'importe quel serveur pour identifier et catégoriser les services actifs."
 > - "`check_http` vérifie qu'un serveur web répond — status HTTP, header Server, temps de réponse."
 >
-> *(pointer le schéma de décision)* "Chaque vérification suit une logique de décision claire. Par exemple pour l'AD : si le serveur est injoignable, c'est UNKNOWN. Si LDAP ne répond pas, c'est CRITICAL. Si LDAP répond mais le DNS est en panne, c'est WARNING. Et si tout va bien, OK."
+> "Chaque vérification suit une logique de décision claire. Par exemple pour l'AD : si le serveur est injoignable, c'est UNKNOWN. Si LDAP ne répond pas, c'est CRITICAL. Si LDAP répond mais le DNS est en panne, c'est WARNING. Et si tout va bien, OK."
 
 ### Ce que le jury attend :
 
@@ -175,20 +189,23 @@
 
 ---
 
-## SLIDE 7 — Module Backup (Ojvind, 1min30)
+## SLIDE 8 — Module Backup (Ojvind, 1min30)
+
+**Contenu slide :** "Sauvegarder la base WMS de manière fiable et traçable" / 2 fonctions (backup_database, export_table_csv) / 4 mesures de sécurité
 
 ### Ce qu'il faut dire :
 
-> "Mon module permet à la DSI de lancer une sauvegarde de la base WMS à tout moment, de façon fiable et sécurisée."
+> "Mon module permet à la DSI de sauvegarder la base WMS de manière fiable et traçable."
 >
 > "J'ai 2 fonctions principales :"
-> - "`backup_database` fait un dump SQL complet via mysqldump. Si mysqldump n'est pas installé localement, le module bascule automatiquement sur une connexion SSH pour l'exécuter sur le serveur distant."
-> - "`export_table_csv` permet d'exporter une table spécifique en CSV — utile pour des extractions ponctuelles."
+> - "`backup_database` fait un dump SQL complet via mysqldump. Si mysqldump n'est pas installé localement, le module bascule automatiquement sur une connexion SSH pour l'exécuter sur le serveur distant. Le fichier de sortie est horodaté dans `output/backups/`."
+> - "`export_table_csv` permet d'exporter une table spécifique en CSV horodaté — utile pour des extractions ponctuelles."
 >
-> "J'ai porté une attention particulière à la sécurité :"
-> - "Le mot de passe MySQL transite par variable d'environnement, jamais en argument de commande — ça évite qu'il apparaisse dans `ps aux` ou dans l'historique."
+> "J'ai porté une attention particulière à la sécurité — vous pouvez voir les 4 mesures sur la slide :"
+> - "Le mot de passe MySQL transite par variable d'environnement `MYSQL_PWD`, jamais en argument de commande."
 > - "Le nom de table est validé par regex pour empêcher toute injection SQL."
-> - "Les chemins de sortie sont protégés contre le path traversal."
+> - "Les chemins de sortie sont protégés contre le path traversal — pas de `..` autorisé."
+> - "Et le fallback SSH si mysqldump n'est pas disponible localement."
 
 ### Ce que le jury attend :
 
@@ -204,19 +221,19 @@
 
 ---
 
-## SLIDE 8 — Module Audit (Zaid, 1min30)
+## SLIDE 9 — Module Audit (Zaid, 1min30)
+
+**Contenu slide :** "Quels équipements du parc sont obsolètes et représentent un risque ?" / Pipeline 4 étapes / Tableau fonctions (entrée/sortie)
 
 ### Ce qu'il faut dire :
 
 > "Mon module répond à la question : quels équipements du parc sont obsolètes et représentent un risque de sécurité ?"
 >
-> "Le processus se fait en 4 étapes :"
-> 1. "`scan_network` utilise nmap pour scanner une plage IP et détecter les machines actives, leurs ports ouverts et leur OS."
+> *(pointer le pipeline en haut)* "Le processus se fait en 4 étapes, de gauche à droite :"
+> 1. "`scan_network` utilise nmap pour scanner une plage IP en CIDR et détecter les machines actives, leurs ports ouverts et leur OS."
 > 2. "`list_os_eol` consulte notre base JSON locale qui contient les dates de fin de support officielles de chaque OS."
 > 3. "`audit_from_csv` croise un inventaire CSV — qui contient les machines du parc avec leur OS — avec les dates EOL."
-> 4. "`generate_report` produit un rapport trié par urgence : d'abord les OS expirés, puis ceux qui expirent bientôt, puis les OK."
->
-> *(pointer l'exemple de rapport)* "Dans cet exemple, on voit immédiatement que SRV-PRINT et PC-QUAI tournent sur des OS expirés depuis plus de 2000 jours — ce sont des risques critiques. SRV-FILE expire dans 6 mois — c'est un WARNING. Et DC01 est tranquille jusqu'en 2031."
+> 4. "`generate_report` produit un rapport trié par urgence : d'abord les OS expirés, puis ceux qui expirent bientôt, puis les OK. Le rapport est en JSON et aussi affiché en tableau coloré dans le terminal."
 
 ### Ce que le jury attend :
 
@@ -232,13 +249,15 @@
 
 ---
 
-## SLIDE 9A — Lab de test Proxmox (Ianis, 45s)
+## SLIDE 10 — Environnement de test (Ianis, 45s)
+
+**Contenu slide :** Tableau 5 VMs (DC01, WMS-DB, WMS-APP, SRV-OLD, SRV-LEGACY) avec OS/rôle/IP + Pourquoi un lab + Proxmox VE
 
 ### Ce qu'il faut dire :
 
-> "Pour valider notre outil en conditions réelles, on a monté un lab sur Proxmox VE — un hyperviseur open source."
+> "Pour valider notre outil en conditions réelles, on a monté un lab sur Proxmox VE — un hyperviseur open source — avec 5 VMs sur le réseau 192.168.10.0/24."
 >
-> "Le lab reproduit l'infra de NTL : un DC01 sous Windows Server 2022 avec Active Directory et DNS, un WMS-DB sous Ubuntu avec MySQL, et des VMs legacy — Windows Server 2012 R2 et Ubuntu 18.04 — spécifiquement pour tester la détection des OS en fin de vie."
+> "Le lab reproduit l'infra de NTL : un DC01 sous Windows Server 2022 avec Active Directory et DNS, un WMS-DB sous Ubuntu avec MySQL, un WMS-APP pour l'application, et deux VMs legacy — Windows Server 2012 R2 et Ubuntu 18.04 — spécifiquement pour tester la détection des OS en fin de vie."
 >
 > "Ça nous a permis de tester chaque module sur des machines identiques à la production, sans jamais toucher à l'infra réelle du client."
 
@@ -247,24 +266,28 @@
 - Que vous ayez un **environnement de test** — ça montre du professionnalisme.
 - Que le lab **reproduise l'infra réelle** — pas un test en local sur localhost.
 - Les VMs legacy montrent une **démarche délibérée** de test des cas limites.
+- Le déploiement via **scripts post-install** montre que c'est reproductible.
 
 ---
 
-## SLIDE 9B — CI/CD (Ianis, 45s)
+## SLIDE 11 — Intégration continue (Ianis, 45s)
+
+**Contenu slide :** Pipeline GitHub Actions en schéma (déclenchement → 2 jobs parallèles → merge OK) + Détails lint/types/tests/feedback
 
 ### Ce qu'il faut dire :
 
 > "Chaque commit est vérifié automatiquement par notre pipeline GitHub Actions."
 >
-> "On a 2 jobs en parallèle : un job qualité qui exécute ruff pour le lint et mypy pour le typage, et un job tests qui lance pytest sur 3 versions de Python — 3.10, 3.11 et 3.12 — pour garantir la compatibilité."
+> *(pointer le schéma)* "Au déclenchement — push ou PR sur master ou `feature/*` — deux jobs tournent en parallèle : un job qualité avec ruff pour le lint et mypy pour la vérification de types, et un job tests avec pytest et couverture sur 3 versions de Python — 3.10, 3.11 et 3.12."
 >
-> "On a 110 tests, 54% de couverture, et le pipeline tourne en moins de 2 minutes."
+> "Le résultat est disponible en moins de 2 minutes. Si tout passe, le merge est autorisé."
 
 ### Ce que le jury attend :
 
 - Que la CI soit **réelle et automatisée** — pas un truc fait à la main.
 - **3 versions de Python** = on anticipe que la DSI peut avoir différentes versions.
-- Les **métriques concrètes** (110 tests, 54% couverture) rassurent.
+- Les 2 jobs **en parallèle** montrent une optimisation du pipeline.
+- Le feedback en moins de 2 minutes montre un pipeline **efficace**.
 
 ### Question probable :
 
@@ -272,40 +295,42 @@
 
 ---
 
-## SLIDE 10 — Démo live (Tous, 4min)
+## SLIDE 12 — Démo live (Tous, 4min)
+
+**Contenu slide :** 5 étapes numérotées avec qui fait quoi : 1. Menu (Ianis) / 2. Diagnostic (Blaise) / 3. Backup (Ojvind) / 4. Audit (Zaid) / 5. Résultats JSON (Ianis)
 
 ### Déroulement :
 
-**Ianis (30s)** — Lancement :
-> "Je lance l'outil. Vous voyez le menu interactif — la DSI peut naviguer sans documentation."
+**Étape 1 — Ianis (30s)** — Lancement :
+> "Je lance l'outil avec `python src/main.py`. Vous voyez le menu interactif — la DSI peut naviguer sans documentation ni formation."
 
 *(lancer `python src/main.py`, montrer le menu)*
 
-**Blaise (1min)** — Diagnostic :
-> "Je vais vérifier que l'AD et le DNS du DC01 sont opérationnels."
+**Étape 2 — Blaise (1min)** — Diagnostic AD/DNS :
+> "Je vais vérifier que le DC01 répond — que l'AD et le DNS sont opérationnels."
 
 *(Choix 1 → Diagnostic → Vérifier AD/DNS → montrer le résultat JSON)*
 
 > "Le résultat est immédiat : status OK, les ports LDAP et DNS répondent, la résolution DNS fonctionne. Si un service était en panne, on aurait un CRITICAL avec le détail de ce qui ne répond pas."
 
-**Ojvind (1min)** — Backup :
-> "Je vais sauvegarder la base WMS."
+**Étape 3 — Ojvind (1min)** — Backup base WMS :
+> "Je vais sauvegarder la base WMS en dump SQL."
 
 *(Choix 2 → Backup → Backup base de données → montrer le fichier généré)*
 
 > "Le dump SQL est créé avec un horodatage. On voit la taille du fichier et son chemin. Le fichier est prêt à être archivé par la DSI."
 
-**Zaid (1min)** — Audit :
+**Étape 4 — Zaid (1min)** — Audit EOL :
 > "Je vais lister les OS en fin de vie sur le parc."
 
 *(Choix 3 → Audit → Lister dates EOL → montrer le tableau)*
 
 > "Le tableau montre immédiatement quels OS sont expirés, lesquels approchent de la fin de vie, et lesquels sont OK. La DSI sait instantanément où sont les risques."
 
-**Ianis (30s)** — Conclusion démo :
-> "Tous les résultats sont sauvegardés en JSON horodaté dans le dossier output. Ces fichiers sont directement exploitables par n'importe quel outil de supervision."
+**Étape 5 — Ianis (30s)** — Résultats JSON :
+> "Tous les résultats sont sauvegardés en JSON horodaté dans le dossier `output/logs/`. Ces fichiers sont directement exploitables par n'importe quel outil de supervision."
 
-*(montrer un fichier JSON dans output/)*
+*(montrer les fichiers JSON dans output/logs/)*
 
 ### Ce que le jury attend pendant la démo :
 
@@ -316,34 +341,40 @@
 
 ### Plan B (si le lab est inaccessible) :
 
-- Screenshots réels de l'outil en fonctionnement
-- Fichiers JSON de sortie pré-générés à montrer
+- Screenshots réels de l'outil en fonctionnement (dossier `output/screenshots/`)
+- Fichiers JSON de sortie pré-générés à montrer (dossier `output/logs/`)
 - Vidéo de la démo enregistrée à l'avance
 - **Dites-le clairement** : "On a enregistré la démo car le lab n'est pas accessible depuis cette salle, mais l'outil tourne sur notre infrastructure."
 
 ---
 
-## SLIDE 11 — Documentation (Ianis, 1min)
+## SLIDE 13 — Documentation (Ianis, 1min)
+
+**Contenu slide :** Liste livrables (6 ✓) + Message autonomie DSI + Arborescence docs/ complète (12 fichiers)
 
 ### Ce qu'il faut dire :
 
-> "On a produit une documentation complète : un guide d'installation en 5 commandes, 10 documents techniques numérotés qui couvrent de l'architecture au lab, et un cheatsheet d'une page pour l'équipe IT."
+> "On a produit une documentation complète — vous pouvez voir les 6 livrables à gauche et l'arborescence complète à droite."
 >
-> "Un administrateur qui récupère le repo Git peut déployer et utiliser l'outil en moins de 5 minutes. C'est ce qui était demandé dans le cahier des charges : un outil que la DSI peut gérer en autonomie."
+> "Un dossier technique et fonctionnel, un guide d'installation en 5 commandes, 10 documents numérotés qui couvrent de l'architecture au lab, un cheatsheet d'une page pour l'équipe, un rapport CI/CD, et une exécution de référence de l'audit d'obsolescence."
+>
+> "Un administrateur qui récupère le repo Git peut déployer et utiliser l'outil en moins de 5 minutes. La documentation est versionnée avec le code — pas un PDF envoyé par mail."
 
 ### Ce que le jury attend :
 
 - Que la doc **permette l'autonomie** de la DSI — c'est explicitement demandé.
-- Que la doc soit **versionnée avec le code** — pas un PDF envoyé par mail.
-- Pas besoin de tout lister — juste montrer que c'est complet et utilisable.
+- Que la doc soit **versionnée avec le code** dans le repo Git.
+- L'arborescence complète des docs montre un travail **exhaustif et organisé**.
 
 ---
 
-## SLIDE 12 — Difficultés et compromis (Ianis + équipe, 1min30)
+## SLIDE 14 — Difficultés & compromis (Ianis + équipe, 1min30)
+
+**Contenu slide :** "Chaque compromis a été discuté en équipe et assumé en connaissance de cause" / Tableau 5 difficultés avec approche
 
 ### Ce qu'il faut dire :
 
-> "On assume nos choix et nos compromis."
+> "On assume nos choix et nos compromis. Chaque point a été discuté en équipe."
 >
 > *(parcourir le tableau en pointant chaque ligne)*
 >
@@ -351,7 +382,7 @@
 >
 > "L'**accès WinRM** : on a fait un fallback gracieux. L'outil fonctionne sans, mais signale le manque — ça n'empêche pas le diagnostic, ça le dégrade proprement."
 >
-> "La **base EOL locale** : c'est un compromis assumé. Pas de dépendance réseau, l'outil fonctionne même en cas de panne, mais ça impose une mise à jour manuelle. Pour une V2, une API serait envisageable."
+> "La **base EOL locale** plutôt qu'une API externe : c'est un compromis assumé. Pas de dépendance réseau, l'outil fonctionne même en cas de panne, mais ça impose une maintenance manuelle."
 >
 > "La **coordination à 4** en 19 heures : le contrat JSON défini en amont a été la clé. Chacun a pu développer son module en parallèle sans bloquer les autres."
 >
@@ -365,28 +396,31 @@
 
 ---
 
-## SLIDE 13 — Bilan et perspectives (Ianis, 1min30)
+## SLIDE 15 — Bilan & perspectives (Ianis, 1min30)
+
+**Contenu slide :** 7 objectifs atteints (✓) + 5 perspectives (→) avec détails + Métriques projet en bas
 
 ### Ce qu'il faut dire :
 
 > "On a livré un outil fonctionnel qui répond au cahier des charges."
 >
-> *(parcourir la checklist)* "3 modules fonctionnels et indépendants, menu CLI interactif, sorties JSON horodatées avec codes retour, configuration YAML avec gestion des secrets, CI/CD complète, documentation utilisable."
->
-> "Le projet en chiffres : 62 commits, 110 tests, 54% de couverture, environ 2500 lignes de Python, 10 documents, 5 VMs de lab."
+> *(parcourir les objectifs)* "3 modules fonctionnels et indépendants, menu CLI interactif avec Rich, sorties JSON horodatées avec codes retour, configuration YAML avec gestion des secrets, CI/CD complète, documentation complète avec 10 docs et un cheatsheet, et un lab de test Proxmox reproduisant l'infra NTL."
 >
 > "Pour les perspectives — si NTL veut aller plus loin :"
-> - "Intégration directe avec Zabbix — les codes retour sont déjà compatibles, ça demande zéro modification côté outil."
-> - "Planification automatique des backups via cron ou Task Scheduler."
-> - "Mise à jour automatique de la base EOL via une API comme endoflife.date."
-> - "Extension aux sites distants — les 3 entrepôts."
-> - "Et éventuellement un dashboard web pour visualiser les résultats."
+> - "Intégration Zabbix — les codes retour sont déjà compatibles, ça demande zéro modification côté outil."
+> - "Backup planifié via cron ou Task Scheduler."
+> - "Base EOL dynamique via l'API endoflife.date."
+> - "Extension multi-sites pour couvrir les 3 entrepôts via les VPN existants."
+> - "Et un dashboard web pour visualiser les résultats."
+>
+> *(pointer les métriques en bas)* "Le projet en chiffres : 62 commits, 110 tests, environ 2500 lignes Python, 10 docs, 5 VMs de lab, CI avec ruff, mypy et pytest sur 3 versions Python."
 
 ### Ce que le jury attend :
 
 - Un **bilan factuel** — pas de vantardise, des faits et des chiffres.
 - Des **perspectives réalistes** qui montrent que l'architecture est pensée pour évoluer.
 - Le point clé : les codes retour standard signifient que **l'intégration supervision est déjà possible** sans toucher au code.
+- Les **métriques concrètes** en bas rassurent sur le travail réel fourni.
 
 ### Le message final :
 
@@ -394,7 +428,9 @@
 
 ---
 
-## SLIDE 14 — Questions (Tous, 30min)
+## SLIDE 16 — Questions (Tous, 30min)
+
+**Contenu slide :** "Merci pour votre attention. Nous sommes prêts pour vos questions."
 
 ### Ce qu'il faut dire :
 
@@ -448,5 +484,29 @@
 6. **Répondre avec assurance.** Si vous ne savez pas : "C'est un bon point, dans notre V1 on n'a pas couvert ça, mais l'architecture permet de l'ajouter."
 7. **Relier au métier.** Chaque choix technique doit être justifié par un besoin de NTL, pas par un exercice scolaire.
 8. **Garder le rythme.** 20 minutes max. Si une diapo prend trop de temps, avancez — le jury pourra revenir en questions.
-9. **Démo : avoir un plan B.** Toujours.
+9. **Démo : avoir un plan B.** Toujours. Screenshots dans `output/screenshots/`, JSON dans `output/logs/`.
 10. **Finir proprement.** Pas de "voilà c'est fini". Juste : "Merci, on est prêts pour vos questions."
+
+---
+
+## Correspondance slides v6
+
+| Slide | Titre | Qui parle | Durée |
+|-------|-------|-----------|-------|
+| 1 | Titre | Ianis | 30s |
+| 2 | Contexte NTL | Ianis | 1min30 |
+| 3 | Problématique | Ianis | 1min30 |
+| 4 | Notre solution | Ianis | 1min |
+| 5 | Organisation équipe | Ianis | 1min |
+| 6 | Architecture | Ianis | 1min30 |
+| 7 | Module Diagnostic | Blaise | 1min30 |
+| 8 | Module Backup | Ojvind | 1min30 |
+| 9 | Module Audit | Zaid | 1min30 |
+| 10 | Environnement de test | Ianis | 45s |
+| 11 | Intégration continue | Ianis | 45s |
+| 12 | Démo live | Tous | 4min |
+| 13 | Documentation | Ianis | 1min |
+| 14 | Difficultés & compromis | Ianis + équipe | 1min30 |
+| 15 | Bilan & perspectives | Ianis | 1min30 |
+| 16 | Questions | Tous | 30min |
+| | **Total présentation** | | **~19min30** |
