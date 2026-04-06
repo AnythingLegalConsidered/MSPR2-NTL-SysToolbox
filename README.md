@@ -1,6 +1,8 @@
 # NTL-SysToolbox
 
-![CI](https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox/actions/workflows/ci.yml/badge.svg)](https://github.com/AnythingLegalConsidered/MSPR2-NTL-SysToolbox/actions)
+![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-Academic-blue)
 
 Outil CLI d'administration système développé pour **NordTransit Logistics (NTL)**, une PME de logistique implantée dans les Hauts-de-France (siège à Lille, entrepôts à Lens, Valenciennes et Arras).
 
@@ -16,7 +18,7 @@ NTL-SysToolbox industrialise les vérifications d'exploitation, sécurise la ges
 | **Backup** | Garantir l'intégrité et la traçabilité des exports WMS | Sauvegarde BDD au format SQL, export table au format CSV, vérification SHA256 |
 | **Audit** | Fournir un inventaire réseau et qualifier le statut EOL | Scan réseau nmap, détection OS, dates de fin de vie, rapport d'obsolescence |
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 src/
@@ -47,7 +49,7 @@ Les sorties sont horodatées en JSON avec des codes de retour exploitables en su
 | `2` | CRITICAL | Service down, backup échoué |
 | `3` | UNKNOWN | Cible injoignable, timeout |
 
-## Prérequis
+## 📋 Prérequis
 
 ```bash
 # Windows (PowerShell ou cmd)
@@ -59,7 +61,7 @@ sudo apt install python3 python3-venv python3-pip git gh make
 
 > Fermer et rouvrir le terminal après installation. `pip` est inclus avec Python.
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 # Cloner le repo
@@ -81,7 +83,7 @@ cp .env.example .env
 make run
 ```
 
-## Développement
+## 🛠️ Développement
 
 ```bash
 # Installer les outils de dev (ruff, mypy, pytest-cov)
@@ -97,7 +99,7 @@ make lint
 make typecheck
 ```
 
-## Intégration continue
+## ⚙️ Intégration continue
 
 La pipeline GitHub Actions s'exécute automatiquement sur les branches `main`, `master` et `feature/*` :
 
@@ -107,7 +109,7 @@ La pipeline GitHub Actions s'exécute automatiquement sur les branches `main`, `
 
 Voir [docs/08-ci-guide.md](docs/08-ci-guide.md) pour le guide d'utilisation et [docs/09-ci-report.md](docs/09-ci-report.md) pour le rapport technique.
 
-## Infrastructure de lab
+## 🖥️ Infrastructure de lab
 
 Le lab de développement est déployé sur Proxmox avec les VMs suivantes :
 
@@ -121,7 +123,7 @@ Le lab de développement est déployé sur Proxmox avec les VMs suivantes :
 
 Scripts de déploiement dans [`infra/proxmox/`](infra/proxmox/).
 
-## Stack technique
+## 🧰 Stack technique
 
 - **Langage** — Python 3.10+
 - **Librairies** — rich, paramiko, dnspython, python-nmap, mysql-connector, ldap3, psutil
@@ -129,7 +131,7 @@ Scripts de déploiement dans [`infra/proxmox/`](infra/proxmox/).
 - **CI/CD** — GitHub Actions
 - **Lab** — Proxmox VE, cloud-init
 
-## Équipe
+## 👥 Équipe
 
 | Rôle | Membre |
 |------|--------|
@@ -138,7 +140,7 @@ Scripts de déploiement dans [`infra/proxmox/`](infra/proxmox/).
 | Dev Backup | Ojvind LANTSIGBLE |
 | Dev Audit | Zaid ABOUYAALA |
 
-## Documentation
+## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|

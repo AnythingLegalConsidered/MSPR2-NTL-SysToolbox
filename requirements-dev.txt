@@ -5,3 +5,4 @@ pytest-cov>=4.0,<6.0
 ruff>=0.4,<1.0
 mypy>=1.10,<2.0
 types-PyYAML>=6.0,<7.0
+types-paramiko>=3.0,<4.0
