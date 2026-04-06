@@ -23,9 +23,6 @@ output/*.png
 output/*.svg
 output/*.pptx
 
-# Prep soutenance (docs internes equipe, pas dans le rendu)
-docs/_prep/
-
 # Claude Code
 .claude/
 
