@@ -1,0 +1,15 @@
+---
+# NTL-SysToolbox — Homelab Lab Setup (essential profile)
+# Usage:
+#   cd infra/ansible-homelab
+#   ansible-playbook playbooks/site.yml
+#
+# Or step by step:
+#   ansible-playbook playbooks/01-setup-dc01.yml
+#   ansible-playbook playbooks/02-setup-wmsdb.yml
+
+- name: "Phase 1: Samba AD DC on DC01"
+  ansible.builtin.import_playbook: 01-setup-dc01.yml
+
+- name: "Phase 2: MySQL on WMS-DB"
+  ansible.builtin.import_playbook: 02-setup-wmsdb.yml

@@ -1,0 +1,46 @@
+---
+# === Domain ===
+ad_domain: "ntl.local"
+ad_realm: "NTL.LOCAL"
+ad_netbios: "NTL"
+ad_admin_password: "NTL@dmin2026!"
+
+# === Network ===
+lab_subnet: "172.16.132.0/24"
+lab_gateway: "172.16.132.254"
+dns_forwarder: "8.8.8.8"
+
+# === MySQL ===
+mysql_db_name: "wms"
+mysql_db_user: "wms_user"
+mysql_db_password: "WmsP@ss2026"
+
+# === Samba AD OUs and Users (mirrors school lab) ===
+ad_ous:
+  - IT
+  - Servers
+  - Logistics
+
+ad_users:
+  - name: wms-service
+    ou: IT
+    password: "WmsS3rv!ce"
+    description: "WMS Service Account"
+  - name: admin-ntl
+    ou: IT
+    password: "Adm1n@NTL!"
+    description: "NTL Admin Account"
+  - name: j.dupont
+    ou: Logistics
+    password: "L0g1st1cs!"
+    description: "Jean Dupont - Logistics"
+  - name: m.martin
+    ou: Logistics
+    password: "L0g1st1cs!"
+    description: "Marie Martin - Logistics"
+
+ad_groups:
+  - name: IT-Admins
+    ou: IT
+    members:
+      - admin-ntl

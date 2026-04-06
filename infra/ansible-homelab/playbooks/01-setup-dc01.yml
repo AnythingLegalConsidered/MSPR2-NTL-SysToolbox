@@ -1,0 +1,172 @@
+---
+# Setup Samba AD DC on DC01 (Ubuntu 22.04)
+# Provides: LDAP (389), DNS (53), Kerberos (88)
+- name: "Configure DC01 - Samba AD Domain Controller"
+  hosts: dc01
+  become: true
+
+  tasks:
+    # --- Install Samba AD DC ---
+    - name: Install Samba AD DC packages
+      apt:
+        name:
+          - samba
+          - smbclient
+          - krb5-user
+          - krb5-config
+          - winbind
+          - libpam-winbind
+          - libnss-winbind
+          - acl
+          - dnsutils
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    # --- Stop conflicting services ---
+    - name: Stop and disable smbd/nmbd/winbind
+      systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - smbd
+        - nmbd
+        - winbind
+      ignore_errors: true
+
+    - name: Disable systemd-resolved (conflicts with Samba DNS)
+      systemd:
+        name: systemd-resolved
+        state: stopped
+        enabled: false
+      ignore_errors: true
+
+    - name: Set resolv.conf to localhost
+      copy:
+        content: |
+          nameserver 127.0.0.1
+          nameserver {{ dns_forwarder }}
+          search {{ ad_domain }}
+        dest: /etc/resolv.conf
+        mode: "0644"
+
+    # --- Provision Samba AD ---
+    - name: Remove default smb.conf
+      file:
+        path: /etc/samba/smb.conf
+        state: absent
+
+    - name: Provision Samba AD domain
+      command: >
+        samba-tool domain provision
+        --realm={{ ad_realm }}
+        --domain={{ ad_netbios }}
+        --server-role=dc
+        --dns-backend=SAMBA_INTERNAL
+        --adminpass='{{ ad_admin_password }}'
+        --use-rfc2307
+      args:
+        creates: /var/lib/samba/private/sam.ldb
+
+    - name: Copy Samba krb5.conf
+      copy:
+        src: /var/lib/samba/private/krb5.conf
+        dest: /etc/krb5.conf
+        remote_src: true
+        mode: "0644"
+
+    # --- Start Samba AD DC ---
+    - name: Unmask samba-ad-dc service
+      systemd:
+        name: samba-ad-dc
+        masked: false
+
+    - name: Enable and start samba-ad-dc
+      systemd:
+        name: samba-ad-dc
+        state: started
+        enabled: true
+
+    - name: Wait for LDAP port 389
+      wait_for:
+        port: 389
+        timeout: 30
+
+    - name: Wait for DNS port 53
+      wait_for:
+        port: 53
+        timeout: 30
+
+    # --- Create OUs ---
+    - name: Create OUs
+      command: >
+        samba-tool ou create "OU={{ item }},DC=ntl,DC=local"
+        --username=Administrator --password='{{ ad_admin_password }}'
+      loop: "{{ ad_ous }}"
+      register: ou_result
+      failed_when: ou_result.rc != 0 and 'already exists' not in ou_result.stderr
+      changed_when: ou_result.rc == 0
+
+    # --- Create Users ---
+    - name: Create AD users
+      command: >
+        samba-tool user create {{ item.name }} '{{ item.password }}'
+        --userou="OU={{ item.ou }}"
+        --description="{{ item.description }}"
+        --username=Administrator --password='{{ ad_admin_password }}'
+      loop: "{{ ad_users }}"
+      register: user_result
+      failed_when: user_result.rc != 0 and 'already exists' not in user_result.stderr
+      changed_when: user_result.rc == 0
+
+    # --- Create Groups ---
+    - name: Create AD groups
+      command: >
+        samba-tool group create {{ item.name }}
+        --groupou="OU={{ item.ou }}"
+        --description="IT Administrators"
+        --username=Administrator --password='{{ ad_admin_password }}'
+      loop: "{{ ad_groups }}"
+      register: group_result
+      failed_when: group_result.rc != 0 and 'already exists' not in group_result.stderr
+      changed_when: group_result.rc == 0
+
+    - name: Add members to groups
+      command: >
+        samba-tool group addmembers {{ item.0.name }} {{ item.1 }}
+        --username=Administrator --password='{{ ad_admin_password }}'
+      loop: "{{ ad_groups | subelements('members') }}"
+      register: member_result
+      failed_when: member_result.rc != 0 and 'already a member' not in member_result.stderr
+      changed_when: member_result.rc == 0
+
+    # --- DNS forwarder ---
+    - name: Add DNS forwarder
+      command: >
+        samba-tool dns serverinfo 127.0.0.1
+        --username=Administrator --password='{{ ad_admin_password }}'
+      changed_when: false
+      ignore_errors: true
+
+    # --- Verification ---
+    - name: Verify AD domain
+      command: samba-tool domain info 127.0.0.1
+      register: domain_info
+      changed_when: false
+
+    - name: Show domain info
+      debug:
+        var: domain_info.stdout_lines
+
+    - name: List AD users
+      command: >
+        samba-tool user list
+        --username=Administrator --password='{{ ad_admin_password }}'
+      register: user_list
+      changed_when: false
+
+    - name: Show AD users
+      debug:
+        var: user_list.stdout_lines

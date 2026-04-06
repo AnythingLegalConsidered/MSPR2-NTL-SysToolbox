@@ -1,0 +1,100 @@
+---
+# Setup MySQL on WMS-DB (Ubuntu 22.04)
+# Provides: MySQL (3306), SSH (22)
+- name: "Configure WMS-DB - MySQL Database"
+  hosts: wms-db
+  become: true
+
+  tasks:
+    # --- Install MySQL ---
+    - name: Install MySQL server
+      apt:
+        name:
+          - mysql-server
+          - mysql-client
+          - python3-pymysql
+        state: present
+        update_cache: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Enable and start MySQL
+      systemd:
+        name: mysql
+        state: started
+        enabled: true
+
+    # --- Configure MySQL to listen on all interfaces ---
+    - name: Set MySQL bind-address to 0.0.0.0
+      lineinfile:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: "^bind-address"
+        line: "bind-address = 0.0.0.0"
+      notify: Restart MySQL
+
+    # --- Create database and user ---
+    - name: Create WMS database
+      community.mysql.mysql_db:
+        name: "{{ mysql_db_name }}"
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Create WMS user
+      community.mysql.mysql_user:
+        name: "{{ mysql_db_user }}"
+        password: "{{ mysql_db_password }}"
+        host: "%"
+        priv: "{{ mysql_db_name }}.*:ALL"
+        state: present
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    # --- Seed data ---
+    - name: Copy seed SQL
+      copy:
+        src: "{{ playbook_dir }}/../../ansible/files/seed-wms.sql"
+        dest: /tmp/seed-wms.sql
+        mode: "0644"
+
+    - name: Check if tables already seeded
+      community.mysql.mysql_query:
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        login_db: "{{ mysql_db_name }}"
+        query: "SELECT COUNT(*) AS cnt FROM information_schema.tables WHERE table_schema = %s AND table_name = 'shipments'"
+        positional_args:
+          - "{{ mysql_db_name }}"
+      register: table_check
+      ignore_errors: true
+
+    - name: Import seed data
+      community.mysql.mysql_db:
+        name: "{{ mysql_db_name }}"
+        state: import
+        target: /tmp/seed-wms.sql
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+      when: table_check is failed or (table_check.query_result[0][0].cnt | int) == 0
+
+    # --- Verification ---
+    - name: Verify MySQL is listening
+      wait_for:
+        port: 3306
+        timeout: 10
+
+    - name: Count rows in tables
+      community.mysql.mysql_query:
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        login_db: "{{ mysql_db_name }}"
+        query: >
+          SELECT 'shipments' AS tbl, COUNT(*) AS cnt FROM shipments
+          UNION ALL
+          SELECT 'inventory', COUNT(*) FROM inventory
+      register: row_counts
+
+    - name: Show seed data status
+      debug:
+        var: row_counts.query_result
+
+  handlers:
+    - name: Restart MySQL
+      systemd:
+        name: mysql
+        state: restarted
