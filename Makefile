@@ -21,7 +21,7 @@ setup-dev:
 
 # Run the CLI
 run:
-	python src/main.py
+	python -m src.main
 
 # Run tests with coverage
 test:
