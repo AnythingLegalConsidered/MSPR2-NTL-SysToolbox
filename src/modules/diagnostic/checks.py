@@ -1,6 +1,16 @@
 """
 Fonctions de vérification — AD/DNS, MySQL, HTTP, services réseau.
 Basé sur le travail de Blaise, étendu pour le réseau école.
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- check_dns()           : Résolution DNS (dnspython si serveur spécifié, sinon socket)
+- check_ports()         : Teste les ports critiques AD (53, 88, 389, 445, 3268)
+- check_ldap()          : Connexion LDAP via ldap3 (test bind anonyme)
+- check_services()      : Vérifie services Windows (NTDS, DNS, Netlogon) via WinRM/PowerShell
+- check_mysql_port()    : Port MySQL ouvert + version (grab handshake, sans auth)
+- check_http()          : Requête HTTP GET → code, temps, header Server
+- check_host_services() : Scan multi-ports → liste des services détectés (SSH, HTTP, MySQL...)
 """
 
 import logging
@@ -18,6 +28,9 @@ logger = logging.getLogger(__name__)
 # AD/DNS checks (nécessitent dnspython, ldap3, pywinrm)
 # ---------------------------------------------------------------------------
 
+# --- RESOLUTION DNS ----------------------------------------------------------
+# Avec serveur DNS spécifié → dnspython (ex: interroger le DC directement).
+# Sans → socket.gethostbyname() (résolution DNS système).
 def check_dns(
     host: str, dns_server: str | None = None, timeout: int = 3
 ) -> tuple[bool, str]:
@@ -43,6 +56,9 @@ def check_dns(
         return False, str(e)
 
 
+# --- VERIFICATION PORTS AD ---------------------------------------------------
+# Teste les ports critiques (53=DNS, 88=Kerberos, 389=LDAP) et importants (445=SMB, 3268=LDAP-GC).
+# Si un port critique est fermé → CRITICAL. Port important fermé → WARNING.
 def check_ports(host: str, timeout: int = 2) -> tuple[str, dict[int, bool]]:
     """Check critical and important AD ports."""
     results: dict[int, bool] = {}
@@ -60,6 +76,9 @@ def check_ports(host: str, timeout: int = 2) -> tuple[str, dict[int, bool]]:
     return overall, results
 
 
+# --- TEST CONNEXION LDAP (BIND ANONYME) --------------------------------------
+# Utilise ldap3 pour tenter une connexion au serveur LDAP.
+# auto_bind=True → bind anonyme, suffisant pour vérifier que le service répond.
 def check_ldap(host: str) -> bool:
     """Test LDAP connectivity."""
     try:
@@ -73,6 +92,10 @@ def check_ldap(host: str) -> bool:
         return False
 
 
+# --- VERIFICATION SERVICES WINDOWS VIA WINRM ---------------------------------
+# Se connecte au serveur Windows via WinRM (HTTP) et exécute des commandes PowerShell.
+# Vérifie que les services AD critiques tournent : NTDS, DNS, Netlogon.
+# Nécessite des credentials (user/password dans la config).
 def check_services(
     host: str, username: str, password: str
 ) -> tuple[str, dict[str, Any]]:
@@ -116,6 +139,10 @@ def check_services(
 # Discovery checks (sans authentification)
 # ---------------------------------------------------------------------------
 
+# --- CHECK PORT MYSQL + VERSION (SANS AUTH) -----------------------------------
+# 1. Vérifie si le port (3306) est ouvert via check_port()
+# 2. Si ouvert → lit la version MySQL depuis le handshake packet
+# 3. Si pas de version → tente un grab_banner() générique
 def check_mysql_port(host: str, port: int = 3306, timeout: int = 3) -> dict[str, Any]:
     """Check MySQL port and grab server version without credentials.
 
@@ -137,6 +164,8 @@ def check_mysql_port(host: str, port: int = 3306, timeout: int = 3) -> dict[str,
     return result
 
 
+# --- CHECK HTTP — WRAPPER VERS utils/network.py ------------------------------
+# Délègue à http_check() qui fait le vrai travail (GET, mesure temps, SSL).
 def check_http(host: str, port: int = 80, timeout: int = 5) -> dict[str, Any]:
     """Check HTTP(S) service and return response metadata.
 
@@ -146,6 +175,10 @@ def check_http(host: str, port: int = 80, timeout: int = 5) -> dict[str, Any]:
     return http_check(host, port, timeout=timeout)
 
 
+# --- SCAN MULTI-PORTS (DECOUVERTE DE SERVICES) -------------------------------
+# Teste chaque port de la liste DISCOVERY_PORTS (22, 80, 443, 3306, etc.)
+# et retourne les services trouvés avec leur nom (SSH, HTTP, MySQL...).
+# Utilisé par le check Linux et le module audit.
 def check_host_services(
     host: str, ports: list[int] | None = None, timeout: int = 2
 ) -> dict[str, Any]:

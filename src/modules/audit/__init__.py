@@ -2,6 +2,14 @@
 Module: Audit
 Description: Scan réseau, détection EOL, inventaire CSV, rapport d'audit.
 Responsable: Zaid
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- run()              : Point d'entrée — dispatch vers scan_network, list_os_eol, etc.
+- _scan_network()    : Lance un scan nmap et catégorise les hosts trouvés
+- _list_os_eol()     : Affiche les OS en fin de vie depuis eol_database.json
+- _audit_from_csv()  : Audite les hosts d'un inventaire CSV (connectivité + EOL)
+- _generate_report() : Génère un rapport JSON complet (scan + EOL + inventaire)
 """
 
 import logging
@@ -20,6 +28,9 @@ logger = logging.getLogger(__name__)
 MODULE_NAME = "audit"
 
 
+# --- POINT D'ENTREE DU MODULE AUDIT ------------------------------------------
+# Dispatch table : mappe chaque action vers sa fonction privée.
+# Même pattern que diagnostic — évite les if/elif.
 def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
     """Point d'entrée du module audit.
 
@@ -57,6 +68,9 @@ def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
     )
 
 
+# --- SCAN RESEAU (NMAP) ------------------------------------------------------
+# Délègue à scanner.scan_network() qui utilise python-nmap.
+# Scanne la plage réseau configurée et retourne les hosts UP + leurs ports ouverts.
 def _scan_network(config: dict, target: str) -> dict[str, Any]:
     """Scanner le réseau et catégoriser les hosts."""
     from .scanner import scan_network
@@ -100,6 +114,9 @@ def _scan_network(config: dict, target: str) -> dict[str, Any]:
         )
 
 
+# --- LISTE DES OS EN FIN DE VIE (EOL) ----------------------------------------
+# Lit data/eol_database.json et compare chaque date EOL avec aujourd'hui.
+# Si eol_date < now → l'OS est obsolète (WARNING).
 def _list_os_eol(config: dict, target: str) -> dict[str, Any]:
     """Lister les dates EOL des systèmes d'exploitation."""
     from .scanner import list_os_eol
@@ -147,6 +164,10 @@ def _list_os_eol(config: dict, target: str) -> dict[str, Any]:
         )
 
 
+# --- AUDIT DEPUIS INVENTAIRE CSV ---------------------------------------------
+# Lit un fichier CSV (hostname, ip, os_name, os_version, role),
+# vérifie la connectivité de chaque host (port 22 puis 80),
+# et croise avec la base EOL pour détecter les OS obsolètes.
 def _audit_from_csv(config: dict, target: str) -> dict[str, Any]:
     """Auditer les hosts depuis un inventaire CSV."""
     from .scanner import audit_from_csv
@@ -190,6 +211,9 @@ def _audit_from_csv(config: dict, target: str) -> dict[str, Any]:
         )
 
 
+# --- RAPPORT D'AUDIT COMPLET -------------------------------------------------
+# Exécute les 3 fonctions (scan + EOL + CSV) et combine tout
+# dans un seul fichier JSON sauvegardé dans output/reports/.
 def _generate_report(config: dict, target: str) -> dict[str, Any]:
     """Générer un rapport d'audit complet."""
     from .scanner import generate_report

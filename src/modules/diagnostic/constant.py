@@ -1,3 +1,10 @@
+# --- CONSTANTES DIAGNOSTIC ---------------------------------------------------
+# Ports critiques AD : si un de ceux-là est fermé → CRITICAL
+# Ports importants : si fermé → WARNING (pas bloquant mais anormal)
+# Services Windows à vérifier via WinRM sur le contrôleur de domaine
+# Discovery ports : ports scannés pour l'auto-découverte de services sur le réseau
+# Service names : mapping port → nom lisible (pour l'affichage des résultats)
+
 CRITICAL_PORTS = [53, 88, 389]
 IMPORTANT_PORTS = [445, 3268]
 

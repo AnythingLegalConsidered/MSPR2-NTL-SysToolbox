@@ -2,6 +2,14 @@
 Module: Diagnostic
 Description: Vérification de l'état des services AD/DNS, MySQL, Linux et HTTP.
 Responsable: Blaise
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- run()           : Point d'entrée — dispatch vers la bonne action (check_ad_dns, check_mysql, etc.)
+- _check_ad_dns() : Vérifie DNS + ports AD critiques + LDAP + services Windows (WinRM)
+- _check_mysql()  : Vérifie port MySQL ouvert + récupère la version (sans auth)
+- _check_linux()  : Scan multi-ports sur un serveur Linux pour lister les services actifs
+- _check_http()   : Vérifie qu'un serveur HTTP/HTTPS répond (code, temps, header Server)
 """
 
 import logging
@@ -20,6 +28,9 @@ logger = logging.getLogger(__name__)
 MODULE_NAME = "diagnostic"
 
 
+# --- POINT D'ENTREE DU MODULE DIAGNOSTIC -------------------------------------
+# Reçoit l'action depuis le menu CLI et dispatch via un dict de fonctions.
+# Pattern "dispatch table" : évite les if/elif en chaîne.
 def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
     """Point d'entrée du module diagnostic.
 
@@ -58,6 +69,12 @@ def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
     )
 
 
+# --- CHECK AD/DNS (CONTROLEUR DE DOMAINE) ------------------------------------
+# 1. Résolution DNS du domaine AD via le DC cible
+# 2. Vérifie les ports critiques AD (53=DNS, 88=Kerberos, 389=LDAP, 445=SMB)
+# 3. Test connexion LDAP via ldap3
+# 4. Optionnel : vérifie les services Windows (NTDS, DNS, Netlogon) via WinRM
+# Statut global = CRITICAL si un check critique échoue
 def _check_ad_dns(config: dict, target: str) -> dict[str, Any]:
     """Exécute les checks AD/DNS (DNS, ports, LDAP, services WinRM)."""
     from .checks import check_dns, check_ldap, check_ports, check_services
@@ -128,6 +145,9 @@ def _check_ad_dns(config: dict, target: str) -> dict[str, Any]:
         )
 
 
+# --- CHECK MYSQL (PORT + VERSION SANS AUTH) -----------------------------------
+# Teste si le port MySQL (3306 par défaut) est ouvert,
+# puis lit la version via le handshake packet (pas besoin de mot de passe).
 def _check_mysql(config: dict, target: str) -> dict[str, Any]:
     """Check MySQL port and version (sans authentification)."""
     from .checks import check_mysql_port as _check_mysql_port
@@ -167,6 +187,9 @@ def _check_mysql(config: dict, target: str) -> dict[str, Any]:
         )
 
 
+# --- CHECK SERVICES LINUX (SCAN MULTI-PORTS) ---------------------------------
+# Teste une liste de ports courants (22, 80, 443, 3306, 5432, 8006, 8080)
+# et identifie les services trouvés (SSH, HTTP, MySQL, etc.).
 def _check_linux(config: dict, target: str) -> dict[str, Any]:
     """Check services ouverts sur un host Linux (scan multi-ports)."""
     from .checks import check_host_services
@@ -207,6 +230,9 @@ def _check_linux(config: dict, target: str) -> dict[str, Any]:
         )
 
 
+# --- CHECK HTTP/HTTPS --------------------------------------------------------
+# Parse "host:port" si fourni, sinon port 80 par défaut.
+# Fait un GET HTTP et retourne code, temps de réponse, header Server.
 def _check_http(config: dict, target: str) -> dict[str, Any]:
     """Check HTTP(S) service on a host."""
     from .checks import check_http as _http_check
