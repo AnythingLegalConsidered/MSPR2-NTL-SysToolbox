@@ -7,7 +7,7 @@
 
 ---
 
-## SLIDE 1 — Titre (Ianis, 30s)
+## SLIDE 1 — Titre (Blaise, 30s)
 
 **Contenu slide :** NTL-SysToolbox / Outil CLI d'administration système pour NordTransit Logistics / Noms équipe / MSPR TPRE511
 
@@ -29,7 +29,7 @@
 
 ---
 
-## SLIDE 2 — Contexte NTL (Ianis, 1min30)
+## SLIDE 2 — Contexte NTL (Blaise, 1min30)
 
 **Contenu slide :** PME logistique Hauts-de-France / ~240 employés / WMS cœur de métier / Équipe IT 4 personnes / Maintenance nocturne
 
@@ -53,7 +53,7 @@
 
 ---
 
-## SLIDE 3 — Problématique (Ianis, 1min30)
+## SLIDE 3 — Problématique (Zaid, 1min30)
 
 **Contenu slide :** 3 colonnes — Supervision / Sauvegardes / Obsolescence → chacune mène à un module
 
@@ -81,7 +81,7 @@
 
 ---
 
-## SLIDE 4 — Notre solution (Ianis, 1min)
+## SLIDE 4 — Notre solution (Ojvind, 1min)
 
 **Contenu slide :** CLI Python interactif / 3 modules / JSON horodaté / Codes retour 0-3 / Config YAML + .env / Cross-platform
 
@@ -107,7 +107,7 @@
 
 ---
 
-## SLIDE 5 — Organisation de l'équipe (Ianis, 1min)
+## SLIDE 5 — Organisation de l'équipe (Ojvind, 1min)
 
 **Contenu slide :** Tableau membres/rôles/périmètre + Méthode de travail (contrat JSON, branches, PRs, CI) + Workflow Git en 4 étapes
 
@@ -368,7 +368,7 @@
 
 ---
 
-## SLIDE 14 — Difficultés & compromis (Ianis + équipe, 1min30)
+## SLIDE 14 — Difficultés & compromis (Zaid, 1min30)
 
 **Contenu slide :** "Chaque compromis a été discuté en équipe et assumé en connaissance de cause" / Tableau 5 difficultés avec approche
 
@@ -396,7 +396,7 @@
 
 ---
 
-## SLIDE 15 — Bilan & perspectives (Ianis, 1min30)
+## SLIDE 15 — Bilan & perspectives (Blaise, 1min30)
 
 **Contenu slide :** 7 objectifs atteints (✓) + 5 perspectives (→) avec détails + Métriques projet en bas
 
@@ -493,11 +493,11 @@
 
 | Slide | Titre | Qui parle | Durée |
 |-------|-------|-----------|-------|
-| 1 | Titre | Ianis | 30s |
-| 2 | Contexte NTL | Ianis | 1min30 |
-| 3 | Problématique | Ianis | 1min30 |
-| 4 | Notre solution | Ianis | 1min |
-| 5 | Organisation équipe | Ianis | 1min |
+| 1 | Titre | Blaise | 30s |
+| 2 | Contexte NTL | Blaise | 1min30 |
+| 3 | Problématique | Zaid | 1min30 |
+| 4 | Notre solution | Ojvind | 1min |
+| 5 | Organisation équipe | Ojvind | 1min |
 | 6 | Architecture | Ianis | 1min30 |
 | 7 | Module Diagnostic | Blaise | 1min30 |
 | 8 | Module Backup | Ojvind | 1min30 |
@@ -506,7 +506,7 @@
 | 11 | Intégration continue | Ianis | 45s |
 | 12 | Démo live | Tous | 4min |
 | 13 | Documentation | Ianis | 1min |
-| 14 | Difficultés & compromis | Ianis + équipe | 1min30 |
-| 15 | Bilan & perspectives | Ianis | 1min30 |
+| 14 | Difficultés & compromis | Zaid | 1min30 |
+| 15 | Bilan & perspectives | Blaise | 1min30 |
 | 16 | Questions | Tous | 30min |
 | | **Total présentation** | | **~19min30** |

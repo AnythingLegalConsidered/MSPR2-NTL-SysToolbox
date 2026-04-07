@@ -2,6 +2,16 @@
 NTL-SysToolbox — Interactive CLI menu.
 
 Entry point: python src/main.py
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- _print_menu()       : Affiche un menu (Rich ou texte brut)
+- _validate_target()  : Valide la saisie utilisateur (anti-injection)
+- _prompt()           : Lit l'input utilisateur (avec gestion EOFError)
+- _run_module_action(): Execute une action de module et affiche le résultat JSON
+- _handle_submenu()   : Boucle de sous-menu pour un module (diagnostic/backup/audit)
+- _get_default_target(): Retourne la cible par défaut selon l'action et la config
+- main()              : Point d'entrée — charge config, affiche menu principal, dispatch
 """
 
 import logging
@@ -46,6 +56,9 @@ except ImportError:
     _HAS_RICH = False
 
 
+# --- AFFICHAGE MENU ----------------------------------------------------------
+# Affiche un tableau Rich (coloré) si la lib est dispo, sinon texte brut.
+# Réutilisé pour le menu principal ET les sous-menus de chaque module.
 def _print_menu(title: str, items: list[tuple[str, str]]) -> None:
     """Print a menu using Rich tables if available, plain text otherwise."""
     if _HAS_RICH:
@@ -116,6 +129,9 @@ _SAFE_TARGET_RE = re.compile(r"^[a-zA-Z0-9._:/\-]+$")
 _MAX_TARGET_LEN = 255
 
 
+# --- VALIDATION SAISIE UTILISATEUR -------------------------------------------
+# Empêche l'injection de commandes : max 255 chars, pas de "..", regex safe.
+# Retourne un message d'erreur si invalide, None si OK.
 def _validate_target(target: str) -> str | None:
     """Return error message if target is invalid, None if OK."""
     if not target:
@@ -137,6 +153,11 @@ def _prompt(text: str) -> str:
         return ""
 
 
+# --- EXECUTION D'UNE ACTION DE MODULE ----------------------------------------
+# Appelle module.run(config, target, action=...) et gère :
+# - L'affichage du résultat JSON (print_result)
+# - La sauvegarde en fichier JSON horodaté (save_result_json)
+# - Les erreurs (config, exécution, inattendue)
 def _run_module_action(
     module: Any,
     module_name: str,
@@ -169,6 +190,9 @@ def _run_module_action(
         print(f"\n  Erreur inattendue: {exc}\n")
 
 
+# --- BOUCLE SOUS-MENU --------------------------------------------------------
+# Affiche le sous-menu d'un module en boucle (while True) jusqu'à "0" (retour).
+# Demande la cible à l'utilisateur, valide l'input, puis lance l'action.
 def _handle_submenu(
     menu_title: str,
     menu_items: list[tuple[str, str]],
@@ -198,6 +222,9 @@ def _handle_submenu(
         _run_module_action(module, module_name, action, config, target)
 
 
+# --- CIBLE PAR DEFAUT --------------------------------------------------------
+# Si l'utilisateur appuie juste sur Entrée, retourne une valeur par défaut
+# tirée du fichier config.yaml (ex: IP du DC, nom de la base MySQL, etc.)
 def _get_default_target(action: str, config: dict[str, Any]) -> str:
     """Return a sensible default target based on the action and config."""
     targets = config.get("targets", {})
@@ -220,6 +247,10 @@ def _get_default_target(action: str, config: dict[str, Any]) -> str:
 
 # --- Main -------------------------------------------------------------------
 
+# --- POINT D'ENTREE PRINCIPAL ------------------------------------------------
+# 1. Charge la config YAML (+ résolution des ${VAR} depuis .env)
+# 2. Initialise le logging
+# 3. Affiche le menu principal en boucle → dispatch vers les sous-menus
 def main() -> None:
     """Application entry point."""
     config_path = "config/config.yaml"

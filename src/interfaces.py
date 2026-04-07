@@ -3,6 +3,13 @@ NTL-SysToolbox — Contrat d'interface entre modules.
 
 Ce fichier definit les structures communes que TOUS les modules doivent respecter.
 Ne pas modifier sans accord de l'equipe.
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- EXIT_OK/WARNING/CRITICAL/UNKNOWN : Codes de sortie standardisés (0/1/2/3)
+- ModuleConfigError    : Exception levée quand la config est invalide
+- ModuleExecutionError : Exception levée quand un module échoue à l'exécution
+- build_result()       : Construit le dict JSON standardisé retourné par TOUTES les fonctions
 """
 
 from datetime import datetime, timezone  # noqa: I001
@@ -41,6 +48,11 @@ _VALID_STATUSES = {"OK", "WARNING", "CRITICAL", "UNKNOWN"}
 _VALID_EXIT_CODES = {EXIT_OK, EXIT_WARNING, EXIT_CRITICAL, EXIT_UNKNOWN}
 
 
+# --- CONSTRUCTION DU RESULTAT JSON STANDARDISE -------------------------------
+# TOUTE fonction de module DOIT retourner le résultat de build_result().
+# Format : { module, function, timestamp, status, exit_code, target, details, message }
+# Le jury peut demander : "Comment garantissez-vous un format uniforme ?"
+# → Réponse : build_result() est le seul point de création de résultats.
 def build_result(
     module: str,
     function: str,

@@ -12,11 +12,11 @@
 
 | Slide(s) | Titre | Qui | Durée |
 |----------|-------|-----|-------|
-| 1 | Titre | Ianis | 30s |
-| 2 | Contexte — NordTransit Logistics | Ianis | 1min30 |
-| 3 | Problématique | Ianis | 1min30 |
-| 4 | Notre solution | Ianis | 1min |
-| 5 | Organisation de l'équipe | Ianis | 1min |
+| 1 | Titre | Blaise | 30s |
+| 2 | Contexte — NordTransit Logistics | Blaise | 1min30 |
+| 3 | Problématique | Zaid | 1min30 |
+| 4 | Notre solution | Ojvind | 1min |
+| 5 | Organisation de l'équipe | Ojvind | 1min |
 | 6 | Architecture | Ianis | 1min30 |
 | 7 | Module Diagnostic | Blaise | 1min30 |
 | 8 | Module Backup | Ojvind | 1min30 |
@@ -25,8 +25,8 @@
 | 11 | Intégration continue | Ianis | 45s |
 | 12 | Démo live | Tous (Ianis pilote) | 4min |
 | 13 | Documentation | Ianis | 1min |
-| 14 | Difficultés & compromis | Ianis + équipe | 1min30 |
-| 15 | Bilan & perspectives | Ianis | 1min30 |
+| 14 | Difficultés & compromis | Zaid | 1min30 |
+| 15 | Bilan & perspectives | Blaise | 1min30 |
 | 16 | Questions | Tous | 30min |
 
 **Total présentation** : ~19 min (1 min de marge)

@@ -2,6 +2,12 @@
 Helpers for JSON output formatting, logging setup, and file writing.
 
 Used by all modules. Do not modify without team agreement.
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- setup_logging()     : Configure le logging global (appelé une seule fois dans main.py)
+- save_result_json()  : Sauvegarde un résultat JSON horodaté dans output/logs/
+- print_result()      : Affiche un résultat JSON en couleur (Rich) ou brut
 """
 
 import json
@@ -11,6 +17,10 @@ from pathlib import Path
 from typing import Any
 
 
+# --- CONFIG LOGGING GLOBAL ---------------------------------------------------
+# Appelé UNE SEULE FOIS dans main.py. Configure le format des logs :
+# "2026-04-07 14:30:00 [INFO] src.modules.backup — Backup action=backup_database..."
+# Les modules utilisent ensuite logging.getLogger(__name__) pour loguer.
 def setup_logging(log_level: str = "INFO", output_dir: str = "./output") -> None:
     """Configure logging for the entire application.
 
@@ -29,6 +39,9 @@ def setup_logging(log_level: str = "INFO", output_dir: str = "./output") -> None
     )
 
 
+# --- SAUVEGARDE RESULTAT EN JSON HORODATE ------------------------------------
+# Écrit le résultat d'un module dans output/logs/YYYYMMDD_HHMMSS_module_func.json
+# Permet de garder un historique de toutes les exécutions pour audit/traçabilité.
 def save_result_json(result: dict[str, Any], output_dir: str = "./output") -> Path:
     """Save a module result dict to a timestamped JSON log file.
 
@@ -58,6 +71,9 @@ def save_result_json(result: dict[str, Any], output_dir: str = "./output") -> Pa
     return filepath
 
 
+# --- AFFICHAGE RESULTAT (RICH OU BRUT) ---------------------------------------
+# Si Rich est installé → affichage JSON coloré et indenté dans le terminal.
+# Sinon → fallback json.dumps() en texte brut.
 def print_result(result: dict[str, Any]) -> None:
     """Pretty-print a result dict to the console using rich if available.
 

@@ -2,6 +2,11 @@
 NTL-SysToolbox — Configuration loader.
 
 Loads YAML config and resolves ${VAR} placeholders from environment variables.
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- _resolve_env_vars() : Remplace les ${VAR} par les variables d'environnement (récursif)
+- load_config()       : Charge le fichier YAML + .env, résout les placeholders
 """
 
 import logging
@@ -21,6 +26,10 @@ _ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 _MAX_RESOLVE_DEPTH = 20
 
 
+# --- RESOLUTION DES VARIABLES D'ENVIRONNEMENT --------------------------------
+# Parcourt récursivement le dict YAML et remplace ${VAR} par os.environ[VAR].
+# Ex: password: "${MYSQL_PASSWORD}" → password: "monmdp123"
+# Si la variable n'existe pas → garde le placeholder et log un warning.
 def _resolve_env_vars(
     data: Any, unresolved: list[str] | None = None, _depth: int = 0,
 ) -> Any:
@@ -62,6 +71,11 @@ def _resolve_env_vars(
     return data
 
 
+# --- CHARGEMENT CONFIG YAML + .ENV -------------------------------------------
+# 1. Charge le .env (mots de passe, secrets) via python-dotenv
+# 2. Lit le fichier YAML (config/config.yaml)
+# 3. Remplace les ${VAR} par les vraies valeurs d'environnement
+# Mode strict : échoue si des variables ne sont pas résolues
 def load_config(config_path: str = "config/config.yaml", strict: bool = False) -> dict[str, Any]:
     """Load YAML configuration and resolve environment variable placeholders.
 

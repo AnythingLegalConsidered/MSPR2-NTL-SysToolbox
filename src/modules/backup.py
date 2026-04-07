@@ -2,6 +2,13 @@
 Module: Backup
 Description: Sauvegarde base de donnees MySQL (dump SQL) et export de tables en CSV
 Responsable: Ojvind
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- run()                   : Point d'entrée — dispatch vers backup_database ou export_table_csv
+- backup_database()       : Sauvegarde une base MySQL via mysqldump (dump .sql horodaté)
+- _backup_database_ssh()  : Fallback — exécute mysqldump à distance via SSH (paramiko)
+- export_table_csv()      : Exporte une table MySQL en CSV via mysql-connector-python
 """
 
 import csv
@@ -36,6 +43,9 @@ _VALID_TABLE_RE = re.compile(r"^[a-zA-Z_]\w{0,63}$")
 # ---------------------------------------------------------------------------
 
 
+# --- POINT D'ENTREE DU MODULE BACKUP -----------------------------------------
+# Reçoit l'action depuis le menu CLI et dispatch vers la bonne fonction.
+# action = "backup_database" → dump SQL | "export_table_csv" → export CSV
 def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
     """Point d'entree principal du module backup.
 
@@ -68,6 +78,10 @@ def run(config: dict, target: str, **kwargs: Any) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+# --- SAUVEGARDE BASE MYSQL (DUMP SQL) ----------------------------------------
+# Exécute mysqldump en local. Si mysqldump n'est pas installé → fallback SSH.
+# Le mot de passe est passé via la variable d'env MYSQL_PWD (pas en CLI).
+# Le fichier .sql est sauvegardé dans output/backups/ avec un timestamp.
 def backup_database(config: dict, target: str) -> dict[str, Any]:
     """Sauvegarde une base MySQL via mysqldump.
 
@@ -207,6 +221,10 @@ def backup_database(config: dict, target: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+# --- FALLBACK : DUMP MYSQL VIA SSH (PARAMIKO) --------------------------------
+# Si mysqldump n'est pas dispo en local, on se connecte en SSH au serveur MySQL
+# et on exécute mysqldump à distance. Le résultat est récupéré via stdout.
+# Utilise la lib paramiko (client SSH Python).
 def _backup_database_ssh(config: dict, database: str, dump_path: Path) -> dict[str, Any]:
     """Fallback: exécute mysqldump sur le serveur distant via SSH (paramiko)."""
     import paramiko
@@ -306,6 +324,10 @@ def _backup_database_ssh(config: dict, database: str, dump_path: Path) -> dict[s
 # ---------------------------------------------------------------------------
 
 
+# --- EXPORT TABLE MYSQL → CSV ------------------------------------------------
+# Se connecte à MySQL via mysql-connector-python, fait un SELECT * sur la table,
+# puis écrit les résultats en CSV horodaté dans output/exports/.
+# Le nom de table est validé par regex pour éviter l'injection SQL.
 def export_table_csv(config: dict, target: str) -> dict[str, Any]:
     """Exporte une table MySQL en fichier CSV.
 

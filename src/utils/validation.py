@@ -2,6 +2,13 @@
 Centralized validation helpers for NTL-SysToolbox.
 
 Reusable input validation and sanitization functions used across modules.
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- sanitize_filename_part()  : Nettoie un string pour l'utiliser dans un nom de fichier
+- validate_network_range()  : Valide une plage réseau (IP, CIDR, nmap-style)
+- validate_port()           : Vérifie qu'un numéro de port est valide (1-65535)
+- validate_path_within()    : Anti-traversal — vérifie qu'un chemin reste dans les dossiers autorisés
 """
 
 import ipaddress
@@ -12,6 +19,9 @@ from pathlib import Path
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9_\-]")
 
 
+# --- NETTOYAGE NOM DE FICHIER ------------------------------------------------
+# Remplace tout caractère non alphanumérique par "_", tronque à 50 chars.
+# Empêche les noms de fichier dangereux (ex: "../../etc/passwd").
 def sanitize_filename_part(name: str) -> str:
     """Sanitize a string for safe use as part of a filename.
 
@@ -27,6 +37,9 @@ def sanitize_filename_part(name: str) -> str:
     return _SAFE_FILENAME_RE.sub("_", name)[:50]
 
 
+# --- VALIDATION PLAGE RESEAU (POUR NMAP) -------------------------------------
+# Accepte : IP seule, CIDR (192.168.1.0/24), nmap-style (192.168.1.1-50).
+# Retourne un message d'erreur si invalide, None si OK.
 def validate_network_range(target_range: str) -> str | None:
     """Validate a network target range for nmap scanning.
 
@@ -71,6 +84,8 @@ def validate_network_range(target_range: str) -> str | None:
     return None
 
 
+# --- VALIDATION PORT TCP/UDP -------------------------------------------------
+# Simple check : le port doit être entre 1 et 65535.
 def validate_port(port: int) -> bool:
     """Check if a port number is within valid TCP/UDP range.
 
@@ -83,6 +98,9 @@ def validate_port(port: int) -> bool:
     return 1 <= port <= 65535
 
 
+# --- ANTI PATH-TRAVERSAL -----------------------------------------------------
+# Vérifie qu'un chemin reste sous les dossiers autorisés (résout les symlinks).
+# Empêche un attaquant d'écrire hors du dossier output/ via "../../".
 def validate_path_within(path: str, allowed_dirs: list[str]) -> Path:
     """Validate that a path resolves under one of the allowed directories.
 

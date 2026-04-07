@@ -2,6 +2,15 @@
 Network utility helpers used by diagnostic and audit modules.
 
 Provides port checking, ping, DNS resolution, banner grabbing, and HTTP checks.
+
+SOMMAIRE (navigation rapide soutenance) :
+─────────────────────────────────────────
+- check_port()          : Teste si un port TCP est ouvert sur une machine
+- ping_host()           : Ping ICMP cross-platform (Windows/Linux)
+- resolve_dns()         : Résolution DNS (via dnspython ou socket standard)
+- grab_banner()         : Récupère la bannière d'un service (ex: SSH, SMTP)
+- grab_mysql_version()  : Lit la version MySQL depuis le paquet handshake (sans auth)
+- http_check()          : Requête HTTP GET + mesure temps de réponse, code HTTP, header Server
 """
 
 import logging
@@ -20,6 +29,9 @@ _MAX_HTTP_BODY = 1024 * 1024
 _HTTPS_PORTS = {443, 8443, 4443, 9443}
 
 
+# --- VERIFICATION PORT TCP ---------------------------------------------------
+# Ouvre une socket TCP vers host:port. Si la connexion réussit → port ouvert.
+# Utilisé par diagnostic pour tester MySQL (3306), SSH (22), HTTP (80), etc.
 def check_port(host: str, port: int, timeout: int = 10) -> bool:
     """Check if a TCP port is open on a host.
 
@@ -46,6 +58,10 @@ def check_port(host: str, port: int, timeout: int = 10) -> bool:
         return False
 
 
+# --- PING ICMP (CROSS-PLATFORM) ----------------------------------------------
+# Détecte l'OS (Windows vs Linux) pour adapter la commande ping.
+# Windows: ping -n 1 -w <ms>  |  Linux: ping -c 1 -W <sec>
+# C'est ICI qu'on détecte l'OS pour adapter le comportement.
 def ping_host(host: str, timeout: int = 10) -> bool:
     """Check if a host responds to ICMP ping (cross-platform).
 
@@ -76,6 +92,10 @@ def ping_host(host: str, timeout: int = 10) -> bool:
         return False
 
 
+# --- RESOLUTION DNS ----------------------------------------------------------
+# Si un serveur DNS est spécifié (ex: DC01 = 192.168.10.10) → utilise dnspython.
+# Sinon → résolution standard via socket.gethostbyname() (DNS système).
+# Sert à vérifier que le contrôleur de domaine AD répond bien en DNS.
 def resolve_dns(
     hostname: str, dns_server: str | None = None
 ) -> str | None:
@@ -124,6 +144,10 @@ def resolve_dns(
         return None
 
 
+# --- GRAB BANNER (SERVICE FINGERPRINT) ---------------------------------------
+# Se connecte en TCP et lit les premiers octets envoyés par le service.
+# Ex: un serveur SSH envoie "SSH-2.0-OpenSSH_8.9" dès la connexion.
+# Permet d'identifier le service et sa version sans authentification.
 def grab_banner(host: str, port: int, timeout: int = 3) -> str | None:
     """Read the initial banner sent by a service (SSH version, MySQL greeting, etc.).
 
@@ -149,6 +173,10 @@ def grab_banner(host: str, port: int, timeout: int = 3) -> str | None:
     return None
 
 
+# --- VERSION MYSQL (SANS AUTH) -----------------------------------------------
+# MySQL envoie un "handshake packet" dès la connexion TCP.
+# On lit les octets à partir de la position 5 jusqu'au premier \x00 (null byte)
+# pour extraire la version (ex: "8.0.35"). Aucun mot de passe nécessaire.
 def grab_mysql_version(host: str, port: int = 3306, timeout: int = 3) -> str | None:
     """Read the MySQL greeting packet and extract the server version.
 
@@ -182,6 +210,11 @@ def grab_mysql_version(host: str, port: int = 3306, timeout: int = 3) -> str | N
     return None
 
 
+# --- CHECK HTTP/HTTPS --------------------------------------------------------
+# Fait un GET sur http(s)://host:port/path et retourne :
+# - code HTTP, header Server, taille réponse, temps de réponse en ms
+# Détecte auto le schéma (HTTPS si port 443/8443, sinon HTTP).
+# SSL non vérifié par défaut (environnement lab).
 def http_check(
     host: str, port: int = 80, path: str = "/", timeout: int = 5,
     verify_ssl: bool = False, scheme: str | None = None,
